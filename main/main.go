@@ -7,75 +7,86 @@ import (
 	"prism/operating_system"
 )
 
-func main() {
+type art struct {
+	width  int
+	height int
+	art    []string
+}
 
-	// data setup for obj location
-	scrWidth := 50
-	scrHeight := 18
+var house art = art{
+	width:  70,
+	height: 14,
+	art: []string{
+		"    .                  .-.    .  _   *     _   .",
+		"           *          /   \\     ((       _/ \\       *    .",
+		"         _    .   .--'/\\/_ \\     `      /    \\  *    ___",
+		"     *  / \\_    _/ ^      \\/\\\\__        /\\/\\  /\\  __/   \\ *",
+		"       /    \\  /    .'   _/  /  \\  *' /    \\/  \\/ .'\\_/\\   .",
+		"  .   /\\/\\  /\\/ :' __  ^/  ^/    `--./.'  ^  `-.\\_    _:\\ _",
+		"     /    \\/  \\  _/  \\-' __/.' ^ _   \\_   .\\'   _/ \\ .  __/ \\",
+		"   /\\  .-   `. \\/     \\ / -.   _/ \\ -. `_/   \\ /    `._/  ^  \\",
+		"  /  `-.__ ^   / .-'.--'    . /    `--./ .-'  `-.  `-. `.  -  `.",
+		"@/        `.  / /      `-.   /  .-'   / .   .'   \\    \\  \\  .-  \\%",
+		"@&8jgs@@%% @)&@&(88&@.-_=_-=_-=_-=_-=_.8@% &@&&8(8%@%8)(8@%8 8%@)%",
+		"@88:::&(&8&&8:::::%&`.~-_~~-~~_~-~_~-~~=.'@(&%::::%@8&8)::&#@8::::",
+		"::::::8%@@%:::::@%&8:`.=~~-.~~-.~~=..~'8::::::::&@8:::::&8:::::",
+		"::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::.",
+	},
+}
+
+func main() {
 
 	var userLat float32 = 32.234
 	var userLong float32 = -48.554
 
-	var objLat float32 = 33.01
-	var objLong float32 = -47.935
+	var objLat float32 = 32.532
+	var objLong float32 = -48.235
 
-	objCoordinates, err := findObjectCoordinate(userLong, userLat, objLong, objLat, scrWidth, scrHeight)
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	width, height, err := operating_system.GetTerminalSize()
+	termWidth, termHeight, err := operating_system.GetTerminalSize()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Printf("Width: %d, Height: %d\n", width, height)
 
-	// top line, 50 char long
-	for i := 0; i < 50; i++ {
-		fmt.Print("*")
+	fmt.Printf("Width: %d, Height: %d\n", termWidth, termHeight)
+
+	objCoordinates, err := findObjectCoordinate(userLong, userLat, objLong, objLat, termWidth, termHeight)
+	if err != nil {
+		fmt.Println(err)
 	}
 
-	// for one line, not the top / bottom of the map
-	for i := 0; i < 18; i++ {
-		fmt.Println()
-		fmt.Print("*")
+	termWidth, termHeight, err = operating_system.GetTerminalSize()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(1)
+	}
+	fmt.Printf("Width: %d, Height: %d\n", termWidth, termHeight)
 
-		for j := 0; j < 48; j++ {
-			if j == 23 && i == 9 {
-				fmt.Print("@")
-			} else if j == objCoordinates[0] && i == objCoordinates[1] {
-				fmt.Print("X")
-			} else {
-				fmt.Print(" ")
-			}
+	canvas := make([][]rune, termHeight)
+	for i := range canvas {
+		canvas[i] = make([]rune, termWidth)
+		for j := range canvas[i] {
+			canvas[i][j] = '-'
 		}
-
-		fmt.Print("*")
 	}
-	fmt.Println()
 
-	// bottom line, 50 char long
-	for i := 0; i < 50; i++ {
-		fmt.Print("*")
+	addObjectToCanvas(canvas, house, objCoordinates[0], objCoordinates[1])
+
+	for _, line := range canvas {
+		fmt.Println(string(line))
 	}
-	fmt.Println()
 }
 
 func findObjectCoordinate(userLong, userLat, objLong, objLat float32, scrWidth, scrHeight int) ([2]int, error) {
 
-	var objPosition = [2]int{1, 1}
-	latDistance := userLat - objLat
-	longDistance := userLong - objLong
+	var objPosition = [2]int{0, 0}
+	latDistance := objLat - userLat
+	longDistance := objLong - userLong
 
 	if latDistance > 1 || latDistance < -1 || longDistance > 1 || longDistance < -1 {
 		// if true, will NOT be visible on screen
 		return objPosition, errors.New(" object too far to project to map")
 	}
-
-	// make them flip their value, so we can use the distance values where the user is at 0,0 coordinates
-	latDistance *= -1
-	longDistance *= -1
 
 	// gets the range between 0-2 for the equation below
 	latDistance += 1
@@ -90,4 +101,38 @@ func findObjectCoordinate(userLong, userLat, objLong, objLat float32, scrWidth, 
 
 	fmt.Println(objPosition)
 	return objPosition, nil
+}
+
+func addObjectToCanvas(canvas [][]rune, art art, posX int, posY int) {
+	canvasHeight := len(canvas)
+	canvasWidth := len(canvas[0])
+
+	fmt.Printf("Canvas Size: Width: %d, Height: %d\n", canvasWidth, canvasHeight)
+	fmt.Printf("Art Position: X: %d, Y: %d\n", posX, posY)
+
+	for y := 0; y < art.height; y++ {
+		artY := posY + y
+		if artY < 0 || artY >= canvasHeight {
+			fmt.Printf("Skipping line %d: artY (%d) out of canvas bounds\n", y, artY)
+			continue
+		}
+
+		for x := 0; x < art.width; x++ {
+			artX := posX + x
+			if artX < 0 || artX >= canvasWidth {
+				fmt.Printf("Skipping column %d: artX (%d) out of canvas bounds\n", x, artX)
+				continue
+			}
+
+			// Ensure the art slice indices are also within bounds
+			if y >= len(art.art) || x >= len(art.art[y]) {
+				fmt.Printf("Invalid art index [%d][%d] accessed, skipping draw.\n", y, x)
+				continue
+			}
+
+			fmt.Printf("Drawing at canvas[%d][%d]\n", artY, artX)
+			canvas[artY][artX] = rune(art.art[y][x])
+		}
+	}
+
 }
