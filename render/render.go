@@ -24,6 +24,20 @@ type art struct {
 	art    []string
 }
 
+var tower art = art{
+	width:  10,
+	height: 7,
+	art: []string{
+		"  _______ ",
+		" /       \\",
+		"|        |",
+		"|        |",
+		"|        |",
+		"|        |",
+		"|________|",
+	},
+}
+
 var mountain art = art{
 	width:  72,
 	height: 14,
@@ -67,12 +81,12 @@ func RenderScreen() [][]rune {
 
 	// get obj locations
 	// dummy obj data
-	objLandmark := object{0, 0, 0, "node1", 12.01, -143.32, "node", "first node", art{5, 2, []string{"12345", "12345"}}, 0, 0}
-	objWorker := object{0, 0, 0, "node2", 11.80, -143.02, "worker", "first worker", mountain, 0, 0}
-	obj3 := object{0, 0, 0, "node3", 12.01, -143.32, "node", "first node", art{5, 2, []string{"12345", "12345"}}, 0, 0}
-	obj4 := object{0, 0, 0, "node4", 11.80, -143.02, "worker", "first worker", mountain, 0, 0}
-	obj5 := object{0, 0, 0, "node5", 11.67, -143.32, "node", "first node", art{5, 2, []string{"12345", "12345"}}, 0, 0}
-	obj6 := object{0, 0, 0, "node6", 13.120, -143.02, "worker", "first worker", mountain, 0, 0}
+	objLandmark := object{0, 0, 0, "node1", 12.01, -143.32, "node", "first node", tower, 0, 0}
+	objWorker := object{0, 0, 0, "node2", 11.80, -142.55, "worker", "first worker", tower, 0, 0}
+	obj3 := object{0, 0, 0, "node3", 12.31, -144.32, "node", "first node", tower, 0, 0}
+	obj4 := object{0, 0, 0, "node4", 11.80, -143.02, "worker", "first worker", tower, 0, 0}
+	obj5 := object{0, 0, 0, "node5", 11.67, -142.82, "node", "first node", tower, 0, 0}
+	obj6 := object{0, 0, 0, "node6", 13.120, -144.02, "worker", "first worker", tower, 0, 0}
 	var objectsToRender []object = []object{objLandmark, objWorker, obj3, obj4, obj5, obj6}
 
 	// get each obj coordinates
@@ -87,7 +101,7 @@ func RenderScreen() [][]rune {
 	for i := range canvas {
 		canvas[i] = make([]rune, termWidth)
 		for j := range canvas[i] {
-			canvas[i][j] = '='
+			canvas[i][j] = ' '
 		}
 	}
 
@@ -128,7 +142,6 @@ func findObjectCoordinate(userLong, userLat float32, objects []object, scrWidth,
 
 		//	fmt.Printf("\nObject: %s, [%d, %d]", object.name, objCoordinates[i][0], objCoordinates[i][1])
 	}
-	// TODO: fiter objects so that the object with the lowest vertical coordinates always on top...
 	validatedObjects = orderObjectSlice(validatedObjects)
 
 	return validatedObjects, nil
@@ -171,7 +184,7 @@ func orderObjectSlice(objects []object) []object {
 	// bubble sort
 	for j := len(objects); j > 0; j-- {
 		for i := 0; i < len(objects)-1; i++ {
-			if objects[i].yCoordinate+objects[i].art.height < objects[i+1].yCoordinate+objects[i+1].art.height {
+			if objects[i].yCoordinate+objects[i].art.height > objects[i+1].yCoordinate+objects[i+1].art.height {
 				tempObj := objects[i]
 				objects[i] = objects[i+1]
 				objects[i+1] = tempObj
