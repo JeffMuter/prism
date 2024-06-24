@@ -2,6 +2,7 @@ package render
 
 import (
 	"fmt"
+	"sort"
 )
 
 type object struct {
@@ -24,12 +25,44 @@ type art struct {
 	art    []string
 }
 
+var ball art = art{
+	width:  3,
+	height: 4,
+	art: []string{
+		" _ ",
+		"/ \\",
+		"| |",
+		"\\_/",
+	},
+}
+
+var house art = art{
+	width:  4,
+	height: 2,
+	art: []string{
+		" /\\ ",
+		"|__|",
+	},
+}
+
+var box art = art{
+	width:  2,
+	height: 2,
+	art: []string{
+		"xx",
+		"xx",
+	},
+}
+
 var tower art = art{
 	width:  10,
-	height: 7,
+	height: 10,
 	art: []string{
 		"  _______ ",
 		" /       \\",
+		"|        |",
+		"|        |",
+		"|        |",
 		"|        |",
 		"|        |",
 		"|        |",
@@ -81,12 +114,12 @@ func RenderScreen() [][]rune {
 
 	// get obj locations
 	// dummy obj data
-	objLandmark := object{0, 0, 0, "node1", 12.01, -143.32, "node", "first node", tower, 0, 0}
-	objWorker := object{0, 0, 0, "node2", 11.80, -142.55, "worker", "first worker", tower, 0, 0}
-	obj3 := object{0, 0, 0, "node3", 12.31, -144.32, "node", "first node", tower, 0, 0}
-	obj4 := object{0, 0, 0, "node4", 11.80, -143.02, "worker", "first worker", tower, 0, 0}
-	obj5 := object{0, 0, 0, "node5", 11.67, -142.82, "node", "first node", tower, 0, 0}
-	obj6 := object{0, 0, 0, "node6", 13.120, -144.02, "worker", "first worker", tower, 0, 0}
+	objLandmark := object{0, 0, 0, "node0", 11.91, -143.92, "node", "first node", mountain, 0, 0}
+	objWorker := object{0, 0, 0, "node1", 11.80, -142.55, "worker", "first worker", house, 0, 0}
+	obj3 := object{0, 0, 0, "node2", 12.31, -144.32, "node", "first node", tower, 0, 0}
+	obj4 := object{0, 0, 0, "node3", 11.990, -144.42, "worker", "first worker", tower, 0, 0}
+	obj5 := object{0, 0, 0, "node4", 12.17, -144.2, "node", "first node", house, 0, 0}
+	obj6 := object{0, 0, 0, "node5", 12.120, -144.02, "worker", "first worker", tower, 0, 0}
 	var objectsToRender []object = []object{objLandmark, objWorker, obj3, obj4, obj5, obj6}
 
 	// get each obj coordinates
@@ -135,8 +168,9 @@ func findObjectCoordinate(userLong, userLat float32, objects []object, scrWidth,
 		// Calculate the position in screen coordinates, place into return slice
 
 		if userLat-object.latitude > -1 && userLat-object.latitude < 1 && userLong-object.longitude > -1 && userLong-object.longitude < 1 {
-			objects[i].xCoordinate = int(latDistance / horizontalDistancePerChar)
-			objects[i].yCoordinate = scrHeight - int(longDistance/verticalDistancePerChar)
+			objects[i].xCoordinate = int(latDistance/horizontalDistancePerChar) - 1
+			objects[i].yCoordinate = scrHeight - int(longDistance/verticalDistancePerChar) - 1
+
 			validatedObjects = append(validatedObjects, objects[i])
 		}
 
@@ -151,29 +185,27 @@ func addObjectsToCanvas(canvas [][]rune, objects []object) {
 	canvasHeight := len(canvas)
 	canvasWidth := len(canvas[0])
 
-	// on first glance, I think something smells fishy here. not sure y < object.art.height should be the bounds for y...
 	for _, object := range objects {
-		for y := 0; y < object.art.height; y++ {
-			artY := object.yCoordinate + y
+		for y := object.art.height - 1; y >= 0; y-- {
+			artY := object.yCoordinate - (object.art.height - 1 - y)
 			if artY < 0 || artY >= canvasHeight {
-				fmt.Printf("Skipping line %d: artY (%d) out of canvas bounds\n", y, artY)
+				// Skip this line of the art if it's out of canvas bounds
 				continue
 			}
 
 			for x := 0; x < object.art.width; x++ {
 				artX := object.xCoordinate + x
 				if artX < 0 || artX >= canvasWidth {
-					fmt.Printf("Skipping column %d: artX (%d) out of canvas bounds\n", x, artX)
+					// Skip this column of the art if it's out of canvas bounds
 					continue
 				}
 
-				// Ensure the art slice indices are also within bounds
-				if y >= len(object.art.art) || x >= len(object.art.art[y]) {
-					fmt.Printf("Invalid art index [%d][%d] accessed, skipping draw.\n", y, x)
+				if y < 0 || y >= len(object.art.art) || x < 0 || x >= len(object.art.art[y]) {
+					// Ensure we're within the bounds of the art
 					continue
 				}
 
-				fmt.Printf("Drawing at canvas[%d][%d]\n", artY, artX)
+				// Draw the art on the canvas
 				canvas[artY][artX] = rune(object.art.art[y][x])
 			}
 		}
@@ -181,15 +213,12 @@ func addObjectsToCanvas(canvas [][]rune, objects []object) {
 }
 
 func orderObjectSlice(objects []object) []object {
-	// bubble sort
-	for j := len(objects); j > 0; j-- {
-		for i := 0; i < len(objects)-1; i++ {
-			if objects[i].yCoordinate+objects[i].art.height > objects[i+1].yCoordinate+objects[i+1].art.height {
-				tempObj := objects[i]
-				objects[i] = objects[i+1]
-				objects[i+1] = tempObj
-			}
+
+	sort.SliceStable(objects, func(i, j int) bool {
+		if objects[i].yCoordinate == objects[j].yCoordinate {
+			return objects[i].xCoordinate < objects[j].xCoordinate
 		}
-	}
+		return objects[i].yCoordinate < objects[j].yCoordinate
+	})
 	return objects
 }
