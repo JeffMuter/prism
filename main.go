@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 
 	"prism/render"
 )
@@ -23,6 +25,17 @@ func main() {
 
 	for _, line := range canvas {
 		fmt.Println(string(line))
+	}
+
+	reader := bufio.NewReader(os.Stdin)
+
+	input, err := reader.ReadString('\n')
+	if err != nil {
+		fmt.Println("Invalid input: ", err)
+	}
+
+	if input == "ping" {
+		user.Ping()
 	}
 
 }
