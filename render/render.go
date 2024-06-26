@@ -2,7 +2,6 @@ package render
 
 import (
 	"fmt"
-	"os"
 	"prism/operating_system"
 	"sort"
 )
@@ -27,7 +26,7 @@ type art struct {
 	art    []string
 }
 
-var pokemon0 art = art{
+var pokemon0 = art{
 	width:  87,
 	height: 39,
 	art: []string{
@@ -73,7 +72,7 @@ var pokemon0 art = art{
 	},
 }
 
-var pokemon1 art = art{
+var pokemon1 = art{
 	width:  87,
 	height: 39,
 	art: []string{
@@ -112,7 +111,7 @@ var pokemon1 art = art{
 		"  .@=++++++==================++++=++++++++++++++++=.+:.=+++++*@.                         ",
 	},
 }
-var ball art = art{
+var ball = art{
 	width:  3,
 	height: 4,
 	art: []string{
@@ -123,7 +122,7 @@ var ball art = art{
 	},
 }
 
-var house art = art{
+var house = art{
 	width:  4,
 	height: 2,
 	art: []string{
@@ -132,7 +131,7 @@ var house art = art{
 	},
 }
 
-var box art = art{
+var box = art{
 	width:  2,
 	height: 2,
 	art: []string{
@@ -141,7 +140,7 @@ var box art = art{
 	},
 }
 
-var tower art = art{
+var tower = art{
 	width:  10,
 	height: 10,
 	art: []string{
@@ -158,7 +157,7 @@ var tower art = art{
 	},
 }
 
-var mountain art = art{
+var mountain = art{
 	width:  72,
 	height: 14,
 	art: []string{
@@ -179,19 +178,18 @@ var mountain art = art{
 	},
 }
 
-func RenderScreen() [][]rune {
-	// get terminal size
-	// real way to get user screen
+func PaintScreen() [][]rune {
+	//get terminal size
+	//real way to get user screen
 
 	termWidth, termHeight, err := operating_system.GetTerminalSize()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
+		fmt.Println("issue getting screen dimensions for rendering")
 	}
 
 	// dummy terminal data
-	// termWidth := 100
-	// termHeight := 20
+	//termWidth := 100
+	//termHeight := 20
 	fmt.Printf("Width: %d, Height: %d\n", termWidth, termHeight)
 
 	// get user location
@@ -207,7 +205,7 @@ func RenderScreen() [][]rune {
 	obj4 := object{0, 0, 0, "node3", 11.990, -144.42, "worker", "first worker", tower, 0, 0}
 	obj5 := object{0, 0, 0, "node4", 12.17, -144.2, "node", "first node", house, 0, 0}
 	obj6 := object{0, 0, 0, "node5", 12.120, -144.02, "worker", "first worker", tower, 0, 0}
-	var objectsToRender []object = []object{objLandmark, objWorker, obj3, obj4, obj5, obj6}
+	var objectsToRender = []object{objLandmark, objWorker, obj3, obj4, obj5, obj6}
 
 	// get each obj coordinates
 
@@ -249,8 +247,8 @@ func findObjectCoordinate(userLong, userLat float32, objects []object, scrWidth,
 		latDistance += 1
 		longDistance += 1
 
-		var horizontalDistancePerChar float32 = float32(2) / float32(scrWidth)
-		var verticalDistancePerChar float32 = float32(2) / float32(scrHeight)
+		var horizontalDistancePerChar = float32(2) / float32(scrWidth)
+		var verticalDistancePerChar = float32(2) / float32(scrHeight)
 
 		// Calculate the position in screen coordinates, place into return slice
 

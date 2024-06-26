@@ -4,8 +4,10 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 
 	"prism/render"
+	"prism/user"
 )
 
 func main() {
@@ -21,7 +23,7 @@ func main() {
 	// render the screen to display to the user
 	// render.RenderScreen()
 
-	canvas := render.RenderScreen()
+	canvas := render.PaintScreen()
 
 	for _, line := range canvas {
 		fmt.Println(string(line))
@@ -33,9 +35,11 @@ func main() {
 	if err != nil {
 		fmt.Println("Invalid input: ", err)
 	}
+	input = strings.TrimSpace(input)
 
 	if input == "ping" {
 		user.Ping()
+
 	}
 
 }
