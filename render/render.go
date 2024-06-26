@@ -2,8 +2,6 @@ package render
 
 import (
 	"fmt"
-	"os"
-	"prism/operating_system"
 	"sort"
 )
 
@@ -183,15 +181,15 @@ func RenderScreen() [][]rune {
 	// get terminal size
 	// real way to get user screen
 
-	termWidth, termHeight, err := operating_system.GetTerminalSize()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
-	}
+	// termWidth, termHeight, err := operating_system.GetTerminalSize()
+	// if err != nil {
+	// 	fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+	// 	os.Exit(1)
+	// }
 
 	// dummy terminal data
-	// termWidth := 100
-	// termHeight := 20
+	termWidth := 100
+	termHeight := 20
 	fmt.Printf("Width: %d, Height: %d\n", termWidth, termHeight)
 
 	// get user location
@@ -211,7 +209,7 @@ func RenderScreen() [][]rune {
 
 	// get each obj coordinates
 
-	objectsToRender, err =
+	objectsToRender, err :=
 		findObjectCoordinate(userLong, userLat, objectsToRender, termWidth, termHeight)
 	if err != nil {
 		fmt.Println(err)

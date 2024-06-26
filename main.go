@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"prism/render"
+	"prism/user"
 )
 
 func main() {
@@ -35,7 +36,8 @@ func main() {
 	}
 
 	if input == "ping" {
-		user.Ping()
+		stuff, _ := user.Ping()
+		fmt.Println(stuff)
 	}
 
 }
