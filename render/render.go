@@ -3,6 +3,7 @@ package render
 import (
 	"fmt"
 	"prism/operating_system"
+	"prism/user"
 	"sort"
 )
 
@@ -26,6 +27,28 @@ type art struct {
 	art    []string
 }
 
+var city = art{
+	width:  54,
+	height: 17,
+	art: []string{
+		"                              ###                               ",
+		"                             #####                              ",
+		"                             #####                              ",
+		"  ###                       #######                             ",
+		" #####                      #######                             ",
+		" ######                     #######  #######                    ",
+		" #######                    #######  ##########                 ",
+		" #######    ###             #######  ###########    ###         ",
+		" ########  #####            #######  ############  #####        ",
+		" ########  #####    ###     ####### #############  #####        ",
+		" ######## #######  #####    ####### ############## #####        ",
+		" ######## ######## #####    ####### ############## #####        ",
+		" ################# #####    ####### ############## #####        ",
+		" #######################    ####### #####################       ",
+		" ###########################################################    ",
+		" ############################################################   ",
+	},
+}
 var pokemon0 = art{
 	width:  87,
 	height: 39,
@@ -193,24 +216,25 @@ func PaintScreen() [][]rune {
 	fmt.Printf("Width: %d, Height: %d\n", termWidth, termHeight)
 
 	// get user location
-	// dummy user data
-	var userLat float32 = 12.54
-	var userLong float32 = -143.54
+	userLat, userLong, err := user.Ping()
+	if err != nil {
+		fmt.Println("issue getting user position for rendering...")
+	}
 
 	// get obj locations
 	// dummy obj data
-	objLandmark := object{0, 0, 0, "node0", 12, -144, "node", "first node", pokemon0, 0, 0}
-	objWorker := object{0, 0, 0, "node1", 11.60, -144.41, "worker", "first worker", pokemon1, 0, 0}
-	obj3 := object{0, 0, 0, "node2", 12.31, -144.32, "node", "first node", tower, 0, 0}
-	obj4 := object{0, 0, 0, "node3", 11.990, -144.42, "worker", "first worker", tower, 0, 0}
-	obj5 := object{0, 0, 0, "node4", 12.17, -144.2, "node", "first node", house, 0, 0}
-	obj6 := object{0, 0, 0, "node5", 12.120, -144.02, "worker", "first worker", tower, 0, 0}
+	objLandmark := object{0, 0, 0, "node0", 39.95930175232374, -83.00445638483892, "node", "first node", tower, 0, 0}
+	objWorker := object{0, 0, 0, "node1", 39.60, -80.41, "worker", "first worker", tower, 0, 0}
+	obj3 := object{0, 0, 0, "node2", 39.31, -81.32, "node", "first node", tower, 0, 0}
+	obj4 := object{0, 0, 0, "node3", 37.990, -82.42, "worker", "first worker", tower, 0, 0}
+	obj5 := object{0, 0, 0, "node4", 42.17, -83.2, "node", "first node", house, 0, 0}
+	obj6 := object{0, 0, 0, "node5", 40.120, -84.02, "worker", "first worker", tower, 0, 0}
 	var objectsToRender = []object{objLandmark, objWorker, obj3, obj4, obj5, obj6}
 
 	// get each obj coordinates
 
 	objectsToRender, err =
-		findObjectCoordinate(userLong, userLat, objectsToRender, termWidth, termHeight)
+		findObjectCoordinate(float32(userLong), float32(userLat), objectsToRender, termWidth, termHeight)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -252,7 +276,7 @@ func findObjectCoordinate(userLong, userLat float32, objects []object, scrWidth,
 
 		// Calculate the position in screen coordinates, place into return slice
 
-		if userLat-object.latitude > -1 && userLat-object.latitude < 1 && userLong-object.longitude > -1 && userLong-object.longitude < 1 {
+		if userLat-object.latitude > -5 && userLat-object.latitude < 5 && userLong-object.longitude > -5 && userLong-object.longitude < 5 {
 			objects[i].xCoordinate = int(latDistance/horizontalDistancePerChar) - 1
 			objects[i].yCoordinate = scrHeight - int(longDistance/verticalDistancePerChar) - 1
 
