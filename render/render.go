@@ -27,26 +27,45 @@ type art struct {
 	art    []string
 }
 
-var city = art{
-	width:  63,
-	height: 17,
+var columbus = art{
+	width:  7,
+	height: 2,
 	art: []string{
-		"                              ###                               ",
-		"                             #####                              ",
-		"                             #####                              ",
-		"  ###                       #######                             ",
-		" #####                      #######                             ",
-		" ######                     #######  #######                    ",
-		" #######                    #######  ##########                 ",
-		" #######    ###             #######  ###########    ###         ",
-		" ########  #####            #######  ############  #####        ",
-		" ########  #####    ###     ####### #############  #####        ",
-		" ######## #######  #####    ####### ############## #####        ",
-		" ######## ######## #####    ####### ############## #####        ",
-		" ################# #####    ####### ############## #####        ",
-		" #######################    ####### #####################       ",
-		" ###########################################################    ",
-		" ############################################################   ",
+		"columbus",
+		"columbus",
+	},
+}
+var sunbury = art{
+	width:  7,
+	height: 2,
+	art: []string{
+		"sunbury",
+		"sunbury",
+	},
+}
+var cinci = art{
+	width:  5,
+	height: 3,
+	art: []string{
+		"cinci",
+		"cinci",
+		"cnccc",
+	},
+}
+var dayton = art{
+	width:  6,
+	height: 2,
+	art: []string{
+		"dayton",
+		"dayton",
+	},
+}
+var cleveland = art{
+	width:  9,
+	height: 2,
+	art: []string{
+		"cleveland",
+		"cleveland",
 	},
 }
 var pokemon0 = art{
@@ -209,10 +228,6 @@ func PaintScreen() [][]rune {
 	if err != nil {
 		fmt.Println("issue getting screen dimensions for rendering")
 	}
-
-	// dummy terminal data
-	//termWidth := 100
-	//termHeight := 20
 	fmt.Printf("Width: %d, Height: %d\n", termWidth, termHeight)
 
 	// get user location
@@ -223,13 +238,13 @@ func PaintScreen() [][]rune {
 
 	// get obj locations
 	// dummy obj data
-	objLandmark := object{0, 0, 0, "node0", 39.95930175232374, -83.00445638483892, "node", "first node", city, 0, 0}
-	objWorker := object{0, 0, 0, "node1", 39.60, -82.41, "worker", "first worker", tower, 0, 0}
-	obj3 := object{0, 0, 0, "node2", 38.31, -82.32, "node", "first node", tower, 0, 0}
-	obj4 := object{0, 0, 0, "node3", 41.990, -80.42, "worker", "first worker", tower, 0, 0}
-	obj5 := object{0, 0, 0, "node4", 38.17, -80.2, "node", "first node", house, 0, 0}
-	obj6 := object{0, 0, 0, "node5", 42.120, -85.02, "worker", "first worker", tower, 0, 0}
-	var objectsToRender = []object{objLandmark, objWorker, obj3, obj4, obj5, obj6}
+	objLandmark := object{0, 0, 0, "node0", 39.95930175232374, -83.00445638483892, "node", "first node", columbus, 0, 0}
+	objWorker := object{0, 0, 0, "node1", 39.60, -82.41, "worker", "first worker", cinci, 0, 0}
+	obj3 := object{0, 0, 0, "node2", 38.31, -82.32, "node", "first node", sunbury, 0, 0}
+	obj4 := object{0, 0, 0, "node3", 41.990, -80.42, "worker", "first worker", dayton, 0, 0}
+	obj5 := object{0, 0, 0, "node4", 38.17, -80.2, "node", "first node", cleveland, 0, 0}
+	//obj6 := object{0, 0, 0, "node5", 42.120, -85.02, "worker", "first worker", tower, 0, 0}
+	var objectsToRender = []object{objLandmark, objWorker, obj3, obj4, obj5}
 
 	// get each obj coordinates
 
@@ -258,6 +273,10 @@ func PaintScreen() [][]rune {
 // calc obj coordinates on screen
 
 func findObjectCoordinate(userLong, userLat float32, objects []object, scrWidth, scrHeight int) ([]object, error) {
+	// in my opinion, this could be made shorter, and more clear. the coordinate is currently fighting for determination between judging based on the user's location, versus within a range... While we can make an if-check on being within x lat/long units of the user, we should ideally find the user's location, add x, subtract x from the long and lat, and use that as the 2d range, and refine the equation.
+	// also need to get the art out of here.
+	// this needs much more documentation. and the lat / long distances need to be made variables.
+	//
 	var validatedObjects []object
 
 	for i, object := range objects {
