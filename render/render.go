@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"prism/operating_system"
 	"prism/user"
+	"prism/util"
 	"sort"
 )
 
@@ -422,10 +423,10 @@ func addObjectsToCanvas(canvas [][]rune, objects []object) {
 	}
 }
 
-func getObjectArt(path string) []string {
+func getObjectArt(artName string) []string {
 	// we want to take the path, go to our assets folder
 	var artSlice []string
-	txtFilePath := "assets/" + path + ".txt"
+	txtFilePath := util.getAbsoluteFilepath("/assets/" + artname)
 
 	return artSlice
 }
