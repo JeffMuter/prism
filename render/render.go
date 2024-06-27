@@ -153,6 +153,22 @@ var pokemon1 = art{
 		"  .@=++++++==================++++=++++++++++++++++=.+:.=+++++*@.                         ",
 	},
 }
+
+var userArt = art{
+	width:  1,
+	height: 1,
+	art: []string{
+		"@",
+	},
+}
+
+var worker = art{
+	width:  1,
+	height: 1,
+	art: []string{
+		"#",
+	},
+}
 var ball = art{
 	width:  3,
 	height: 4,
@@ -235,25 +251,97 @@ func PaintScreen() [][]rune {
 	if err != nil {
 		fmt.Println("issue getting user position for rendering...")
 	}
+	//dummy data for user location
+	//userLat, userLong := 43.00, -83.00
+	userObject := object{
+		latitude:  float32(userLat),
+		longitude: float32(userLong),
+		name:      "user",
+		art:       userArt,
+	}
 
 	// get obj locations
 	// dummy obj data
-	objLandmark := object{0, 0, 0, "node0", 39.95930175232374, -83.00445638483892, "node", "first node", columbus, 0, 0}
-	objWorker := object{0, 0, 0, "node1", 39.60, -82.41, "worker", "first worker", cinci, 0, 0}
-	obj3 := object{0, 0, 0, "node2", 38.31, -82.32, "node", "first node", sunbury, 0, 0}
-	obj4 := object{0, 0, 0, "node3", 41.990, -80.42, "worker", "first worker", dayton, 0, 0}
-	obj5 := object{0, 0, 0, "node4", 38.17, -80.2, "node", "first node", cleveland, 0, 0}
+	columbusObject := object{
+		0,
+		0,
+		0,
+		"node0",
+		39.95930175232374,
+		-83.00445638483892,
+		"node",
+		"columbus",
+		house,
+		0,
+		0,
+	}
+	cinciObject := object{0,
+		0,
+		0,
+		"node1",
+		39.101398,
+		-84.512395,
+		"worker",
+		"cinci",
+		house,
+		0,
+		0,
+	}
+	//obj3 := object{
+	//	0,
+	//	0,
+	//	0,
+	//	"node2",
+	//	40.01,
+	//	-85.99,
+	//	"node",
+	//	"sunbury",
+	//	sunbury,
+	//	0,
+	//	0,
+	//}
+	daytonObject := object{
+		0,
+		0,
+		0,
+		"node3",
+		39.760504,
+		-84.193430,
+		"worker",
+		"dayton",
+		house,
+		0,
+		0,
+	}
+	clevelandObject := object{0,
+		0,
+		0,
+		"node4",
+		41.499748,
+		-81.693500,
+		"node",
+		"cleveland",
+		house,
+		0,
+		0,
+	}
 	//obj6 := object{0, 0, 0, "node5", 42.120, -85.02, "worker", "first worker", tower, 0, 0}
-	var objectsToRender = []object{objLandmark, objWorker, obj3, obj4, obj5}
+	var objectsToRender = []object{
+		userObject,
+		clevelandObject,
+		daytonObject,
+		cinciObject,
+		columbusObject,
+	}
 
 	// get each obj coordinates
-
 	objectsToRender, err =
 		findObjectCoordinate(float32(userLong), float32(userLat), objectsToRender, termWidth, termHeight)
 	if err != nil {
 		fmt.Println(err)
 	}
 
+	// create canvas
 	canvas := make([][]rune, termHeight)
 	for i := range canvas {
 		canvas[i] = make([]rune, termWidth)
@@ -261,52 +349,46 @@ func PaintScreen() [][]rune {
 			canvas[i][j] = ' '
 		}
 	}
+	// order objects
+	objectsToRender = orderObjectSlice(objectsToRender)
 
+	// place objects on the canvas
 	addObjectsToCanvas(canvas, objectsToRender)
 
 	return canvas
 }
 
-// get user location
-// get all obj locations
-// validate obj locations as close enough to user
-// calc obj coordinates on screen
-
 func findObjectCoordinate(userLong, userLat float32, objects []object, scrWidth, scrHeight int) ([]object, error) {
-	// in my opinion, this could be made shorter, and more clear. the coordinate is currently fighting for determination between judging based on the user's location, versus within a range... While we can make an if-check on being within x lat/long units of the user, we should ideally find the user's location, add x, subtract x from the long and lat, and use that as the 2d range, and refine the equation.
-	// also need to get the art out of here.
-	// this needs much more documentation. and the lat / long distances need to be made variables.
-	//
-	var validatedObjects []object
+	var filteredObjects []object
+	// number represents the screen's range from top to bottom. Higher this number, the further the user can see.
+	// the user would be in the center. If the degree radius from the user is 1, then the long/lat goes above and
+	// below the user 1 degree, so 2 degrees. If the radius is 5, then the canvas range is 10, etc..
+	canvasDegreeRange := 4
+	for i := range objects {
 
-	for i, object := range objects {
-		objLat := object.latitude
-		objLong := object.longitude
+		// defines max min values in degrees for the canvas
+		// should canvas be a type and we set those?
+		maxLat := userLat + float32(canvasDegreeRange)/float32(2)
+		minLat := userLat - float32(canvasDegreeRange)/float32(2)
+		maxLong := userLong + float32(canvasDegreeRange)/float32(2)
+		minLong := userLong - float32(canvasDegreeRange)/float32(2)
 
-		latDistance := objLat - userLat
-		longDistance := objLong - userLong
+		// distance represents the unit of distance each char on the canvas represents in degree distance.
+		// if the canvas degree range is 10, and the screen width is 10, then every char on the screen is 1 lat.
+		var horizontalDistancePerChar = float32(canvasDegreeRange) / float32(scrWidth)
+		var verticalDistancePerChar = float32(canvasDegreeRange) / float32(scrHeight)
 
-		// gets the range between 0-2 for the equation below
-		latDistance += 1
-		longDistance += 1
-
-		var horizontalDistancePerChar = float32(6) / float32(scrWidth)
-		var verticalDistancePerChar = float32(6) / float32(scrHeight)
-
-		// Calculate the position in screen coordinates, place into return slice
-
-		if userLat-object.latitude > -3 && userLat-object.latitude < 3 && userLong-object.longitude > -3 && userLong-object.longitude < 3 {
-			objects[i].xCoordinate = int(latDistance/horizontalDistancePerChar) - 1
-			objects[i].yCoordinate = scrHeight - int(longDistance/verticalDistancePerChar) - 1
-
-			validatedObjects = append(validatedObjects, objects[i])
+		// if out of bounds, don't add the object to the filtered slice
+		if objects[i].latitude > maxLat || objects[i].latitude < minLat || objects[i].longitude > maxLong || objects[i].longitude < minLong {
+			continue
 		}
-
-		//	fmt.Printf("\nObject: %s, [%d, %d]", object.name, objCoordinates[i][0], objCoordinates[i][1])
+		// calc is wrong, creating a 90degree rotation incorrectly.
+		objects[i].xCoordinate = int((objects[i].longitude - minLong) / horizontalDistancePerChar)
+		objects[i].yCoordinate = scrHeight - 1 - int((objects[i].latitude-minLat)/verticalDistancePerChar)
+		filteredObjects = append(filteredObjects, objects[i])
 	}
-	validatedObjects = orderObjectSlice(validatedObjects)
 
-	return validatedObjects, nil
+	return objects, nil
 }
 
 func addObjectsToCanvas(canvas [][]rune, objects []object) {
@@ -338,6 +420,14 @@ func addObjectsToCanvas(canvas [][]rune, objects []object) {
 			}
 		}
 	}
+}
+
+func getObjectArt(path string) []string {
+	// we want to take the path, go to our assets folder
+	var artSlice []string
+	txtFilePath := "assets/" + path + ".txt"
+
+	return artSlice
 }
 
 func orderObjectSlice(objects []object) []object {
