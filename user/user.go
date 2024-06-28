@@ -7,7 +7,7 @@ import (
 	"github.com/joho/godotenv"
 	"net/http"
 	"os"
-	"prism/wifi"
+	"prism/operating_system"
 )
 
 type GeoLocationRequest struct {
@@ -18,35 +18,34 @@ type WiFiAccessPoint struct {
 	MacAddress string `json:"macAddress"`
 }
 
-// Ping this function will use ipinfo, which gathers some super rough location estimates.
-// but gives us more of what we need for google's geolocation api.
+// Ping this function will use Google's geolocate api, which gathers some super rough location estimates.
 func Ping() (float64, float64, error) {
 	// Load environment variables from .env file
 	err := godotenv.Load()
 	if err != nil {
 		fmt.Println("Error loading .env file")
-		return 0, 0, fmt.Errorf("error loading .env file: ", err)
+		return 0, 0, fmt.Errorf("error loading .env file:  %v", err)
 	}
 	googleGeolocationKey := os.Getenv("GOOGLE_GEOLOCATION_KEY")
-	windowsBSSID, err := wifi.GetWifiInfoWindows()
+	osBSSID, err := operating_system.GetWifiInfo()
 	if err != nil {
-		return 0, 0, fmt.Errorf("error getting wifi info: ", err)
+		return 0, 0, fmt.Errorf("error getting wifi info: %v", err)
 	}
 
 	wifiAccess := WiFiAccessPoint{
-		MacAddress: windowsBSSID,
+		MacAddress: osBSSID,
 	}
 
 	geoRequest := GeoLocationRequest{WiFiAccessPoints: []WiFiAccessPoint{wifiAccess}}
 
 	reqBody, err := json.Marshal(geoRequest)
 	if err != nil {
-		return 0, 0, fmt.Errorf("json marshalling went awry: ", err)
+		return 0, 0, fmt.Errorf("json marshalling went awry: %v", err)
 	}
 	url := "https://www.googleapis.com/geolocation/v1/geolocate?key=" + googleGeolocationKey
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(reqBody))
 	if err != nil {
-		return 0, 0, fmt.Errorf("http post err: ", err)
+		return 0, 0, fmt.Errorf("http post err: %v", err)
 	}
 	defer resp.Body.Close()
 
@@ -58,10 +57,10 @@ func Ping() (float64, float64, error) {
 	err = json.NewDecoder(resp.Body).Decode(&result)
 	if err != nil {
 		fmt.Println("json decoding went awry... ", err)
-		return 0, 0, fmt.Errorf("ping error on decoding resp", err)
+		return 0, 0, fmt.Errorf("ping error on decoding resp: %v", err)
 	}
-	lat := float64(result["location"].(map[string]interface{})["lat"].(float64))
-	long := float64(result["location"].(map[string]interface{})["lng"].(float64))
+	lat := result["location"].(map[string]interface{})["lat"].(float64)
+	long := result["location"].(map[string]interface{})["lng"].(float64)
 	fmt.Println(lat, long)
 	return lat, long, nil
 }

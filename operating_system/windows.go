@@ -1,9 +1,15 @@
+//go:build windows || darwin
+
 package operating_system
 
 import (
 	"golang.org/x/sys/windows"
 	"os"
 )
+
+type Wifi struct {
+	MacAddress string
+}
 
 // GetTerminalSize retrieves the console size on Windows
 func GetTerminalSize() (int, int, error) {
@@ -17,32 +23,21 @@ func GetTerminalSize() (int, int, error) {
 	} else {
 		return 140, 20, nil
 	}
+}
+func GetWifiInfo() (string, error) {
+	cmd := exec.Command("netsh", "wlan", "show", "interfaces")
+	stdout, err := cmd.Output()
+	if err != nil {
+		fmt.Println("command to windows error: ", err)
+	}
 
-	// Fallback for IDE
-	//cmd := exec.Command("cmd", "/c", "mode con")
-	//output, err := cmd.Output()
-	//if err != nil {
-	//	return 0, 0, err
-	//}
-	//
-	//lines := strings.Split(string(output), "\r\n")
-	//var cols, rows int
-	//for _, line := range lines {
-	//	if strings.Contains(line, "Columns:") {
-	//		parts := strings.Fields(line)
-	//		if len(parts) >= 2 {
-	//			cols, _ = strconv.Atoi(parts[1])
-	//		}
-	//	}
-	//	if strings.Contains(line, "Lines:") {
-	//		parts := strings.Fields(line)
-	//		if len(parts) >= 2 {
-	//			rows, _ = strconv.Atoi(parts[1])
-	//		}
-	//	}
-	//}
-	//if cols == 0 || rows == 0 {
-	//	return 0, 0, fmt.Errorf("unable to retrieve terminal size")
-	//}
-	//return cols, rows, nil
+	scanner := bufio.NewScanner(strings.NewReader(string(stdout)))
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.Contains(line, "BSSID") {
+			return strings.TrimSpace(strings.SplitN(line, ":", 2)[1]), nil
+		}
+	}
+
+	return "", fmt.Errorf("no windows Wifi info found")
 }
