@@ -2,10 +2,9 @@ package user
 
 import (
 	"fmt"
+	geolocate "github.com/martinlindhe/google-geolocate"
 	"log"
 	"os"
-
-	geolocate "github.com/martinlindhe/google-geolocate"
 )
 
 func Ping() (*geolocate.GoogleGeo, error) {
