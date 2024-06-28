@@ -39,7 +39,5 @@ func main() {
 
 	if input == "ping" {
 		user.Ping()
-
 	}
-
 }
