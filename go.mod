@@ -2,6 +2,9 @@ module prism
 
 go 1.22.3
 
-require golang.org/x/sys v0.21.0
+require (
+	github.com/yelinaung/wifi-name v0.0.0-20181205043121-60d8acb81b8f
+	golang.org/x/sys v0.21.0
+)
 
-require github.com/martinlindhe/google-geolocate v0.0.0-20211021100736-8c4877eb6655
+require github.com/joho/godotenv v1.5.1 // indirect
