@@ -10,12 +10,12 @@ import (
 
 type object struct {
 	id          int
-	user_id     int
-	object_id   int
+	userId      int
+	objectId    int
 	name        string
 	latitude    float32
 	longitude   float32
-	object_type string
+	objectType  string
 	description string
 	art         art
 	xCoordinate int
@@ -426,7 +426,12 @@ func addObjectsToCanvas(canvas [][]rune, objects []object) {
 func getObjectArt(artName string) []string {
 	// we want to take the path, go to our assets folder
 	var artSlice []string
-	txtFilePath := util.getAbsoluteFilepath("/assets/" + artname)
+	txtFilePath, err := util.GetAbsoluteFilepath("/assets/" + artName)
+	if err != nil {
+		fmt.Println("txtFilePath err:", txtFilePath, err)
+	}
+	// get file
+	fmt.Println(txtFilePath)
 
 	return artSlice
 }
