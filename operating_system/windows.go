@@ -3,8 +3,12 @@
 package operating_system
 
 import (
+	"bufio"
+	"fmt"
 	"golang.org/x/sys/windows"
 	"os"
+	"os/exec"
+	"strings"
 )
 
 type Wifi struct {
