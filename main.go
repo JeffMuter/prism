@@ -4,10 +4,9 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"strings"
-
 	"prism/render"
 	"prism/user"
+	"strings"
 )
 
 func main() {

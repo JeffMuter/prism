@@ -1,7 +1,9 @@
 package render
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 	"prism/operating_system"
 	"prism/user"
 	"prism/util"
@@ -423,19 +425,42 @@ func addObjectsToCanvas(canvas [][]rune, objects []object) {
 	}
 }
 
-func getObjectArt(artName string) []string {
+// GetObjectArt send the name of the .txt file, returns slice of strings to represent an objects art.
+func GetObjectArt(artName string) []string {
 	// we want to take the path, go to our assets folder
 	var artSlice []string
-	txtFilePath, err := util.GetAbsoluteFilepath("/assets/" + artName)
+	txtFilePath, err := util.GetAbsoluteFilepath("/assets/" + artName + ".txt")
 	if err != nil {
 		fmt.Println("txtFilePath err:", txtFilePath, err)
 	}
 	// get file
 	fmt.Println(txtFilePath)
 
+	file, err := os.Open(txtFilePath)
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer file.Close()
+
+	// create scanner to read the file
+	scanner := bufio.NewScanner(file)
+
+	// read lines of txt file.
+	for scanner.Scan() {
+		artSlice = append(artSlice, scanner.Text())
+	}
+
+	// check for scanning errors
+	if err := scanner.Err(); err != nil {
+		fmt.Println(err)
+	}
+
 	return artSlice
 }
 
+// orderObjectSlice takes a slice of object, and returns them, where the ycoordinate sorts them.
+// intention being to have the object closest to the user printed last, and overtop of all other objects that have
+// coordinates closer to the top of the rendered screen.
 func orderObjectSlice(objects []object) []object {
 
 	sort.SliceStable(objects, func(i, j int) bool {
