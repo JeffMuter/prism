@@ -1,16 +1,25 @@
-DROP TABLE IF EXISTS users, objects, workers, resources, nodes, events, worker_events, worker_activities;
+DROP TABLE IF EXISTS resources CASCADE;
+DROP TABLE IF EXISTS workers CASCADE;
+DROP TABLE IF EXISTS events CASCADE;
+DROP TABLE IF EXISTS nodes CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS objects CASCADE;
+DROP TABLE IF EXISTS worker_events CASCADE;
+DROP TABLE IF EXISTS node_resources CASCADE;
+DROP TABLE IF EXISTS worker_activities CASCADE;
+
 
 CREATE TABLE users (
-                       id SERIAL PRIMARY KEY,
-                       username VARCHAR(50) NOT NULL,
-                       email VARCHAR(100) UNIQUE NOT NULL,
-                       password VARCHAR(100) NOT NULL,
-                       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE resources (
-                           id SERIAL PRIMARY KEY,
-                           name VARCHAR(50)
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50)
 );
 
 CREATE TABLE workers (
@@ -57,12 +66,12 @@ CREATE TABLE events (
 );
 
 CREATE TABLE worker_events (
-                               id SERIAL PRIMARY KEY,
-                               worker_id INT NOT NULL REFERENCES workers(id),
-                               event_id INT NOT NULL REFERENCES events(id)
+    id SERIAL PRIMARY KEY,
+    worker_id INT NOT NULL REFERENCES workers(id),
+    event_id INT NOT NULL REFERENCES events(id)
 );
 
-CREATE TABLE worker_activites (
+CREATE TABLE worker_activities (
                                   id SERIAL PRIMARY KEY,
                                   worker_id INTEGER NOT NULL REFERENCES workers(id),
                                   node_id INTEGER NOT NULL REFERENCES nodes(id),
@@ -71,4 +80,10 @@ CREATE TABLE worker_activites (
                                   end_time TIMESTAMP NOT NULL,
                                   destination_latitude DOUBLE PRECISION NOT NULL,
                                   destination_longitude DOUBLE PRECISION NOT NULL
+);
+
+CREATE TABLE node_resources (
+  id SERIAL PRIMARY KEY,
+  node_id INTEGER NOT NULL REFERENCES nodes(id),
+  resource_id INTEGER NOT NULL REFERENCES resources(id)
 );
