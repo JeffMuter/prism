@@ -2,11 +2,15 @@ package user
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/joho/godotenv"
+	"log"
 	"net/http"
 	"os"
+	"prism/database"
 	"prism/operating_system"
 )
 
@@ -70,4 +74,23 @@ func Ping() (float64, float64, error) {
 	long := result["location"].(map[string]interface{})["lng"].(float64)
 	fmt.Println(lat, long)
 	return lat, long, nil
+}
+
+func GetUser(email string) (User, error) {
+	db := database.DatabaseOpen()
+	defer db.Close()
+
+	query := "SELECT id, username, email, password FROM users WHERE email=$1"
+	row := db.QueryRow(query, email)
+	err := row.Scan(&user.Id, &user.Username, &user.Email, &user.Password)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			fmt.Println("Scanned db for a user via email, found none...")
+			return user, err
+		} else {
+			log.Fatal(err)
+			return user, err
+		}
+	}
+	return user, nil
 }

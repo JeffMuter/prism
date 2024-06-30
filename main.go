@@ -10,12 +10,12 @@ import (
 )
 
 func main() {
-	var thisUser = user.User{
-		Id:       1,
-		Username: "1",
-		Email:    "1@gmail.com",
-		Password: "1",
-	}
+	//var thisUser = user.User{
+	//	Id:       1,
+	//	Username: "1",
+	//	Email:    "1@gmail.com",
+	//	Password: "1",
+	//}
 
 	canvas := render.PaintScreen()
 
