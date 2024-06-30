@@ -14,6 +14,7 @@
         <method importPath="hash" receiver="Hash" name="Write" />
         <method importPath="strings" receiver="*Builder" name="WriteByte" />
         <method importPath="io" receiver="ReadCloser" name="Close" />
+        <method importPath="database/sql" receiver="*DB" name="Close" />
       </methods>
     </inspection_tool>
   </profile>

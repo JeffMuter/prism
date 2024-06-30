@@ -77,7 +77,8 @@ func Ping() (float64, float64, error) {
 }
 
 func GetUser(email string) (User, error) {
-	db := database.DatabaseOpen()
+	user := User{}
+	db := database.OpenDatabase()
 	defer db.Close()
 
 	query := "SELECT id, username, email, password FROM users WHERE email=$1"
