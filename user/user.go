@@ -10,6 +10,13 @@ import (
 	"prism/operating_system"
 )
 
+type User struct {
+	Id       int
+	Username string
+	Email    string
+	Password string
+}
+
 type GeoLocationRequest struct {
 	WiFiAccessPoints []WiFiAccessPoint `json:"wifiAccessPoints"`
 }

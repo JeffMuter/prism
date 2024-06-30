@@ -10,17 +10,12 @@ import (
 )
 
 func main() {
-
-	// get user location
-
-	// get objects that will be on screen
-	// database.getArtForDisplay()
-
-	// get screen size
-	// term.GetTermSize
-
-	// render the screen to display to the user
-	// render.RenderScreen()
+	var thisUser = user.User{
+		Id:       1,
+		Username: "1",
+		Email:    "1@gmail.com",
+		Password: "1",
+	}
 
 	canvas := render.PaintScreen()
 
