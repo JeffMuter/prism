@@ -237,6 +237,7 @@ func GetObjectArt(artName string) []string {
 	return artSlice
 }
 
+// UpdateArtDimensions takes in an art object, and adds the dimension fields of height and width
 func (Art) UpdateArtDimensions(art Art) Art {
 	art.height = len(art.art)
 	art.width = len(art.art[0]) + 2
