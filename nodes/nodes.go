@@ -1,3 +1,9 @@
 package nodes
 
-func CreateNode(userLong float32, userLat float32)
+import "prism/user"
+
+func CreateNode(userLong float32, userLat float32) error {
+	user.Ping()
+
+	return nil
+}
