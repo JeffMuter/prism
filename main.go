@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"prism/nodes"
 	"prism/render"
 	"prism/user"
 	"strings"
@@ -33,5 +34,14 @@ func main() {
 
 	if input == "ping" {
 		user.Ping()
+	} else if input == "node" {
+		userLat, userLong, err := user.Ping()
+		if err != nil {
+			fmt.Println(err)
+		}
+		err = nodes.CreateNode(userLat, userLong)
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 }
