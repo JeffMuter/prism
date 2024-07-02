@@ -33,13 +33,17 @@ func main() {
 	input = strings.TrimSpace(input)
 
 	if input == "ping" {
-		user.Ping()
+		lat, long, err := user.Ping()
+		if err != nil {
+			fmt.Println("ping err: ", err)
+		}
+		fmt.Printf("lat: %v, long: %v.\n", lat, long)
 	} else if input == "node" {
 		userLat, userLong, err := user.Ping()
 		if err != nil {
 			fmt.Println(err)
 		}
-		err = nodes.CreateNode(userLat, userLong)
+		err = nodes.CreateNode(1, userLat, userLong)
 		if err != nil {
 			fmt.Println(err)
 		}
