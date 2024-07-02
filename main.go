@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"prism/data_scripting"
 	"prism/nodes"
 	"prism/render"
 	"prism/user"
@@ -17,6 +18,7 @@ func main() {
 	//	Email:    "1@gmail.com",
 	//	Password: "1",
 	//}
+	data_scripting.AddLocationsToDb()
 
 	canvas := render.PaintScreen()
 
