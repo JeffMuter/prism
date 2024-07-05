@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"prism/database"
+	"prism/user"
+	"prism/util"
 )
 
 type Location struct {
@@ -16,14 +18,24 @@ type Location struct {
 	Art          string
 }
 
-func CreateNode(userId int, userLong float64, userLat float64) error {
+func CreateNode(user user.User) error {
 	// get all other nodes
 	// if any other nodes are too close, err
 	// else, create new node
+
+	// max lat & long
+
 	db := database.OpenDatabase()
 	defer db.Close()
 
 	var locations []Location
+
+	//this num signifies 10 miles in lat/long degrees. We're using this to
+	// determine the max / min lat&long to determine if the node we want to place is too close to another node.
+	var latLongRange float64 = 0.145
+
+	// call func to get the vars for the lat/long range
+	minLat, maxLat, minLong, maxLong := util.GetMaxLocationRanges(latLongRange, user.Latitude, user.Longitude)
 
 	query :=
 		"SELECT * " +
@@ -53,6 +65,13 @@ func CreateNode(userId int, userLong float64, userLat float64) error {
 	}
 	for _, loc := range locations {
 		fmt.Printf("ID: %d, Type: %s, Name: %s, Description: %s\n", loc.Id, loc.LocationType, loc.Name, loc.Description)
+		if loc.Latitude < minLat || loc.Latitude > maxLat || loc.Longitude < minLong || loc.Longitude > maxLong {
+			return fmt.Errorf("node location too close to another")
+		}
 	}
+
+	// add node to locations
+	query = "INSERT INTO locations (location_type, longitude, latitude, name, description, art) VALUES ('default', $1, $2, name, 'a small default type node', 'node')"
+
 	return nil
 }

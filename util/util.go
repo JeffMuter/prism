@@ -13,3 +13,14 @@ func GetAbsoluteFilepath(relativeFilepath string) (string, error) {
 	}
 	return filepath.Join(workingDir, relativeFilepath), nil
 }
+
+func GetMaxLocationRanges(lRange, lat, long float64) (float64, float64, float64, float64) {
+	var minLat, maxLat, minLong, maxLong float64
+
+	minLat = lat - lRange
+	maxLat = lat + lRange
+	minLong = long - lRange
+	maxLong = long + lRange
+
+	return minLat, maxLat, minLong, maxLong
+}

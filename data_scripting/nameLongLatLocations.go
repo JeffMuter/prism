@@ -51,3 +51,8 @@ func AddLocationsToDb() {
 		fmt.Printf("name: %s, lat: %v, long: %v\n", name, lat, long)
 	}
 }
+
+// run a func to get specific info from OpenStreetMaps
+//func main() {
+//	req, err := http.NewRequest("GET")
+//}

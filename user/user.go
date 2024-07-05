@@ -15,10 +15,12 @@ import (
 )
 
 type User struct {
-	Id       int
-	Username string
-	Email    string
-	Password string
+	Id        int
+	Username  string
+	Email     string
+	Password  string
+	Latitude  float64
+	Longitude float64
 }
 
 type GeoLocationRequest struct {
