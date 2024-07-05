@@ -40,6 +40,7 @@ CREATE TABLE workers (
 
 CREATE TABLE locations (
     id SERIAL PRIMARY KEY,
+    default_accessible BOOLEAN DEFAULT TRUE,
     location_type VARCHAR(50) NOT NULL,
     longitude DOUBLE PRECISION NOT NULL,
     latitude DOUBLE PRECISION NOT NULL,
@@ -52,9 +53,7 @@ CREATE TABLE locations (
  CREATE TABLE user_locations (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id),
-    location_id INTEGER NOT NULL REFERENCES locations(id),
-    is_global BOOLEAN DEFAULT FALSE,
-    visible BOOLEAN DEFAULT FALSE
+    location_id INTEGER NOT NULL REFERENCES locations(id)
 );
 
 CREATE TABLE global_locations (
