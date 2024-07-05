@@ -1,9 +1,5 @@
 package main
 
-import (
-	"prism/data_scripting"
-)
-
 func main() {
 	//var thisUser = user.User{
 	//	Id:       1,
@@ -11,7 +7,6 @@ func main() {
 	//	Email:    "1@gmail.com",
 	//	Password: "1",
 	//}
-	data_scripting.AddLocationsToDb()
 
 	//canvas := render.PaintScreen()
 	//

@@ -50,7 +50,7 @@ func CreateNode(user user.User) error {
 			"WHERE global_locations.available_on_start = TRUE OR user_locations.visible = TRUE" +
 			");"
 
-	rows, err := db.Query(query, userId)
+	rows, err := db.Query(query, user.Id)
 	if err != nil {
 		fmt.Println("err querying db for create node: ", err)
 	}
@@ -71,7 +71,10 @@ func CreateNode(user user.User) error {
 	}
 
 	// add node to locations
-	query = "INSERT INTO locations (location_type, longitude, latitude, name, description, art) VALUES ('default', $1, $2, name, 'a small default type node', 'node')"
+	query = "INSERT INTO locations (location_type, longitude, latitude, name, description, art) VALUES ($1, $2, $3, $4, $5, $6)"
+	retRow := db.QueryRow(query, "node", user.Latitude, user.Longitude, "new node", "new node description", "node")
+	//not totally sure how to properly err handle for retRow...
+	fmt.Println(retRow.Scan())
 
 	return nil
 }
