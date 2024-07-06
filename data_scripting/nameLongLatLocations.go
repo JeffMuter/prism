@@ -28,10 +28,10 @@ func AddLocationsToDb() {
 	for scanner.Scan() {
 		nameLocationSlice := strings.Split(scanner.Text(), "	")
 		var loctype string = "city"
-		var description = "a large city in the distance... probably"
-		var art string = "city_art"
+		var description string = "a large city in the distance... probably"
+		var art = "city_art"
 
-		var name string = nameLocationSlice[0]
+		var name = nameLocationSlice[0]
 		var lat float64
 		var long float64
 		lat, err = strconv.ParseFloat(nameLocationSlice[1], 64)
@@ -43,16 +43,11 @@ func AddLocationsToDb() {
 			fmt.Println("error converting lat to float:", err)
 		}
 
-		query := `INSERT INTO locations (location_type, longitude, latitude, name, description, art) VALUES ($1, $2, $3, $4, $5, $6 )`
-		_, err := db.Exec(query, loctype, long, lat, name, description, art)
+		query := `INSERT INTO locations (default_accessible, location_type, longitude, latitude, name, description, art) VALUES ($1, $2, $3, $4, $5, $6, $7 )`
+		_, err := db.Exec(query, true, loctype, long, lat, name, description, art)
 		if err != nil {
 			log.Panic("executing to db...", err)
 		}
 		fmt.Printf("name: %s, lat: %v, long: %v\n", name, lat, long)
 	}
 }
-
-// run a func to get specific info from OpenStreetMaps
-//func main() {
-//	req, err := http.NewRequest("GET")
-//}

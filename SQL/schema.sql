@@ -1,15 +1,12 @@
 DROP TABLE IF EXISTS resources CASCADE;
 DROP TABLE IF EXISTS workers CASCADE;
 DROP TABLE IF EXISTS events CASCADE;
-DROP TABLE IF EXISTS nodes CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS locations CASCADE;
-DROP TABLE IF EXISTS global_locations CASCADE;
 DROP TABLE IF EXISTS user_locations CASCADE;
 DROP TABLE IF EXISTS worker_events CASCADE;
 DROP TABLE IF EXISTS node_resources CASCADE;
 DROP TABLE IF EXISTS worker_activities CASCADE;
-
 
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
@@ -56,12 +53,6 @@ CREATE TABLE locations (
     location_id INTEGER NOT NULL REFERENCES locations(id)
 );
 
-CREATE TABLE global_locations (
-    id SERIAL PRIMARY KEY,
-    location_id INTEGER NOT NULL REFERENCES locations(id),
-    available_on_start BOOLEAN DEFAULT FALSE
-);
-
 CREATE TABLE events (
     id SERIAL PRIMARY KEY,
     event_name VARCHAR(255) NOT NULL,
@@ -91,6 +82,7 @@ CREATE TABLE worker_activities (
     destination_longitude DOUBLE PRECISION NOT NULL
 );
 
+-- possible unnecessary table
 CREATE TABLE node_resources (
   id SERIAL PRIMARY KEY,
   locations_id INTEGER NOT NULL REFERENCES locations(id),

@@ -1,6 +1,11 @@
 package main
 
+import "prism/data_scripting"
+
 func main() {
+
+	data_scripting.AddLocationsToDb()
+
 	//var thisUser = user.User{
 	//	Id:       1,
 	//	Username: "1",
