@@ -23,8 +23,6 @@ func CreateNode(user user.User) error {
 	// if any other nodes are too close, err
 	// else, create new node
 
-	// max lat & long
-
 	db := database.OpenDatabase()
 	defer db.Close()
 
@@ -41,14 +39,7 @@ func CreateNode(user user.User) error {
 		"SELECT * " +
 			"FROM locations " +
 			"LEFT JOIN user_locations ON locations.id = user_locations.location_id" +
-			"WHERE user_locations.user_id = ? AND (user_locations.visible = TRUE OR location.location_type = 'user')" +
-			"UNION" +
-			"SELECT * " +
-			"FROM locations " +
-			"JOIN global_locations ON locations.id = global_locations.location_id" +
-			"LEFT JOIN user_locations ON locations.id = user_locations.location_id AND user_locations.user_id" +
-			"WHERE global_locations.available_on_start = TRUE OR user_locations.visible = TRUE" +
-			");"
+			"WHERE user_locations.user_id = ? OR locations.default_accessible = TRUE"
 
 	rows, err := db.Query(query, user.Id)
 	if err != nil {
