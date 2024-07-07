@@ -1,18 +1,24 @@
 package main
 
-import "prism/data_scripting"
+import (
+	"fmt"
+	"prism/nodes"
+	"prism/user"
+)
 
 func main() {
 
-	data_scripting.AddLocationsToDb()
-
-	//var thisUser = user.User{
-	//	Id:       1,
-	//	Username: "1",
-	//	Email:    "1@gmail.com",
-	//	Password: "1",
-	//}
-
+	var thisUser = user.User{
+		Id:       1,
+		Username: "1",
+		Email:    "1@gmail.com",
+		Password: "1",
+		//set lat & long
+	}
+	err := nodes.CreateNode(thisUser)
+	if err != nil {
+		fmt.Println(err)
+	}
 	//canvas := render.PaintScreen()
 	//
 	//for _, line := range canvas {

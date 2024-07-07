@@ -48,6 +48,7 @@ func CreateNode(user user.User) error {
 
 	for rows.Next() {
 		var location Location
+		// TODO: trim this down to just grab lat & long for efficiency
 		err := rows.Scan(&location.Id, &location.LocationType, &location.Longitude, &location.Latitude, &location.Name, &location.Description, &location.Art)
 		if err != nil {
 			log.Fatal(err)
@@ -62,10 +63,12 @@ func CreateNode(user user.User) error {
 	}
 
 	// add node to locations
-	query = "INSERT INTO locations (location_type, longitude, latitude, name, description, art) VALUES ($1, $2, $3, $4, $5, $6)"
-	retRow := db.QueryRow(query, "node", user.Latitude, user.Longitude, "new node", "new node description", "node")
+	query = "INSERT INTO locations (default_accessible, location_type, longitude, latitude, name, description, art) VALUES ($1, $2, $3, $4, $5, $6, $7)"
+	retRow := db.QueryRow(query, "false", "node", user.Latitude, user.Longitude, "new node", "new node description", "node")
 	//not totally sure how to properly err handle for retRow...
 	fmt.Println(retRow.Scan())
+	query = "INSERT INTO user_locations (user_id, location_id) VALUES ($1, $2)"
+	retRow = db.QueryRow(query)
 
 	return nil
 }
