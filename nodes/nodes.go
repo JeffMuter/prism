@@ -26,9 +26,7 @@ func CreateNode(user user.User) error {
 
 	db := database.OpenDatabase()
 	defer db.Close()
-
 	var locations []Location
-
 	//this num signifies 10 miles in lat/long degrees. We're using this to
 	// determine the max / min lat&long to determine if the node we want to place is too close to another node.
 	var latLongRange float64 = 0.145
