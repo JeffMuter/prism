@@ -9,13 +9,14 @@ import (
 )
 
 type Location struct {
-	Id           int
-	LocationType string
-	Longitude    float64
-	Latitude     float64
-	Name         string
-	Description  string
-	Art          string
+	Id                int
+	DefaultAccessible bool
+	LocationType      string
+	Longitude         float64
+	Latitude          float64
+	Name              string
+	Description       string
+	Art               string
 }
 
 func CreateNode(user user.User) error {
