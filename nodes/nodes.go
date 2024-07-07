@@ -36,10 +36,7 @@ func CreateNode(user user.User) error {
 	minLat, maxLat, minLong, maxLong := util.GetMaxLocationRanges(latLongRange, user.Latitude, user.Longitude)
 
 	query :=
-		"SELECT * " +
-			"FROM locations " +
-			"LEFT JOIN user_locations ON locations.id = user_locations.location_id" +
-			"WHERE user_locations.user_id = ? OR locations.default_accessible = TRUE"
+		"SELECT longitude, latitude FROM locations LEFT JOIN user_locations ON locations.id = user_locations.location_id WHERE user_locations.user_id = $1 OR locations.default_accessible = TRUE"
 
 	rows, err := db.Query(query, user.Id)
 	if err != nil {
@@ -48,8 +45,7 @@ func CreateNode(user user.User) error {
 
 	for rows.Next() {
 		var location Location
-		// TODO: trim this down to just grab lat & long for efficiency
-		err := rows.Scan(&location.Id, &location.LocationType, &location.Longitude, &location.Latitude, &location.Name, &location.Description, &location.Art)
+		err := rows.Scan(&location.Longitude, &location.Latitude)
 		if err != nil {
 			log.Fatal(err)
 		}

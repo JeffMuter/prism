@@ -15,7 +15,15 @@ func main() {
 		Password: "1",
 		//set lat & long
 	}
-	err := nodes.CreateNode(thisUser)
+
+	var err error
+
+	thisUser.Latitude, thisUser.Longitude, err = user.Ping()
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	err = nodes.CreateNode(thisUser)
 	if err != nil {
 		fmt.Println(err)
 	}
