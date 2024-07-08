@@ -136,6 +136,10 @@ func PaintScreen() [][]rune {
 	// place objects on the canvas
 	addObjectsToCanvas(canvas, objectsToRender)
 
+	for _, line := range canvas {
+		fmt.Println(string(line))
+	}
+
 	return canvas
 }
 
