@@ -1,34 +1,12 @@
 package render
 
 import (
-	"bufio"
 	"fmt"
-	"os"
 	"prism/nodes"
 	"prism/operating_system"
 	"prism/user"
-	"prism/util"
 	"sort"
 )
-
-type object struct {
-	id          int
-	userId      int
-	objectId    int
-	name        string
-	latitude    float64
-	longitude   float64
-	objectType  string
-	description string
-	artFileName string
-	art         Art
-}
-
-type Art struct {
-	width  int
-	height int
-	art    []string
-}
 
 func PaintScreen(thisUser user.User) [][]rune {
 
@@ -47,15 +25,17 @@ func PaintScreen(thisUser user.User) [][]rune {
 	// get obj locations
 	var locationsToRender []nodes.Location
 
-	// get locations which act as objects
+	// get locations near this user
 	nodes.GetNodesRelevantToUserFromDb(thisUser)
 
-	// get each obj coordinates
+	// set each locations coordinates
 	locationsToRender, err =
 		findLocationsCoordinates(thisUser, locationsToRender, termWidth, termHeight)
 	if err != nil {
 		fmt.Println(err)
 	}
+	// set each location's art file from their ArtName
+	locationsToRender = nodes.SetLocationsArt(locationsToRender)
 
 	// create canvas
 	canvas := make([][]rune, termHeight)
@@ -65,11 +45,11 @@ func PaintScreen(thisUser user.User) [][]rune {
 			canvas[i][j] = ' '
 		}
 	}
-	// order objects
-	objectsToRender = orderObjectSlice(objectsToRender)
+	// order locations
+	locationsToRender = orderLocationsSlice(locationsToRender)
 
 	// place objects on the canvas
-	addObjectsToCanvas(canvas, objectsToRender)
+	addLocationsToCanvas(canvas, locationsToRender)
 
 	for _, line := range canvas {
 		fmt.Println(string(line))
@@ -107,91 +87,51 @@ func findLocationsCoordinates(user user.User, unfilteredLocations []nodes.Locati
 		filteredLocations = append(filteredLocations, unfilteredLocations[i])
 	}
 
-	return objects, nil
+	return filteredLocations, nil
 }
 
-func addObjectsToCanvas(canvas [][]rune, objects []object) {
+func addLocationsToCanvas(canvas [][]rune, locations []nodes.Location) {
 	canvasHeight := len(canvas)
 	canvasWidth := len(canvas[0])
 
-	for _, object := range objects {
-		object.art = object.art.UpdateArtDimensions(object.art)
-		for y := object.art.height - 1; y >= 0; y-- {
-			artY := object.yCoordinate - (object.art.height - 1 - y)
+	for _, location := range locations {
+		location.Art = location.Art.UpdateArtDimensions(location.Art)
+		for y := location.Art.Height - 1; y >= 0; y-- {
+			artY := location.YCoordinate - (location.Art.Height - 1 - y)
 			if artY < 0 || artY >= canvasHeight {
 				// Skip this line of the art if it's out of canvas bounds
 				continue
 			}
 
-			for x := 0; x < object.art.width; x++ {
-				artX := object.xCoordinate + x
+			for x := 0; x < location.Art.Width; x++ {
+				artX := location.XCoordinate + x
 				if artX < 0 || artX >= canvasWidth {
 					// Skip this column of the art if it's out of canvas bounds
 					continue
 				}
 
-				if y < 0 || y >= len(object.art.art) || x < 0 || x >= len(object.art.art[y]) {
+				if y < 0 || y >= len(location.Art.Art) || x < 0 || x >= len(location.Art.Art[y]) {
 					// Ensure we're within the bounds of the art
 					continue
 				}
 
 				// Draw the art on the canvas
-				canvas[artY][artX] = rune(object.art.art[y][x])
+				canvas[artY][artX] = rune(location.Art.Art[y][x])
 			}
 		}
 	}
 }
 
-// GetObjectArt send the name of the .txt file, returns slice of strings to represent an objects art.
-func GetObjectArt(artName string) []string {
-	// we want to take the path, go to our assets folder
-	var artSlice []string
-	txtFilePath, err := util.GetAbsoluteFilepath("/assets/" + artName + ".txt")
-	if err != nil {
-		fmt.Println("txtFilePath err:", txtFilePath, err)
-	}
-	// get file
-	fmt.Println(txtFilePath)
-
-	file, err := os.Open(txtFilePath)
-	if err != nil {
-		fmt.Println(err)
-	}
-	defer file.Close()
-
-	// create scanner to read the file
-	scanner := bufio.NewScanner(file)
-
-	// read lines of txt file.
-	for scanner.Scan() {
-		artSlice = append(artSlice, scanner.Text())
-	}
-
-	// check for scanning errors
-	if err := scanner.Err(); err != nil {
-		fmt.Println(err)
-	}
-
-	return artSlice
-}
-
-// UpdateArtDimensions takes in an art object, and adds the dimension fields of height and width
-func (Art) UpdateArtDimensions(art Art) Art {
-	art.height = len(art.art)
-	art.width = len(art.art[0]) + 2
-	return art
-}
-
-// orderObjectSlice takes a slice of object, and returns them, where the ycoordinate sorts them.
+// orderObjectSlice takes a slice of object, and returns them, where the Ycoordinate sorts them.
 // intention being to have the object closest to the user printed last, and overtop of all other objects that have
 // coordinates closer to the top of the rendered screen.
-func orderObjectSlice(objects []object) []object {
+func orderLocationsSlice(locations []nodes.Location) []nodes.Location {
 
-	sort.SliceStable(objects, func(i, j int) bool {
-		if objects[i].yCoordinate == objects[j].yCoordinate {
-			return objects[i].xCoordinate < objects[j].xCoordinate
+	sort.SliceStable(locations, func(i, j int) bool {
+		if locations[i].YCoordinate == locations[j].YCoordinate {
+			return locations[i].XCoordinate < locations[j].XCoordinate
 		}
-		return objects[i].yCoordinate < objects[j].yCoordinate
+		return locations[i].YCoordinate < locations[j].YCoordinate
 	})
-	return objects
+	return locations
 }

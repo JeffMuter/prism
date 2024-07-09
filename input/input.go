@@ -20,7 +20,7 @@ func Listen(thisUser user.User) {
 	input = strings.TrimSpace(input)
 
 	if input == "ping" {
-		render.PaintScreen() // repaints the screen
+		render.PaintScreen(thisUser) // repaints the screen
 	} else if input == "node" {
 		thisUser.Latitude, thisUser.Longitude, err = user.Ping()
 		if err != nil {

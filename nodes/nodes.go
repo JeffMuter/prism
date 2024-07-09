@@ -1,10 +1,11 @@
 package nodes
 
 import (
+	"bufio"
 	"fmt"
 	"log"
+	"os"
 	"prism/database"
-	"prism/render"
 	"prism/user"
 	"prism/util"
 )
@@ -18,9 +19,14 @@ type Location struct {
 	Name              string
 	Description       string
 	ArtFileName       string
-	art               render.Art
+	Art               Art
 	YCoordinate       int
 	XCoordinate       int
+}
+type Art struct {
+	Width  int
+	Height int
+	Art    []string
 }
 
 func CreateNode(user user.User) error {
@@ -81,4 +87,47 @@ func GetNodesRelevantToUserFromDb(user user.User) []Location {
 		locations = append(locations, location)
 	}
 	return locations
+}
+
+// SetLocationsArt send the name of the .txt file, returns slice of strings to represent an objects art.
+func SetLocationsArt(locations []Location) []Location {
+	var locationsWithArt []Location
+	for _, location := range locations {
+		// we want to take the path, go to our assets folder
+		var artSlice []string
+		var artName string = location.ArtFileName
+		txtFilePath, err := util.GetAbsoluteFilepath("/assets/" + artName + ".txt")
+		if err != nil {
+			fmt.Println("txtFilePath err:", txtFilePath, err)
+		}
+		// get file
+		fmt.Println(txtFilePath)
+
+		file, err := os.Open(txtFilePath)
+		if err != nil {
+			fmt.Println(err)
+		}
+		defer file.Close()
+
+		// create scanner to read the file
+		scanner := bufio.NewScanner(file)
+
+		// read lines of txt file.
+		for scanner.Scan() {
+			artSlice = append(artSlice, scanner.Text())
+		}
+
+		// check for scanning errors
+		if err := scanner.Err(); err != nil {
+			fmt.Println(err)
+		}
+	}
+	return locationsWithArt
+}
+
+// UpdateArtDimensions takes in an art object, and adds the dimension fields of height and width
+func (Art) UpdateArtDimensions(art Art) Art {
+	art.Height = len(art.Art)
+	art.Width = len(art.Art[0]) + 2
+	return art
 }
