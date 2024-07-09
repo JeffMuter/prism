@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"prism/database"
+	"prism/render"
 	"prism/user"
 	"prism/util"
 )
@@ -16,7 +17,10 @@ type Location struct {
 	Latitude          float64
 	Name              string
 	Description       string
-	Art               string
+	ArtFileName       string
+	art               render.Art
+	YCoordinate       int
+	XCoordinate       int
 }
 
 func CreateNode(user user.User) error {

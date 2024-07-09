@@ -20,9 +20,8 @@ type object struct {
 	longitude   float64
 	objectType  string
 	description string
+	artFileName string
 	art         Art
-	xCoordinate int
-	yCoordinate int
 }
 
 type Art struct {
@@ -46,14 +45,14 @@ func PaintScreen(thisUser user.User) [][]rune {
 	}
 
 	// get obj locations
-	var objectsToRender []object
+	var locationsToRender []nodes.Location
 
 	// get locations which act as objects
 	nodes.GetNodesRelevantToUserFromDb(thisUser)
 
 	// get each obj coordinates
-	objectsToRender, err =
-		findObjectCoordinate(thisUser.Longitude, thisUser.Latitude, objectsToRender, termWidth, termHeight)
+	locationsToRender, err =
+		findLocationsCoordinates(thisUser, locationsToRender, termWidth, termHeight)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -79,20 +78,19 @@ func PaintScreen(thisUser user.User) [][]rune {
 	return canvas
 }
 
-func findObjectCoordinate(userLong, userLat float64, objects []object, scrWidth, scrHeight int) ([]object, error) {
-	var filteredObjects []object
-	// number represents the screen's range from top to bottom. Higher this number, the further the user can see.
-	// the user would be in the center. If the degree radius from the user is 1, then the long/lat goes above and
-	// below the user 1 degree, so 2 degrees. If the radius is 5, then the canvas range is 10, etc..
+func findLocationsCoordinates(user user.User, unfilteredLocations []nodes.Location, scrWidth, scrHeight int) ([]nodes.Location, error) {
+	var filteredLocations []nodes.Location
+
 	canvasDegreeRange := 4
-	for i := range objects {
+
+	for i := range unfilteredLocations {
 
 		// defines max min values in degrees for the canvas
 		// should canvas be a type and we set those?
-		maxLat := userLat + float64(canvasDegreeRange)/float64(2)
-		minLat := userLat - float64(canvasDegreeRange)/float64(2)
-		maxLong := userLong + float64(canvasDegreeRange)/float64(2)
-		minLong := userLong - float64(canvasDegreeRange)/float64(2)
+		maxLat := user.Latitude + float64(canvasDegreeRange)/float64(2)
+		minLat := user.Latitude - float64(canvasDegreeRange)/float64(2)
+		maxLong := user.Longitude + float64(canvasDegreeRange)/float64(2)
+		minLong := user.Longitude - float64(canvasDegreeRange)/float64(2)
 
 		// distance represents the unit of distance each char on the canvas represents in degree distance.
 		// if the canvas degree range is 10, and the screen width is 10, then every char on the screen is 1 lat.
@@ -100,13 +98,13 @@ func findObjectCoordinate(userLong, userLat float64, objects []object, scrWidth,
 		var verticalDistancePerChar = float64(canvasDegreeRange) / float64(scrHeight)
 
 		// if out of bounds, don't add the object to the filtered slice
-		if objects[i].latitude > maxLat || objects[i].latitude < minLat || objects[i].longitude > maxLong || objects[i].longitude < minLong {
+		if unfilteredLocations[i].Latitude > maxLat || unfilteredLocations[i].Latitude < minLat || unfilteredLocations[i].Longitude > maxLong || unfilteredLocations[i].Longitude < minLong {
 			continue
 		}
 		// calc is wrong, creating a 90degree rotation incorrectly.
-		objects[i].xCoordinate = int((objects[i].longitude - minLong) / horizontalDistancePerChar)
-		objects[i].yCoordinate = scrHeight - 1 - int((objects[i].latitude-minLat)/verticalDistancePerChar)
-		filteredObjects = append(filteredObjects, objects[i])
+		unfilteredLocations[i].XCoordinate = int((unfilteredLocations[i].Longitude - minLong) / horizontalDistancePerChar)
+		unfilteredLocations[i].YCoordinate = scrHeight - 1 - int((unfilteredLocations[i].Latitude-minLat)/verticalDistancePerChar)
+		filteredLocations = append(filteredLocations, unfilteredLocations[i])
 	}
 
 	return objects, nil
@@ -195,29 +193,5 @@ func orderObjectSlice(objects []object) []object {
 		}
 		return objects[i].yCoordinate < objects[j].yCoordinate
 	})
-	return objects
-}
-
-func convertLocationToObject(locations []nodes.Location) []object {
-	var objects []object
-
-	for _, location := range locations {
-		var object = object{
-			latitude:  location.Latitude,
-			longitude: location.Longitude,
-			name:      location.Name,
-		}
-		objects = append(objects, object)
-	}
-
-	//id          int
-	//userId      int
-	//objectId    int
-	//name        string
-	//latitude    float64
-	//longitude   float64
-	//objectType  string
-	//description string
-	//art         Art
 	return objects
 }
