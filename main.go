@@ -24,7 +24,7 @@ func main() {
 		fmt.Println(err)
 	}
 
-	render.PaintScreen()
+	render.PaintScreen(thisUser)
 
 	input.Listen(thisUser)
 }

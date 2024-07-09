@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"prism/nodes"
 	"prism/operating_system"
 	"prism/user"
 	"prism/util"
@@ -15,8 +16,8 @@ type object struct {
 	userId      int
 	objectId    int
 	name        string
-	latitude    float32
-	longitude   float32
+	latitude    float64
+	longitude   float64
 	objectType  string
 	description string
 	art         Art
@@ -30,7 +31,7 @@ type Art struct {
 	art    []string
 }
 
-func PaintScreen() [][]rune {
+func PaintScreen(thisUser user.User) [][]rune {
 
 	//get terminal info
 	termWidth, termHeight, err := operating_system.GetTerminalSize()
@@ -39,7 +40,7 @@ func PaintScreen() [][]rune {
 	}
 
 	// get user location
-	userLat, userLong, err := user.Ping()
+	thisUser.Latitude, thisUser.Longitude, err = user.Ping()
 	if err != nil {
 		fmt.Println("issue getting user position for rendering...")
 	}
@@ -47,9 +48,12 @@ func PaintScreen() [][]rune {
 	// get obj locations
 	var objectsToRender []object
 
+	// get locations which act as objects
+	nodes.GetNodesRelevantToUserFromDb(thisUser)
+
 	// get each obj coordinates
 	objectsToRender, err =
-		findObjectCoordinate(float32(userLong), float32(userLat), objectsToRender, termWidth, termHeight)
+		findObjectCoordinate(thisUser.Longitude, thisUser.Latitude, objectsToRender, termWidth, termHeight)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -75,7 +79,7 @@ func PaintScreen() [][]rune {
 	return canvas
 }
 
-func findObjectCoordinate(userLong, userLat float32, objects []object, scrWidth, scrHeight int) ([]object, error) {
+func findObjectCoordinate(userLong, userLat float64, objects []object, scrWidth, scrHeight int) ([]object, error) {
 	var filteredObjects []object
 	// number represents the screen's range from top to bottom. Higher this number, the further the user can see.
 	// the user would be in the center. If the degree radius from the user is 1, then the long/lat goes above and
@@ -85,15 +89,15 @@ func findObjectCoordinate(userLong, userLat float32, objects []object, scrWidth,
 
 		// defines max min values in degrees for the canvas
 		// should canvas be a type and we set those?
-		maxLat := userLat + float32(canvasDegreeRange)/float32(2)
-		minLat := userLat - float32(canvasDegreeRange)/float32(2)
-		maxLong := userLong + float32(canvasDegreeRange)/float32(2)
-		minLong := userLong - float32(canvasDegreeRange)/float32(2)
+		maxLat := userLat + float64(canvasDegreeRange)/float64(2)
+		minLat := userLat - float64(canvasDegreeRange)/float64(2)
+		maxLong := userLong + float64(canvasDegreeRange)/float64(2)
+		minLong := userLong - float64(canvasDegreeRange)/float64(2)
 
 		// distance represents the unit of distance each char on the canvas represents in degree distance.
 		// if the canvas degree range is 10, and the screen width is 10, then every char on the screen is 1 lat.
-		var horizontalDistancePerChar = float32(canvasDegreeRange) / float32(scrWidth)
-		var verticalDistancePerChar = float32(canvasDegreeRange) / float32(scrHeight)
+		var horizontalDistancePerChar = float64(canvasDegreeRange) / float64(scrWidth)
+		var verticalDistancePerChar = float64(canvasDegreeRange) / float64(scrHeight)
 
 		// if out of bounds, don't add the object to the filtered slice
 		if objects[i].latitude > maxLat || objects[i].latitude < minLat || objects[i].longitude > maxLong || objects[i].longitude < minLong {
@@ -194,7 +198,26 @@ func orderObjectSlice(objects []object) []object {
 	return objects
 }
 
-func getLocationsFromDb() {
-	// we want to get a slice of locations/objects, that are
-	query := "SELECT longitude, latitude, name, location_type, description, art FROM locations"
+func convertLocationToObject(locations []nodes.Location) []object {
+	var objects []object
+
+	for _, location := range locations {
+		var object = object{
+			latitude:  location.Latitude,
+			longitude: location.Longitude,
+			name:      location.Name,
+		}
+		objects = append(objects, object)
+	}
+
+	//id          int
+	//userId      int
+	//objectId    int
+	//name        string
+	//latitude    float64
+	//longitude   float64
+	//objectType  string
+	//description string
+	//art         Art
+	return objects
 }
