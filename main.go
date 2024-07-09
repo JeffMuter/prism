@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"prism/nodes"
+	"prism/input"
 	"prism/render"
 	"prism/user"
 )
@@ -24,9 +24,7 @@ func main() {
 		fmt.Println(err)
 	}
 
-	err = nodes.CreateNode(thisUser)
-	if err != nil {
-		fmt.Println(err)
-	}
 	render.PaintScreen()
+
+	input.Listen(thisUser)
 }

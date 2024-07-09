@@ -30,90 +30,22 @@ type Art struct {
 	art    []string
 }
 
-var userArt = Art{
-	art: GetObjectArt("user"),
-}
-
-var columbusArt = Art{
-	art: GetObjectArt("node"),
-}
-var cinciArt = Art{
-	art: GetObjectArt("node"),
-}
-var clevelandArt = Art{
-	art: GetObjectArt("node"),
-}
-
 func PaintScreen() [][]rune {
-	//get terminal size
-	//real way to get user screen
 
+	//get terminal info
 	termWidth, termHeight, err := operating_system.GetTerminalSize()
 	if err != nil {
 		fmt.Println("issue getting screen dimensions for rendering")
 	}
-	fmt.Printf("Width: %d, Height: %d\n", termWidth, termHeight)
 
 	// get user location
 	userLat, userLong, err := user.Ping()
 	if err != nil {
 		fmt.Println("issue getting user position for rendering...")
 	}
-	//dummy data for user location
-	//userLat, userLong := 43.00, -83.00
-	userObject := object{
-		latitude:  float32(userLat),
-		longitude: float32(userLong),
-		name:      "user",
-		art:       userArt,
-	}
 
 	// get obj locations
-	// dummy obj data
-	columbusObject := object{
-		0,
-		0,
-		0,
-		"node0",
-		39.95930175232374,
-		-83.00445638483892,
-		"node",
-		"columbus",
-		columbusArt,
-		0,
-		0,
-	}
-	cinciObject := object{0,
-		0,
-		0,
-		"node1",
-		39.101398,
-		-84.512395,
-		"worker",
-		"cinci",
-		cinciArt,
-		0,
-		0,
-	}
-	clevelandObject := object{0,
-		0,
-		0,
-		"node4",
-		41.499748,
-		-81.693500,
-		"node",
-		"cleveland",
-		clevelandArt,
-		0,
-		0,
-	}
-	//obj6 := object{0, 0, 0, "node5", 42.120, -85.02, "worker", "first worker", tower, 0, 0}
-	var objectsToRender = []object{
-		userObject,
-		clevelandObject,
-		cinciObject,
-		columbusObject,
-	}
+	var objectsToRender []object
 
 	// get each obj coordinates
 	objectsToRender, err =
@@ -260,4 +192,9 @@ func orderObjectSlice(objects []object) []object {
 		return objects[i].yCoordinate < objects[j].yCoordinate
 	})
 	return objects
+}
+
+func getLocationsFromDb() {
+	// we want to get a slice of locations/objects, that are
+	query := "SELECT longitude, latitude, name, location_type, description, art FROM locations"
 }

@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-func Listen() {
+func Listen(thisUser user.User) {
 	reader := bufio.NewReader(os.Stdin)
 
 	input, err := reader.ReadString('\n')
@@ -22,11 +22,11 @@ func Listen() {
 	if input == "ping" {
 		render.PaintScreen() // repaints the screen
 	} else if input == "node" {
-		userLat, userLong, err := user.Ping()
+		thisUser.Latitude, thisUser.Longitude, err = user.Ping()
 		if err != nil {
 			fmt.Println(err)
 		}
-		err = nodes.CreateNode()
+		err = nodes.CreateNode(thisUser)
 		if err != nil {
 			fmt.Println(err)
 		}

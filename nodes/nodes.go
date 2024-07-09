@@ -67,3 +67,7 @@ func CreateNode(user user.User) error {
 
 	return nil
 }
+
+func GetNodesRelevantToUserFromDb() {
+
+}
