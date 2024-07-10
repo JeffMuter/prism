@@ -14,8 +14,8 @@ type Location struct {
 	Id                int
 	DefaultAccessible bool
 	LocationType      string
-	Longitude         float64
 	Latitude          float64
+	Longitude         float64
 	Name              string
 	Description       string
 	ArtFileName       string
@@ -53,7 +53,7 @@ func CreateNode(user user.User) error {
 	defer db.Close()
 
 	// add node to locations
-	query := "INSERT INTO locations (default_accessible, location_type, longitude, latitude, name, description, art) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id"
+	query := "INSERT INTO locations (default_accessible, location_type, latitude, longitude, name, description, art) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id"
 	var newLocationRowId int
 	db.QueryRow(query, "false", "node", user.Latitude, user.Longitude, "new node", "new node description", "node").Scan(&newLocationRowId)
 
@@ -71,7 +71,7 @@ func GetNodesRelevantToUserFromDb(user user.User) []Location {
 	defer db.Close()
 
 	query :=
-		"SELECT name, longitude, latitude FROM locations LEFT JOIN user_locations ON locations.id = user_locations.location_id WHERE user_locations.user_id = $1 OR locations.default_accessible = TRUE"
+		"SELECT name, latitude, longitude, art FROM locations LEFT JOIN user_locations ON locations.id = user_locations.location_id WHERE user_locations.user_id = $1 OR locations.default_accessible = TRUE"
 
 	rows, err := db.Query(query, user.Id)
 	if err != nil {
@@ -80,7 +80,7 @@ func GetNodesRelevantToUserFromDb(user user.User) []Location {
 
 	for rows.Next() {
 		var location Location
-		err := rows.Scan(&location.Name, &location.Latitude, &location.Longitude)
+		err := rows.Scan(&location.Name, &location.Latitude, &location.Longitude, &location.ArtFileName)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -101,8 +101,6 @@ func SetLocationsArt(locations []Location) []Location {
 			fmt.Println("txtFilePath err:", txtFilePath, err)
 		}
 		// get file
-		fmt.Println(txtFilePath)
-
 		file, err := os.Open(txtFilePath)
 		if err != nil {
 			fmt.Println(err)
@@ -121,13 +119,33 @@ func SetLocationsArt(locations []Location) []Location {
 		if err := scanner.Err(); err != nil {
 			fmt.Println(err)
 		}
+
+		// make an Art struct from the slice of strings, set it to location
+		location.Art = CreateArtFromStringSlice(artSlice)
+
+		// add this location to the locations slice.
+		locationsWithArt = append(locationsWithArt, location)
 	}
 	return locationsWithArt
 }
 
 // UpdateArtDimensions takes in an art object, and adds the dimension fields of height and width
-func (Art) UpdateArtDimensions(art Art) Art {
+func (art Art) UpdateArtDimensions() Art {
 	art.Height = len(art.Art)
-	art.Width = len(art.Art[0]) + 2
+	max := 0
+	for _, line := range art.Art {
+		if len(line) > max {
+			max = len(line)
+		}
+	}
+	art.Width = max
+
 	return art
+}
+
+func CreateArtFromStringSlice(artSlice []string) Art {
+	var thisArt = Art{Art: artSlice}
+	thisArt = thisArt.UpdateArtDimensions()
+
+	return thisArt
 }

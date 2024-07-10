@@ -10,7 +10,7 @@ INSERT INTO resources (name) VALUES
 ('stone'),
 ('food');
 
-INSERT INTO locations (location_type, longitude, latitude, name, description, art) VALUES
+INSERT INTO locations (location_type, latitude, longitude, name, description, art) VALUES
 ('city', 39.9593017, -83.004456, 'Columbus', 'city node', 'node'),
 ('city', 39.101398, -84.512395, 'Cincinnati', 'city node', 'node'),
 ('city', 41.499748, -81.6935, 'Cleveland', 'small city', 'node'),

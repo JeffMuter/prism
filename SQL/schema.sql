@@ -39,8 +39,8 @@ CREATE TABLE locations (
     id SERIAL PRIMARY KEY,
     default_accessible BOOLEAN DEFAULT TRUE,
     location_type VARCHAR(50) NOT NULL,
-    longitude DOUBLE PRECISION NOT NULL,
     latitude DOUBLE PRECISION NOT NULL,
+    longitude DOUBLE PRECISION NOT NULL,
     name TEXT,
     description TEXT,
     art TEXT

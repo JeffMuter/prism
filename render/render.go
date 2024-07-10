@@ -5,6 +5,7 @@ import (
 	"prism/nodes"
 	"prism/operating_system"
 	"prism/user"
+	"prism/util"
 	"sort"
 )
 
@@ -16,17 +17,8 @@ func PaintScreen(thisUser user.User) [][]rune {
 		fmt.Println("issue getting screen dimensions for rendering")
 	}
 
-	// get user location
-	thisUser.Latitude, thisUser.Longitude, err = user.Ping()
-	if err != nil {
-		fmt.Println("issue getting user position for rendering...")
-	}
-
-	// get obj locations
-	var locationsToRender []nodes.Location
-
-	// get locations near this user
-	nodes.GetNodesRelevantToUserFromDb(thisUser)
+	// get locations near user
+	var locationsToRender []nodes.Location = nodes.GetNodesRelevantToUserFromDb(thisUser)
 
 	// set each locations coordinates
 	locationsToRender, err =
@@ -61,30 +53,24 @@ func PaintScreen(thisUser user.User) [][]rune {
 func findLocationsCoordinates(user user.User, unfilteredLocations []nodes.Location, scrWidth, scrHeight int) ([]nodes.Location, error) {
 	var filteredLocations []nodes.Location
 
-	canvasDegreeRange := 4
+	var degreeRange float64 = 2
 
-	for i := range unfilteredLocations {
-
+	for _, location := range unfilteredLocations {
 		// defines max min values in degrees for the canvas
-		// should canvas be a type and we set those?
-		maxLat := user.Latitude + float64(canvasDegreeRange)/float64(2)
-		minLat := user.Latitude - float64(canvasDegreeRange)/float64(2)
-		maxLong := user.Longitude + float64(canvasDegreeRange)/float64(2)
-		minLong := user.Longitude - float64(canvasDegreeRange)/float64(2)
+		minLat, maxLat, minLong, maxLong := util.GetMaxLocationRanges(degreeRange, user.Latitude, user.Longitude)
+		// if out of bounds, don't add the object to the filtered slice
+		if location.Latitude > maxLat || location.Latitude < minLat || location.Longitude > maxLong || location.Longitude < minLong {
+			continue
+		}
 
 		// distance represents the unit of distance each char on the canvas represents in degree distance.
 		// if the canvas degree range is 10, and the screen width is 10, then every char on the screen is 1 lat.
-		var horizontalDistancePerChar = float64(canvasDegreeRange) / float64(scrWidth)
-		var verticalDistancePerChar = float64(canvasDegreeRange) / float64(scrHeight)
+		var horizontalIndex int = int((location.Longitude - minLong) / (degreeRange * 2) * float64(scrWidth))
+		var verticalIndex int = int((location.Latitude - minLat) / (degreeRange * 2) * float64(scrHeight))
 
-		// if out of bounds, don't add the object to the filtered slice
-		if unfilteredLocations[i].Latitude > maxLat || unfilteredLocations[i].Latitude < minLat || unfilteredLocations[i].Longitude > maxLong || unfilteredLocations[i].Longitude < minLong {
-			continue
-		}
-		// calc is wrong, creating a 90degree rotation incorrectly.
-		unfilteredLocations[i].XCoordinate = int((unfilteredLocations[i].Longitude - minLong) / horizontalDistancePerChar)
-		unfilteredLocations[i].YCoordinate = scrHeight - 1 - int((unfilteredLocations[i].Latitude-minLat)/verticalDistancePerChar)
-		filteredLocations = append(filteredLocations, unfilteredLocations[i])
+		location.XCoordinate = horizontalIndex
+		location.YCoordinate = verticalIndex
+		filteredLocations = append(filteredLocations, location)
 	}
 
 	return filteredLocations, nil
@@ -95,7 +81,6 @@ func addLocationsToCanvas(canvas [][]rune, locations []nodes.Location) {
 	canvasWidth := len(canvas[0])
 
 	for _, location := range locations {
-		location.Art = location.Art.UpdateArtDimensions(location.Art)
 		for y := location.Art.Height - 1; y >= 0; y-- {
 			artY := location.YCoordinate - (location.Art.Height - 1 - y)
 			if artY < 0 || artY >= canvasHeight {
