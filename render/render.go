@@ -43,8 +43,10 @@ func PaintScreen(thisUser user.User) [][]rune {
 	// place objects on the canvas
 	addLocationsToCanvas(canvas, locationsToRender)
 
-	for _, line := range canvas {
-		fmt.Println(string(line))
+	fmt.Printf("Canvas dimensions: %v, %v\n", len(canvas), len(canvas[0]))
+
+	for i := range canvas {
+		fmt.Println(string(canvas[len(canvas)-1-i]))
 	}
 
 	return canvas
@@ -52,17 +54,14 @@ func PaintScreen(thisUser user.User) [][]rune {
 
 func findLocationsCoordinates(user user.User, unfilteredLocations []nodes.Location, scrWidth, scrHeight int) ([]nodes.Location, error) {
 	var filteredLocations []nodes.Location
-
 	var degreeRange float64 = 2
+	minLat, maxLat, minLong, maxLong := util.GetMaxLocationRanges(degreeRange, user.Latitude, user.Longitude)
 
 	for _, location := range unfilteredLocations {
-		// defines max min values in degrees for the canvas
-		minLat, maxLat, minLong, maxLong := util.GetMaxLocationRanges(degreeRange, user.Latitude, user.Longitude)
 		// if out of bounds, don't add the object to the filtered slice
 		if location.Latitude > maxLat || location.Latitude < minLat || location.Longitude > maxLong || location.Longitude < minLong {
 			continue
 		}
-
 		// distance represents the unit of distance each char on the canvas represents in degree distance.
 		// if the canvas degree range is 10, and the screen width is 10, then every char on the screen is 1 lat.
 		var horizontalIndex int = int((location.Longitude - minLong) / (degreeRange * 2) * float64(scrWidth))
