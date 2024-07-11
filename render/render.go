@@ -18,7 +18,7 @@ func PaintScreen(thisUser user.User) [][]rune {
 	}
 
 	// get locations near user
-	var locationsToRender []nodes.Location = nodes.GetNodesRelevantToUserFromDb(thisUser)
+	var locationsToRender []nodes.Location = nodes.GetAllNodesUserCouldSee(thisUser)
 
 	// set each locations coordinates
 	locationsToRender, err =

@@ -42,7 +42,7 @@ func CreateNode(user user.User) error {
 	// call func to get the vars for the lat/long range
 	minLat, maxLat, minLong, maxLong := util.GetMaxLocationRanges(latLongRange, user.Latitude, user.Longitude)
 
-	var locations []Location = GetNodesRelevantToUserFromDb(user)
+	var locations []Location = GetAllNodesUserCouldSee(user)
 
 	for _, loc := range locations {
 		if loc.Latitude > minLat && loc.Latitude < maxLat && loc.Longitude > minLong && loc.Longitude < maxLong {
@@ -64,8 +64,8 @@ func CreateNode(user user.User) error {
 	return nil
 }
 
-// GetNodesRelevantToUserFromDb used to get locations from the database, placed into a location type.
-func GetNodesRelevantToUserFromDb(user user.User) []Location {
+// GetAllNodesUserCouldSee used to get locations from the database, placed into a location type.
+func GetAllNodesUserCouldSee(user user.User) []Location {
 	var locations []Location
 
 	db := database.OpenDatabase()
@@ -152,20 +152,17 @@ func CreateArtFromStringSlice(artSlice []string) Art {
 }
 
 func ConnectToNode(user user.User) error {
-	user.Latitude = 39.98
-	user.Longitude = -82.90
-	// get all nodes that the user could be trying to connect to
-	// check if any are within range
-	// if there is 1, then update user_location table.
 	db := database.OpenDatabase()
 	defer db.Close()
 
+	// get all locations currently not associated to this user
 	query := "SELECT locations.id, name, latitude, longitude FROM locations LEFT JOIN user_locations ON locations.id = user_locations.location_id AND user_locations.user_id = $1 WHERE user_id IS NULL"
 	rows, err := db.Query(query, user.Id)
 	if err != nil {
 		fmt.Println("err querying db for connect to node: ", err)
 	}
-	minLat, maxLat, minLong, maxLong := util.GetMaxLocationRanges(.2, user.Latitude, user.Longitude)
+	// a range of roughly .1 miles in lat/long.
+	minLat, maxLat, minLong, maxLong := util.GetMaxLocationRanges(.0015, user.Latitude, user.Longitude)
 	var locations []Location
 	for rows.Next() {
 		var location Location
@@ -182,4 +179,22 @@ func ConnectToNode(user user.User) error {
 	}
 
 	return errors.New("could not find a node close enough to connect to")
+}
+
+func GetListOfNodesLinkedToUser(user user.User) []Location {
+	var locations []Location
+
+	db := database.OpenDatabase()
+	defer db.Close()
+
+	query := "SELECT location_type, latitude, longitude, name, desciption, art,  FROM locations LEFT JOIN user_locations ON locations.id = user_locations.location_id WHERE user_locations.user_id = $1"
+	rows, err := db.Query(query, user.Id)
+	if err != nil {
+		fmt.Println("issue selecting locations in GetListOfNodesLinkedToUser: ", err)
+	}
+	for rows.Next() {
+		err := rows.Scan()
+	}
+
+	return locations
 }
