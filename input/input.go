@@ -30,5 +30,10 @@ func Listen(thisUser user.User) {
 		if err != nil {
 			fmt.Println(err)
 		}
+	} else if input == "connect" {
+		err = nodes.ConnectToNode(thisUser)
+		if err != nil {
+			fmt.Println("Issue connecting to node: ", err)
+		}
 	}
 }

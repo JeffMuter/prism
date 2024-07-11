@@ -2,6 +2,7 @@ package nodes
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -148,4 +149,35 @@ func CreateArtFromStringSlice(artSlice []string) Art {
 	thisArt = thisArt.UpdateArtDimensions()
 
 	return thisArt
+}
+
+func ConnectToNode(user user.User) error {
+	// get all nodes that the user could be trying to connect to
+	// check if any are within range
+	// if there is 1, then update user_location table.
+	db := database.OpenDatabase()
+	db.Close()
+
+	query := "SELECT l.id, name, latitude, longitude FROM locations l LEFT JOIN user_locations ul ON l.id = ul.location_id AND ul.user_id = $1 WHERE ul.id IS NULL;"
+	//query := "INSERT INTO user_locations (user_id, location_id) VALUES ($1, $2)"
+	rows, err := db.Query(query, user.Id)
+	if err != nil {
+		fmt.Println("err querying db for connect to node: ", err)
+	}
+	maxLat, minLat, maxLong, minLong := util.GetMaxLocationRanges(.2, user.Latitude, user.Longitude)
+	for rows.Next() {
+		var location Location
+		err := rows.Scan(&location.Id, &location.Name, &location.Latitude, &location.Longitude)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if location.Latitude < maxLat && location.Latitude > minLat && location.Longitude < maxLong && location.Longitude > minLong {
+			query = "INSERT INTO user_locations (user_id, location_id) VALUES ($1, $2);"
+			db.QueryRow(query, user.Id, location.Id)
+			return nil
+		}
+
+	}
+
+	return errors.New("could not find a node close enough to connect to")
 }
