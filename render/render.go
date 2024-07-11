@@ -42,6 +42,8 @@ func PaintScreen(thisUser user.User) [][]rune {
 
 	// place objects on the canvas
 	addLocationsToCanvas(canvas, locationsToRender)
+	//addWorkersToCanvas(canvas, workersToRender)
+	addUserToCanvas(canvas, thisUser)
 
 	fmt.Printf("Canvas dimensions: %v, %v\n", len(canvas), len(canvas[0]))
 
@@ -54,7 +56,7 @@ func PaintScreen(thisUser user.User) [][]rune {
 
 func findLocationsCoordinates(user user.User, unfilteredLocations []nodes.Location, scrWidth, scrHeight int) ([]nodes.Location, error) {
 	var filteredLocations []nodes.Location
-	var degreeRange float64 = 1
+	var degreeRange float64 = 0.5
 	minLat, maxLat, minLong, maxLong := util.GetMaxLocationRanges(degreeRange, user.Latitude, user.Longitude)
 
 	for _, location := range unfilteredLocations {
@@ -118,4 +120,10 @@ func orderLocationsSlice(locations []nodes.Location) []nodes.Location {
 		return locations[i].YCoordinate < locations[j].YCoordinate
 	})
 	return locations
+}
+
+func addUserToCanvas(canvas [][]rune, user user.User) {
+	halfHorizantalLength := len(canvas[0]) / 2
+	halfVerticalHeight := len(canvas) / 2
+	canvas[halfVerticalHeight][halfHorizantalLength] = '@'
 }
