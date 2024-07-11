@@ -21,7 +21,7 @@ func Listen(thisUser user.User) {
 
 	if input == "ping" {
 		render.PaintScreen(thisUser) // repaints the screen
-	} else if input == "node" {
+	} else if input == "new node" {
 		thisUser.Latitude, thisUser.Longitude, err = user.Ping()
 		if err != nil {
 			fmt.Println(err)
@@ -35,5 +35,7 @@ func Listen(thisUser user.User) {
 		if err != nil {
 			fmt.Println("Issue connecting to node: ", err)
 		}
+	} else if input == "nodes" {
+		
 	}
 }

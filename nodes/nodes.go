@@ -23,6 +23,8 @@ type Location struct {
 	Art               Art
 	YCoordinate       int
 	XCoordinate       int
+	WorkerCount       int
+	Named             string
 }
 type Art struct {
 	Width  int
@@ -31,10 +33,6 @@ type Art struct {
 }
 
 func CreateNode(user user.User) error {
-	// get all other nodes
-	// if any other nodes are too close, err
-	// else, create new node
-
 	//this num signifies 10 miles in lat/long degrees. We're using this to
 	// determine the max / min lat&long to determine if the node we want to place is too close to another node.
 	var latLongRange float64 = 0.145
@@ -44,6 +42,7 @@ func CreateNode(user user.User) error {
 
 	var locations []Location = GetAllNodesUserCouldSee(user)
 
+	// check each location, if any node is too close, cancel the process
 	for _, loc := range locations {
 		if loc.Latitude > minLat && loc.Latitude < maxLat && loc.Longitude > minLong && loc.Longitude < maxLong {
 			return fmt.Errorf("node location too close to another: %s", loc.Name)
@@ -187,14 +186,18 @@ func GetListOfNodesLinkedToUser(user user.User) []Location {
 	db := database.OpenDatabase()
 	defer db.Close()
 
-	query := "SELECT location_type, latitude, longitude, name, desciption, art,  FROM locations LEFT JOIN user_locations ON locations.id = user_locations.location_id WHERE user_locations.user_id = $1"
+	query := "SELECT location_type, latitude, longitude, name, description, art FROM locations LEFT JOIN user_locations ON locations.id = user_locations.location_id WHERE user_locations.user_id = $1"
 	rows, err := db.Query(query, user.Id)
 	if err != nil {
 		fmt.Println("issue selecting locations in GetListOfNodesLinkedToUser: ", err)
 	}
 	for rows.Next() {
-		err := rows.Scan()
+		var location Location
+		err := rows.Scan(&location.LocationType, &location.Latitude, &location.Longitude, &location.Name, &location.Description, &location.ArtFileName)
+		if err != nil {
+			fmt.Println("error scanning next line in rows: ", err)
+		}
+		locations = append(locations, location)
 	}
-
 	return locations
 }
