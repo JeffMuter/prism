@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"prism/menus"
 	"prism/nodes"
 	"prism/render"
 	"prism/user"
@@ -36,6 +37,6 @@ func Listen(thisUser user.User) {
 			fmt.Println("Issue connecting to node: ", err)
 		}
 	} else if input == "nodes" {
-		
+		menus.DisplayUserNodes(thisUser)
 	}
 }

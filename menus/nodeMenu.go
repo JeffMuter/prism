@@ -15,10 +15,10 @@ func DisplayUserNodes(user user.User) {
 	var locations []nodes.Location = nodes.GetListOfNodesLinkedToUser(user)
 	// display info on each node.
 	for i := range locations {
-		fmt.Printf("%v | name: %v | direction: %v | location: %v | \n", i)
+		fmt.Printf("%v | name: %v\n", i, locations[i].Name)
 	}
 	// listen for intput
-	nodeMenuListen(len(locations))
+	nodeMenuListen(locations)
 }
 
 func nodeMenuListen(locations []nodes.Location) {
@@ -32,6 +32,6 @@ func nodeMenuListen(locations []nodes.Location) {
 	input = strings.TrimSpace(input)
 
 	if intInput, err := strconv.Atoi(input); err == nil && intInput < len(locations) {
-		fmt.Printf("Name: %s| WorkerCount: %s | type: %s| Longitude: %v | Latitude: %v\n", locations[intInput].Name, locations[intInput].LocationType, locations[intInput].Longitude, locations[intInput].Latitude)
+		fmt.Printf("Name: %s | type: %s| Longitude: %v | Latitude: %v\n", locations[intInput].Name, locations[intInput].LocationType, locations[intInput].Longitude, locations[intInput].Latitude)
 	}
 }
