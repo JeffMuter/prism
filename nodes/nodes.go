@@ -152,19 +152,21 @@ func CreateArtFromStringSlice(artSlice []string) Art {
 }
 
 func ConnectToNode(user user.User) error {
+	user.Latitude = 39.98
+	user.Longitude = -82.90
 	// get all nodes that the user could be trying to connect to
 	// check if any are within range
 	// if there is 1, then update user_location table.
 	db := database.OpenDatabase()
-	db.Close()
+	defer db.Close()
 
-	query := "SELECT l.id, name, latitude, longitude FROM locations l LEFT JOIN user_locations ul ON l.id = ul.location_id AND ul.user_id = $1 WHERE ul.id IS NULL;"
-	//query := "INSERT INTO user_locations (user_id, location_id) VALUES ($1, $2)"
+	query := "SELECT locations.id, name, latitude, longitude FROM locations LEFT JOIN user_locations ON locations.id = user_locations.location_id AND user_locations.user_id = $1 WHERE user_id IS NULL"
 	rows, err := db.Query(query, user.Id)
 	if err != nil {
 		fmt.Println("err querying db for connect to node: ", err)
 	}
-	maxLat, minLat, maxLong, minLong := util.GetMaxLocationRanges(.2, user.Latitude, user.Longitude)
+	minLat, maxLat, minLong, maxLong := util.GetMaxLocationRanges(.2, user.Latitude, user.Longitude)
+	var locations []Location
 	for rows.Next() {
 		var location Location
 		err := rows.Scan(&location.Id, &location.Name, &location.Latitude, &location.Longitude)
@@ -176,7 +178,7 @@ func ConnectToNode(user user.User) error {
 			db.QueryRow(query, user.Id, location.Id)
 			return nil
 		}
-
+		locations = append(locations, location)
 	}
 
 	return errors.New("could not find a node close enough to connect to")
