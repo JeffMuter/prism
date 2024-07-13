@@ -5,6 +5,7 @@ import (
 	"prism/input"
 	"prism/render"
 	"prism/user"
+	"prism/workers"
 )
 
 func main() {
@@ -23,6 +24,8 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
+
+	workers.GetWorkersRelevantToUser(thisUser)
 
 	render.PaintScreen(thisUser)
 
