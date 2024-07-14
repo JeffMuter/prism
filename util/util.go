@@ -1,9 +1,11 @@
 package util
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func GetAbsoluteFilepath(relativeFilepath string) (string, error) {
@@ -23,4 +25,15 @@ func GetMaxLocationRanges(lRange, lat, long float64) (float64, float64, float64,
 	maxLong = long + lRange
 
 	return minLat, maxLat, minLong, maxLong
+}
+
+func ReadUserInput() string {
+
+	reader := bufio.NewReader(os.Stdin)
+
+	input, err := reader.ReadString('\n')
+	if err != nil {
+		fmt.Println("Invalid input: ", err)
+	}
+	return strings.TrimSpace(input)
 }

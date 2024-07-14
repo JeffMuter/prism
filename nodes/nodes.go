@@ -193,7 +193,7 @@ func GetListOfNodesLinkedToUser(user user.User) []Location {
 	}
 	for rows.Next() {
 		var location Location
-		err := rows.Scan(&location.LocationType, &location.Latitude, &location.Longitude, &location.Name, &location.Description, &location.ArtFileName)
+		err := rows.Scan(&location.WorkerCount, &location.LocationType, &location.Latitude, &location.Longitude, &location.Name, &location.Description, &location.ArtFileName)
 		if err != nil {
 			fmt.Println("error scanning next line in rows: ", err)
 		}

@@ -1,13 +1,11 @@
 package menus
 
 import (
-	"bufio"
 	"fmt"
-	"os"
 	"prism/nodes"
 	"prism/user"
+	"prism/util"
 	"strconv"
-	"strings"
 )
 
 func DisplayUserNodes(user user.User) {
@@ -22,16 +20,14 @@ func DisplayUserNodes(user user.User) {
 }
 
 func nodeMenuListen(locations []nodes.Location) {
+	userInput := util.ReadUserInput()
 
-	reader := bufio.NewReader(os.Stdin)
-
-	input, err := reader.ReadString('\n')
-	if err != nil {
-		fmt.Println("Invalid input: ", err)
+	// if user input's a string within the length of the slice index, then we know they're correctly looking
+	//for more info on a particular location
+	if intInput, err := strconv.Atoi(userInput); err == nil && intInput < len(locations) && intInput > -1 {
+		fmt.Printf("Name: %s | WorkerCount: %v | Type: %v| Longitude: %v | Latitude: %v\n", locations[intInput].Name, locations[intInput].WorkerCount, locations[intInput].LocationType, locations[intInput].Longitude, locations[intInput].Latitude)
+	} else if err == nil {
+		fmt.Println("incorrect search for a worker")
 	}
-	input = strings.TrimSpace(input)
-
-	if intInput, err := strconv.Atoi(input); err == nil && intInput < len(locations) {
-		fmt.Printf("Name: %s | type: %s| Longitude: %v | Latitude: %v\n", locations[intInput].Name, locations[intInput].LocationType, locations[intInput].Longitude, locations[intInput].Latitude)
-	}
+	return
 }
