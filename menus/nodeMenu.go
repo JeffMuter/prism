@@ -5,6 +5,7 @@ import (
 	"prism/nodes"
 	"prism/user"
 	"prism/util"
+	"prism/workers"
 	"strconv"
 )
 
@@ -25,7 +26,14 @@ func nodeMenuListen(locations []nodes.Location) {
 	// if user input's a string within the length of the slice index, then we know they're correctly looking
 	//for more info on a particular location
 	if intInput, err := strconv.Atoi(userInput); err == nil && intInput < len(locations) && intInput > -1 {
+		// get a list of workers for this node.
+		workers := workers.GetWorkersRelatedToLocation(locations[intInput].Id)
+		// display contents
 		fmt.Printf("Name: %s | WorkerCount: %v | Type: %v| Longitude: %v | Latitude: %v\n", locations[intInput].Name, locations[intInput].WorkerCount, locations[intInput].LocationType, locations[intInput].Longitude, locations[intInput].Latitude)
+
+		for i, worker := range workers {
+			fmt.Printf("%v | name:  \n", i)
+		}
 	} else if err == nil {
 		fmt.Println("incorrect search for a worker")
 	}
