@@ -74,12 +74,31 @@ func PrintWorkerDetails(worker Worker) {
 	fmt.Printf("Name: %s | Status: %v | Intelligence: %v | Strength: %v | Faith: %v | Injuered: %v\n", worker.Name, worker.WorkStatus, worker.Intelligence, worker.Strength, worker.Faith, worker.InjuredStatus)
 }
 
-func AssignWorkerToLocation(worker Worker, location nodes.Location, work string) error {
+func AssignWorkerToLocation(worker Worker, newLocation nodes.Location) error {
 	// assign a worker to travel to a location
-	// confirm that the type of work is possible
-	//
+	// if they have a valid user_locations id, then we remove a worker_count from that location.
+	// add a worker_count to the new location,
+	// then add the user_locations.id to the worker in the db and object
+	db := database.OpenDatabase()
+	defer db.Close()
+	var newUserLocationId int
+
+	query := "SELECT user_locations.id FROM user_locations WHERE location_id = $1"
+	row := db.QueryRow(query, newLocation.Id)
+	err := row.Scan(newUserLocationId)
+	if err != nil {
+		fmt.Println("err getting queryRow response converted to int: ", err)
+	}
+
+	query = "UPDATE workers SET user_locations_id = $1 WHERE workers.id = $2"
+
+	_, err = db.Exec(query, newUserLocationId, worker.Id)
+	if err != nil {
+		fmt.Println("issue updating worker's user_location_id: ", err)
+	}
+
 	return nil
 }
 func AssignJobToWorker() {
-	//
+	// set a worker to farm a specific kind of material.
 }
