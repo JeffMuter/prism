@@ -73,3 +73,13 @@ func GetWorkersRelatedToLocation(locationId int) []Worker {
 func PrintWorkerDetails(worker Worker) {
 	fmt.Printf("Name: %s | Status: %v | Intelligence: %v | Strength: %v | Faith: %v | Injuered: %v\n", worker.Name, worker.WorkStatus, worker.Intelligence, worker.Strength, worker.Faith, worker.InjuredStatus)
 }
+
+func AssignWorkerToLocation(worker Worker, location nodes.Location, work string) error {
+	// assign a worker to travel to a location
+	// confirm that the type of work is possible
+	//
+	return nil
+}
+func AssignJobToWorker() {
+	//
+}

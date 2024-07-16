@@ -9,6 +9,7 @@ import (
 	"prism/database"
 	"prism/user"
 	"prism/util"
+	"prism/workers"
 )
 
 type Location struct {
@@ -200,4 +201,35 @@ func GetListOfNodesLinkedToUser(user user.User) []Location {
 		locations = append(locations, location)
 	}
 	return locations
+}
+
+func RemoveWorkerFromNode(worker workers.Worker, location Location) error {
+	db := database.OpenDatabase()
+	defer db.Close()
+
+	countAfter := location.WorkerCount - 1
+	query := "UPDATE locations SET worker_count = $1 WHERE location.id = $2"
+
+	_, err := db.Exec(query, countAfter, location.Id)
+	if err != nil {
+		fmt.Println("Error subtracting from worker_count", err)
+		return err
+	}
+
+	return nil
+}
+func AddWorkerToNode(worker workers.Worker, location Location) error {
+	db := database.OpenDatabase()
+	defer db.Close()
+
+	countAfter := location.WorkerCount + 1
+	query := "UPDATE locations SET worker_count = $1 WHERE location.id = $2"
+
+	_, err := db.Exec(query, countAfter, location.Id)
+	if err != nil {
+		fmt.Println("Error subtracting from worker_count", err)
+		return err
+	}
+
+	return nil
 }
