@@ -186,7 +186,7 @@ func GetListOfNodesLinkedToUser(user user.User) []Location {
 	db := database.OpenDatabase()
 	defer db.Close()
 
-	query := "SELECT id, worker_count, location_type, latitude, longitude, name, description, art FROM locations LEFT JOIN user_locations ON locations.id = user_locations.location_id WHERE user_locations.user_id = $1"
+	query := "SELECT locations.id, worker_count, location_type, latitude, longitude, name, description, art FROM locations LEFT JOIN user_locations ON locations.id = user_locations.location_id WHERE user_locations.user_id = $1"
 	rows, err := db.Query(query, user.Id)
 	if err != nil {
 		fmt.Println("issue selecting locations in GetListOfNodesLinkedToUser: ", err)

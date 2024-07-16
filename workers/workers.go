@@ -53,7 +53,7 @@ func GetWorkersRelevantToUser(user user.User) []Worker {
 
 func GetWorkersRelatedToLocation(locationId int) []Worker {
 	var workers []Worker
-	query := "SELECT id, name, age, religion, work_status, injured, intelligence, strength, faith FROM workers LEFT JOIN user_locations ON workers.user_locations_id = user_locations.id WHERE location_id = $1"
+	query := "SELECT workers.id, name, age, religion, work_status, injured, intelligence, strength, faith FROM workers LEFT JOIN user_locations ON workers.user_locations_id = user_locations.id WHERE location_id = $1"
 	db := database.OpenDatabase()
 	defer db.Close()
 
@@ -68,4 +68,8 @@ func GetWorkersRelatedToLocation(locationId int) []Worker {
 	}
 
 	return workers
+}
+
+func PrintWorkerDetails(worker Worker) {
+	fmt.Printf("Name: %s | Status: %v | Intelligence: %v | Strength: %v | Faith: %v | Injuered: %v\n", worker.Name, worker.WorkStatus, worker.Intelligence, worker.Strength, worker.Faith, worker.InjuredStatus)
 }

@@ -56,7 +56,7 @@ func PaintScreen(thisUser user.User) [][]rune {
 
 func findLocationsCoordinates(user user.User, unfilteredLocations []nodes.Location, scrWidth, scrHeight int) ([]nodes.Location, error) {
 	var filteredLocations []nodes.Location
-	var degreeRange float64 = 0.5
+	var degreeRange float64 = 2
 	minLat, maxLat, minLong, maxLong := util.GetMaxLocationRanges(degreeRange, user.Latitude, user.Longitude)
 
 	for _, location := range unfilteredLocations {
