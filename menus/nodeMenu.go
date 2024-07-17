@@ -31,11 +31,13 @@ func nodeMenuListen(locations []nodes.Location) {
 		// display contents
 		fmt.Printf("Name: %s | WorkerCount: %v | Type: %v| Longitude: %v | Latitude: %v\n", locations[intInput].Name, locations[intInput].WorkerCount, locations[intInput].LocationType, locations[intInput].Longitude, locations[intInput].Latitude)
 
-		for _, worker := range workerSlice {
-			workers.PrintWorkerDetails(worker)
-		}
-
+		workers.PrintWorkersDetails(workerSlice)
 		userInput = util.ReadUserInput()
+
+		// if user selected a num, then let's print that worker.
+		if intInput, err := strconv.Atoi(userInput); err == nil && intInput < len(workerSlice) && intInput > -1 {
+			workers.PrintWorkerDetails(workerSlice[intInput])
+		}
 
 	} else if err == nil {
 		fmt.Println("incorrect search for a worker")

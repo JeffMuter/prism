@@ -22,6 +22,7 @@ type Worker struct {
 	Religion       string
 	Age            int
 	Name           string
+	LocationName   string
 	ArtFilName     string `default:"worker"`
 	Art            nodes.Art
 }
@@ -36,7 +37,7 @@ func GetWorkersRelevantToUser(user user.User) []Worker {
 	db := database.OpenDatabase()
 	defer db.Close()
 
-	query := "SELECT name FROM workers LEFT JOIN user_locations ON workers.user_locations_id = user_locations.id WHERE user_id = $1"
+	query := "SELECT  workers.id, name, age, religion, work_status, injured, intelligence, strength, faith, named  FROM workers LEFT JOIN user_locations ON workers.user_locations_id = user_locations.id WHERE user_id = $1"
 
 	rows, err := db.Query(query, user.Id)
 	if err != nil {
@@ -44,7 +45,7 @@ func GetWorkersRelevantToUser(user user.User) []Worker {
 	}
 	for rows.Next() {
 		var worker Worker
-		rows.Scan(&worker.Name)
+		rows.Scan(&worker.Id, &worker.Name, &worker.Age, &worker.Religion, &worker.WorkStatus, &worker.InjuredStatus, &worker.Intelligence, &worker.Strength, &worker.Faith, &worker.LocationName)
 		workers = append(workers, worker)
 	}
 
@@ -53,7 +54,7 @@ func GetWorkersRelevantToUser(user user.User) []Worker {
 
 func GetWorkersRelatedToLocation(locationId int) []Worker {
 	var workers []Worker
-	query := "SELECT workers.id, name, age, religion, work_status, injured, intelligence, strength, faith FROM workers LEFT JOIN user_locations ON workers.user_locations_id = user_locations.id WHERE location_id = $1"
+	query := "SELECT workers.id, name, age, religion, work_status, injured, intelligence, strength, faith, named FROM workers LEFT JOIN user_locations ON workers.user_locations_id = user_locations.id WHERE location_id = $1"
 	db := database.OpenDatabase()
 	defer db.Close()
 
@@ -63,7 +64,7 @@ func GetWorkersRelatedToLocation(locationId int) []Worker {
 	}
 	for rows.Next() {
 		var worker Worker
-		rows.Scan(&worker.Id, &worker.Name, &worker.Age, &worker.Religion, &worker.WorkStatus, &worker.InjuredStatus, &worker.Intelligence, &worker.Strength, &worker.Faith)
+		rows.Scan(&worker.Id, &worker.Name, &worker.Age, &worker.Religion, &worker.WorkStatus, &worker.InjuredStatus, &worker.Intelligence, &worker.Strength, &worker.Faith, &worker.LocationName)
 		workers = append(workers, worker)
 	}
 
@@ -71,7 +72,15 @@ func GetWorkersRelatedToLocation(locationId int) []Worker {
 }
 
 func PrintWorkerDetails(worker Worker) {
-	fmt.Printf("Name: %s | Status: %v | Intelligence: %v | Strength: %v | Faith: %v | Injuered: %v\n", worker.Name, worker.WorkStatus, worker.Intelligence, worker.Strength, worker.Faith, worker.InjuredStatus)
+	fmt.Println("Worker Details:")
+	fmt.Printf("Name: %s | Location Name: %v | Status: %v | Intelligence: %v | Strength: %v | Faith: %v | Injuered: %v\n", worker.Name, worker.LocationName, worker.WorkStatus, worker.Intelligence, worker.Strength, worker.Faith, worker.InjuredStatus)
+}
+
+func PrintWorkersDetails(workers []Worker) {
+	fmt.Println("Worker Details:")
+	for i, worker := range workers {
+		fmt.Printf("%v: | Name: %s | Location Name: %v | Status: %v | Intelligence: %v | Strength: %v | Faith: %v | Injuered: %v\n", i, worker.Name, worker.LocationName, worker.WorkStatus, worker.Intelligence, worker.Strength, worker.Faith, worker.InjuredStatus)
+	}
 }
 
 func AssignWorkerToLocation(worker Worker, newLocation nodes.Location) error {
