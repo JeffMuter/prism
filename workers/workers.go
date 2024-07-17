@@ -108,6 +108,16 @@ func AssignWorkerToLocation(worker Worker, newLocation nodes.Location) error {
 
 	return nil
 }
-func AssignJobToWorker() {
-	// set a worker to farm a specific kind of material.
+
+// ToggleWorkingForWorker is meant to swap the current value of worker_status,
+// which indicates if they're mining materials or not.
+func ToggleWorkingForWorker(worker Worker) error {
+	db := database.OpenDatabase()
+	defer db.Close()
+	query := "UPDATE workers SET work_status = NOT work_status WHERE workers.id = $1"
+	_, err := db.Exec(query, worker.Id)
+	if err != nil {
+		return fmt.Errorf("Error toggling worker work_status: %v", err)
+	}
+	return nil
 }
