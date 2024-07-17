@@ -9,7 +9,6 @@ import (
 	"prism/database"
 	"prism/user"
 	"prism/util"
-	"prism/workers"
 )
 
 type Location struct {
@@ -151,6 +150,8 @@ func CreateArtFromStringSlice(artSlice []string) Art {
 	return thisArt
 }
 
+// ConnectToNode allows a user to see if they can make a new node in this location. Checks a lat/long
+// range, and if no other nodes are inside it, creates the new node.
 func ConnectToNode(user user.User) error {
 	db := database.OpenDatabase()
 	defer db.Close()
@@ -181,6 +182,8 @@ func ConnectToNode(user user.User) error {
 	return errors.New("could not find a node close enough to connect to")
 }
 
+// GetListOfNodesLinkedToUser takes a user, and returns a slice of locations, made from the db, that
+// are related to that user.
 func GetListOfNodesLinkedToUser(user user.User) []Location {
 	var locations []Location
 
@@ -203,12 +206,13 @@ func GetListOfNodesLinkedToUser(user user.User) []Location {
 	return locations
 }
 
-func RemoveWorkerFromNode(worker workers.Worker, location Location) error {
+// RemoveWorkerFromNode reduces worker_count value in the db by 1
+func RemoveWorkerFromNode(location Location) error {
 	db := database.OpenDatabase()
 	defer db.Close()
 
 	countAfter := location.WorkerCount - 1
-	query := "UPDATE locations SET worker_count = $1 WHERE location.id = $2"
+	query := "UPDATE user_locations SET worker_count = $1 WHERE user_locations.id = $2"
 
 	_, err := db.Exec(query, countAfter, location.Id)
 	if err != nil {
@@ -218,12 +222,14 @@ func RemoveWorkerFromNode(worker workers.Worker, location Location) error {
 
 	return nil
 }
-func AddWorkerToNode(worker workers.Worker, location Location) error {
+
+// AddWorkerToNode updates the new node in the db to increase by 1.
+func AddWorkerToNode(location Location) error {
 	db := database.OpenDatabase()
 	defer db.Close()
 
 	countAfter := location.WorkerCount + 1
-	query := "UPDATE locations SET worker_count = $1 WHERE location.id = $2"
+	query := "UPDATE user_locations SET worker_count = $1 WHERE user_locations.id = $2"
 
 	_, err := db.Exec(query, countAfter, location.Id)
 	if err != nil {
