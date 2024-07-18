@@ -11,13 +11,22 @@ import (
 
 func DisplayUserNodes(user user.User) {
 	// get a list of locations
-	var locations []nodes.Location = nodes.GetListOfNodesLinkedToUser(user)
+	locations, err := nodes.GetListOfNodesLinkedToUser(user)
+	if err != nil {
+		fmt.Println("error getting locations for the node menu: ", err)
+	}
 	// display info on each node.
 	for i := range locations {
 		fmt.Printf("%v | name: %v\n", i, locations[i].Name)
 	}
-	// listen for intput
+	// listen for input
 	nodeMenuListen(locations)
+}
+
+func DisplayNodes(locations []nodes.Location) {
+	for i := range locations {
+		fmt.Printf("%v | name: %v\n", i, locations[i].Name)
+	}
 }
 
 func nodeMenuListen(locations []nodes.Location) {
@@ -38,7 +47,10 @@ func nodeMenuListen(locations []nodes.Location) {
 		if intInput, err := strconv.Atoi(userInput); err == nil && intInput < len(workerSlice) && intInput > -1 {
 			workers.PrintWorkerDetails(workerSlice[intInput])
 		}
-
+		err := WorkerMenuOptions(user, workerSlice[intInput])
+		if err != nil {
+			fmt.Println("error with worker menu options: ", err)
+		}
 	} else if err == nil {
 		fmt.Println("incorrect search for a worker")
 	}

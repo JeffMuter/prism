@@ -1,17 +1,19 @@
-package input
+package menus
 
 import (
 	"bufio"
 	"fmt"
 	"os"
-	"prism/menus"
 	"prism/nodes"
 	"prism/render"
 	"prism/user"
 	"strings"
 )
 
-func Listen(thisUser user.User) {
+// MainMenuListen listens for user input from the main screen
+// user makes choices about the next action to take in the game,
+// either with maps, or accessing other menus
+func MainMenuListen(thisUser user.User) {
 	reader := bufio.NewReader(os.Stdin)
 
 	input, err := reader.ReadString('\n')
@@ -37,6 +39,6 @@ func Listen(thisUser user.User) {
 			fmt.Println("Issue connecting to node: ", err)
 		}
 	} else if input == "nodes" {
-		menus.DisplayUserNodes(thisUser)
+		DisplayUserNodes(thisUser)
 	}
 }

@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"prism/input"
+	"prism/menus"
 	"prism/render"
 	"prism/user"
 	"prism/workers"
@@ -29,5 +29,5 @@ func main() {
 
 	render.PaintScreen(thisUser)
 
-	input.Listen(thisUser)
+	menus.MainMenuListen(thisUser)
 }

@@ -184,7 +184,7 @@ func ConnectToNode(user user.User) error {
 
 // GetListOfNodesLinkedToUser takes a user, and returns a slice of locations, made from the db, that
 // are related to that user.
-func GetListOfNodesLinkedToUser(user user.User) []Location {
+func GetListOfNodesLinkedToUser(user user.User) ([]Location, error) {
 	var locations []Location
 
 	db := database.OpenDatabase()
@@ -193,17 +193,17 @@ func GetListOfNodesLinkedToUser(user user.User) []Location {
 	query := "SELECT locations.id, worker_count, location_type, latitude, longitude, name, description, art FROM locations LEFT JOIN user_locations ON locations.id = user_locations.location_id WHERE user_locations.user_id = $1"
 	rows, err := db.Query(query, user.Id)
 	if err != nil {
-		fmt.Println("issue selecting locations in GetListOfNodesLinkedToUser: ", err)
+		return locations, err
 	}
 	for rows.Next() {
 		var location Location
 		err := rows.Scan(&location.Id, &location.WorkerCount, &location.LocationType, &location.Latitude, &location.Longitude, &location.Name, &location.Description, &location.ArtFileName)
 		if err != nil {
-			fmt.Println("error scanning next line in rows: ", err)
+			return locations, err
 		}
 		locations = append(locations, location)
 	}
-	return locations
+	return locations, nil
 }
 
 // RemoveWorkerFromNode reduces worker_count value in the db by 1

@@ -119,5 +119,12 @@ func ToggleWorkingForWorker(worker Worker) error {
 	if err != nil {
 		return fmt.Errorf("Error toggling worker work_status: %v", err)
 	}
+	var statusOfWork string
+	if worker.WorkStatus {
+		statusOfWork = "resting"
+	} else {
+		statusOfWork = "working"
+	}
+	fmt.Printf("%s is now %s", worker.Name, statusOfWork)
 	return nil
 }
