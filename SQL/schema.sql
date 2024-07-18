@@ -33,7 +33,11 @@ CREATE TABLE workers (
     injured BOOLEAN DEFAULT FALSE,
     strength INTEGER NOT NULL,
     intelligence INTEGER NOT NULL,
-    faith INTEGER NOT NULL
+    faith INTEGER NOT NULL,
+    stamina INTEGER DEFAULT 0 NOT NULL,
+    max_stamina INTEGER DEFAULT 10 NOT NULL,
+    work_speed INTEGER DEFAULT 0 NOT NULL,
+    travel_speed INTEGER DEFAULT 0 NOT NULL
 );
 
 CREATE TABLE locations (
