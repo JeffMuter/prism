@@ -20,7 +20,7 @@ func DisplayUserNodes(user user.User) {
 		fmt.Printf("%v | name: %v\n", i, locations[i].Name)
 	}
 	// listen for input
-	nodeMenuListen(locations)
+	nodeMenuListen(user, locations)
 }
 
 func DisplayNodes(locations []nodes.Location) {
@@ -29,7 +29,7 @@ func DisplayNodes(locations []nodes.Location) {
 	}
 }
 
-func nodeMenuListen(locations []nodes.Location) {
+func nodeMenuListen(user user.User, locations []nodes.Location) {
 	userInput := util.ReadUserInput()
 
 	// if user input's a string within the length of the slice index, then we know they're correctly looking

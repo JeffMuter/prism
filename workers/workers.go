@@ -94,7 +94,7 @@ func AssignWorkerToLocation(worker Worker, newLocation nodes.Location) error {
 
 	query := "SELECT user_locations.id FROM user_locations WHERE location_id = $1"
 	row := db.QueryRow(query, newLocation.Id)
-	err := row.Scan(newUserLocationId)
+	err := row.Scan(&newUserLocationId)
 	if err != nil {
 		fmt.Println("err getting queryRow response converted to int: ", err)
 	}
