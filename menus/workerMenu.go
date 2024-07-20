@@ -48,6 +48,8 @@ func WorkerMenuOptions(user user.User, worker workers.Worker) error {
 		} else {
 			fmt.Println("incorrect input")
 		}
+	} else if userInput == "assign" {
+
 	} else if userInput == "swap" {
 		err := workers.ToggleWorkingForWorker(worker)
 		if err != nil {
