@@ -5,7 +5,7 @@
 -- Dumped from database version 16.3
 -- Dumped by pg_dump version 16.3
 
--- Started on 2024-07-30 10:32:24
+-- Started on 2024-07-30 10:49:45
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -259,17 +259,17 @@ ALTER SEQUENCE public.resources_id_seq OWNED BY public.resources.id;
 
 --
 -- TOC entry 231 (class 1259 OID 49188)
--- Name: task_type_resource; Type: TABLE; Schema: public; Owner: postgres
+-- Name: task_types_resources; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.task_type_resource (
+CREATE TABLE public.task_types_resources (
     id integer NOT NULL,
     task_type_id integer,
     resource_id integer
 );
 
 
-ALTER TABLE public.task_type_resource OWNER TO postgres;
+ALTER TABLE public.task_types_resources OWNER TO postgres;
 
 --
 -- TOC entry 230 (class 1259 OID 49187)
@@ -293,7 +293,7 @@ ALTER SEQUENCE public.task_type_resource_id_seq OWNER TO postgres;
 -- Name: task_type_resource_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
-ALTER SEQUENCE public.task_type_resource_id_seq OWNED BY public.task_type_resource.id;
+ALTER SEQUENCE public.task_type_resource_id_seq OWNED BY public.task_types_resources.id;
 
 
 --
@@ -336,10 +336,10 @@ ALTER SEQUENCE public.task_types_id_seq OWNED BY public.task_types.id;
 
 --
 -- TOC entry 227 (class 1259 OID 25154)
--- Name: user_locations; Type: TABLE; Schema: public; Owner: postgres
+-- Name: users_locations; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public.user_locations (
+CREATE TABLE public.users_locations (
     id integer NOT NULL,
     user_id integer NOT NULL,
     location_id integer NOT NULL,
@@ -348,7 +348,7 @@ CREATE TABLE public.user_locations (
 );
 
 
-ALTER TABLE public.user_locations OWNER TO postgres;
+ALTER TABLE public.users_locations OWNER TO postgres;
 
 --
 -- TOC entry 226 (class 1259 OID 25153)
@@ -372,7 +372,7 @@ ALTER SEQUENCE public.user_locations_id_seq OWNER TO postgres;
 -- Name: user_locations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
-ALTER SEQUENCE public.user_locations_id_seq OWNED BY public.user_locations.id;
+ALTER SEQUENCE public.user_locations_id_seq OWNED BY public.users_locations.id;
 
 
 --
@@ -555,14 +555,6 @@ ALTER TABLE ONLY public.resources ALTER COLUMN id SET DEFAULT nextval('public.re
 
 
 --
--- TOC entry 4703 (class 2604 OID 49191)
--- Name: task_type_resource id; Type: DEFAULT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.task_type_resource ALTER COLUMN id SET DEFAULT nextval('public.task_type_resource_id_seq'::regclass);
-
-
---
 -- TOC entry 4702 (class 2604 OID 49184)
 -- Name: task_types id; Type: DEFAULT; Schema: public; Owner: postgres
 --
@@ -571,11 +563,11 @@ ALTER TABLE ONLY public.task_types ALTER COLUMN id SET DEFAULT nextval('public.t
 
 
 --
--- TOC entry 4700 (class 2604 OID 25157)
--- Name: user_locations id; Type: DEFAULT; Schema: public; Owner: postgres
+-- TOC entry 4703 (class 2604 OID 49191)
+-- Name: task_types_resources id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.user_locations ALTER COLUMN id SET DEFAULT nextval('public.user_locations_id_seq'::regclass);
+ALTER TABLE ONLY public.task_types_resources ALTER COLUMN id SET DEFAULT nextval('public.task_type_resource_id_seq'::regclass);
 
 
 --
@@ -584,6 +576,14 @@ ALTER TABLE ONLY public.user_locations ALTER COLUMN id SET DEFAULT nextval('publ
 --
 
 ALTER TABLE ONLY public.users ALTER COLUMN id SET DEFAULT nextval('public.users_id_seq'::regclass);
+
+
+--
+-- TOC entry 4700 (class 2604 OID 25157)
+-- Name: users_locations id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.users_locations ALTER COLUMN id SET DEFAULT nextval('public.user_locations_id_seq'::regclass);
 
 
 --
@@ -649,10 +649,10 @@ ALTER TABLE ONLY public.resources
 
 --
 -- TOC entry 4723 (class 2606 OID 49193)
--- Name: task_type_resource task_type_resource_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: task_types_resources task_type_resource_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.task_type_resource
+ALTER TABLE ONLY public.task_types_resources
     ADD CONSTRAINT task_type_resource_pkey PRIMARY KEY (id);
 
 
@@ -667,10 +667,10 @@ ALTER TABLE ONLY public.task_types
 
 --
 -- TOC entry 4719 (class 2606 OID 25159)
--- Name: user_locations user_locations_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: users_locations user_locations_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.user_locations
+ALTER TABLE ONLY public.users_locations
     ADD CONSTRAINT user_locations_pkey PRIMARY KEY (id);
 
 
@@ -748,37 +748,37 @@ ALTER TABLE ONLY public.locations_resources
 
 --
 -- TOC entry 4735 (class 2606 OID 49199)
--- Name: task_type_resource task_type_resource_resource_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: task_types_resources task_type_resource_resource_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.task_type_resource
+ALTER TABLE ONLY public.task_types_resources
     ADD CONSTRAINT task_type_resource_resource_id_fkey FOREIGN KEY (resource_id) REFERENCES public.resources(id);
 
 
 --
 -- TOC entry 4736 (class 2606 OID 49194)
--- Name: task_type_resource task_type_resource_task_type_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: task_types_resources task_type_resource_task_type_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.task_type_resource
+ALTER TABLE ONLY public.task_types_resources
     ADD CONSTRAINT task_type_resource_task_type_id_fkey FOREIGN KEY (task_type_id) REFERENCES public.task_types(id);
 
 
 --
 -- TOC entry 4733 (class 2606 OID 25165)
--- Name: user_locations user_locations_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: users_locations user_locations_location_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.user_locations
+ALTER TABLE ONLY public.users_locations
     ADD CONSTRAINT user_locations_location_id_fkey FOREIGN KEY (location_id) REFERENCES public.locations(id);
 
 
 --
 -- TOC entry 4734 (class 2606 OID 25160)
--- Name: user_locations user_locations_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: users_locations user_locations_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.user_locations
+ALTER TABLE ONLY public.users_locations
     ADD CONSTRAINT user_locations_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id);
 
 
@@ -815,10 +815,10 @@ ALTER TABLE ONLY public.workers_tasks
 --
 
 ALTER TABLE ONLY public.workers
-    ADD CONSTRAINT workers_user_locations_id_fkey FOREIGN KEY (user_locations_id) REFERENCES public.user_locations(id);
+    ADD CONSTRAINT workers_user_locations_id_fkey FOREIGN KEY (user_locations_id) REFERENCES public.users_locations(id);
 
 
--- Completed on 2024-07-30 10:32:24
+-- Completed on 2024-07-30 10:49:45
 
 --
 -- PostgreSQL database dump complete
