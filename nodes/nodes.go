@@ -239,3 +239,28 @@ func AddWorkerToNode(location Location) error {
 
 	return nil
 }
+
+func GetTasksForLocation(location Location) ([]string, error) {
+	db := database.OpenDatabase()
+	defer db.Close()
+
+	var taskTypes []string
+	locationType := location.LocationType
+	query := "SELECT tt.name FROM task_types tt JOIN location_types_tasks ltt ON tt.id = ltt.task_type_id JOIN location_types lt ON ltt.location_type_id = lt.id WHERE lt.name = ?;"
+
+	rows, err := db.Query(query, locationType)
+	if err != nil {
+		return taskTypes, err
+	}
+
+	for rows.Next() {
+		var taskTypeName string
+		err := rows.Scan(&taskTypeName)
+		if err != nil {
+			return taskTypes, err
+		}
+		taskTypes = append(taskTypes, taskTypeName)
+	}
+
+	return taskTypes, nil
+}
