@@ -264,3 +264,19 @@ func GetTasksForLocation(location Location) ([]string, error) {
 
 	return taskTypes, nil
 }
+
+func GetLocationFromLocationId(id int) (Location, error) {
+	var location Location
+	db := database.OpenDatabase()
+	defer db.Close()
+	query := "SELECT id, location_type, latitude, longitude, name, description, art FROM locations WHERE id = $1"
+
+	row := db.QueryRow(query, id)
+
+	err := row.Scan(&location.Id, &location.LocationType, &location.Latitude, &location.Longitude, &location.Name, &location.Description, &location.ArtFileName)
+	if err != nil {
+		return location, err
+	}
+
+	return location, nil
+}

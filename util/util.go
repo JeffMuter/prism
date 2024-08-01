@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -27,7 +28,7 @@ func GetMaxLocationRanges(lRange, lat, long float64) (float64, float64, float64,
 	return minLat, maxLat, minLong, maxLong
 }
 
-func ReadUserInput() string {
+func ReadCommandInput() (string, error) {
 
 	reader := bufio.NewReader(os.Stdin)
 
@@ -35,5 +36,24 @@ func ReadUserInput() string {
 	if err != nil {
 		fmt.Println("Invalid input: ", err)
 	}
-	return strings.TrimSpace(input)
+	return strings.TrimSpace(input), nil
+}
+
+func ReadNumericSelection(options int) (int, error) {
+	input, err := ReadCommandInput()
+	if err != nil {
+		return -1, err
+	}
+	// convert input to int
+	intInput, err := strconv.ParseInt(input, 10, 64)
+	if err != nil {
+		return -1, err
+	}
+
+	// make sure input isn't out of bounds.
+	if intInput < 0 || intInput >= int64(options) {
+		return -1, fmt.Errorf("input was too low or too high")
+	}
+
+	return -1, nil
 }

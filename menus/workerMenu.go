@@ -12,7 +12,10 @@ import (
 // WorkerMenuOptions is meant to handle the input / output for the menu options when a user is making decisions
 // on an isolated worker
 func WorkerMenuOptions(user user.User, worker workers.Worker) error {
-	userInput := util.ReadUserInput()
+	userInput, err := util.ReadCommandInput()
+	if err != nil {
+		fmt.Println(err)
+	}
 	if userInput == "move" {
 		// assign worker to new location
 		// get locations the user can access.
@@ -23,7 +26,8 @@ func WorkerMenuOptions(user user.User, worker workers.Worker) error {
 		// print all nodes to the screen of them to choose an index num
 		DisplayNodes(locations)
 		//read user input for num.
-		userInput := util.ReadUserInput()
+		userInput, err := util.ReadCommandInput()
+		fmt.Println(err)
 		if intInput, err := strconv.Atoi(userInput); err == nil && intInput < len(locations) && intInput > -1 {
 			// reduce the previous location's worker_count by one
 			var oldLocation = nodes.Location{Id: worker.UserLocationId}
@@ -49,6 +53,30 @@ func WorkerMenuOptions(user user.User, worker workers.Worker) error {
 			fmt.Println("incorrect input")
 		}
 	} else if userInput == "assign" {
+		// here we need to:
+		// get location from worker.LocationId
+		location, err := nodes.GetLocationFromLocationId(worker.LocationId)
+		if err != nil {
+			return err
+		}
+		// get a list of potential tasks we can do at this node.
+		tasks, err := nodes.GetTasksForLocation(location)
+		if err != nil {
+			return err
+		}
+		// display tasks
+		for i, task := range tasks {
+			fmt.Printf("%v: %s\n", i, task)
+		}
+		//2. wait for user input.
+		userInput, err := util.ReadNumericSelection(len(tasks))
+		if err != nil {
+			fmt.Println(err)
+		}
+		//3. using this input, we assign the worker to a new task.
+		chosenTask := tasks[userInput]
+		//4. end the last task the worker was doing.
+		//5. return the user from whence they came
 
 	} else if userInput == "swap" {
 		err := workers.ToggleWorkingForWorker(worker)

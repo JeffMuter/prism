@@ -30,7 +30,10 @@ func DisplayNodes(locations []nodes.Location) {
 }
 
 func nodeMenuListen(user user.User, locations []nodes.Location) {
-	userInput := util.ReadUserInput()
+	userInput, err := util.ReadCommandInput()
+	if err != nil {
+		fmt.Println("error with getting user input.", err)
+	}
 
 	// if user input's a string within the length of the slice index, then we know they're correctly looking
 	//for more info on a particular location
@@ -41,7 +44,10 @@ func nodeMenuListen(user user.User, locations []nodes.Location) {
 		fmt.Printf("Name: %s | WorkerCount: %v | Type: %v| Longitude: %v | Latitude: %v\n", locations[intInput].Name, locations[intInput].WorkerCount, locations[intInput].LocationType, locations[intInput].Longitude, locations[intInput].Latitude)
 
 		workers.PrintWorkersDetails(workerSlice)
-		userInput = util.ReadUserInput()
+		userInput, err = util.ReadCommandInput()
+		if err != nil {
+			fmt.Println("issue reading uer input.", err)
+		}
 
 		// if user selected a num, then let's print that worker.
 		if intInput, err := strconv.Atoi(userInput); err == nil && intInput < len(workerSlice) && intInput > -1 {
