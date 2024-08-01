@@ -76,7 +76,6 @@ func WorkerMenuOptions(user user.User, worker workers.Worker) error {
 		//3. using this input, we assign the worker to a new task.
 		chosenTask := tasks[userInput]
 		//4. end the last task the worker was doing.
-		//5. return the user from whence they came
 
 	} else if userInput == "swap" {
 		err := workers.ToggleWorkingForWorker(worker)
