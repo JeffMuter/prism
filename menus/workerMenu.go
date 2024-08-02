@@ -3,6 +3,7 @@ package menus
 import (
 	"fmt"
 	"prism/nodes"
+	"prism/tasks"
 	"prism/user"
 	"prism/util"
 	"prism/workers"
@@ -60,21 +61,27 @@ func WorkerMenuOptions(user user.User, worker workers.Worker) error {
 			return err
 		}
 		// get a list of potential tasks we can do at this node.
-		tasks, err := nodes.GetTasksForLocation(location)
+		taskNames, err := nodes.GetTasksForLocation(location)
 		if err != nil {
 			return err
 		}
 		// display tasks
-		for i, task := range tasks {
+		for i, task := range taskNames {
 			fmt.Printf("%v: %s\n", i, task)
 		}
 		//2. wait for user input.
-		userInput, err := util.ReadNumericSelection(len(tasks))
+		userInput, err := util.ReadNumericSelection(len(taskNames))
 		if err != nil {
 			fmt.Println(err)
 		}
 		//3. using this input, we assign the worker to a new task.
-		chosenTask := tasks[userInput]
+		chosenTask := taskNames[userInput]
+
+		err = tasks.SetWorkerTaskToNewTask(worker, chosenTask)
+		if err != nil {
+			return err
+		}
+
 		//4. end the last task the worker was doing.
 
 	} else if userInput == "swap" {

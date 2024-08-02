@@ -32,7 +32,9 @@ func SetWorkerTaskToResting(worker workers.Worker) error {
 func SetWorkerTaskToNewTask(worker workers.Worker, taskType string) error {
 	var verifiedTaskType string
 
-	taskTypes, err := GetListOfTaskTypes()
+	// i think a list of all task types isn't right, we need a list of tasks that this location has access to,
+	// which is quite different
+	taskTypes, err := GetListOfTasksFromLocationId(worker.LocationId)
 	if err != nil {
 		return err
 	}
@@ -46,9 +48,17 @@ func SetWorkerTaskToNewTask(worker workers.Worker, taskType string) error {
 		return fmt.Errorf("no matching task type")
 	}
 
+	//end the old task
+	err = EndCurrentWorkerTask(worker)
+	if err != nil {
+		return err
+	}
+	// update the db with a new task
+
 	return nil
 }
 
+// GetListOfTaskTypes gets a list of ALL task types from the db.
 func GetListOfTaskTypes() ([]string, error) {
 	query := "SELECT name FROM task_types"
 
@@ -73,5 +83,32 @@ func GetListOfTaskTypes() ([]string, error) {
 	return taskTypes, nil
 }
 
-// EndWorkerTask is a func to end the current task of the worker.
-func EndWorkerTask()
+// EndCurrentWorkerTask is a func to end the current task of the worker.
+func EndCurrentWorkerTask(worker workers.Worker) error {
+	return nil
+}
+
+// GetListOfTasksFromLocationId gets a list of all tasks that a location has access to, by a locationId
+func GetListOfTasksFromLocationId(id int) ([]string, error) {
+	var tasks []string
+	db := database.OpenDatabase()
+	defer db.Close()
+	query := "SELECT tt.name FROM locations l JOIN location_types_tasks ltt ON l.location_type_id = ltt.location_type_id JOIN task_types tt ON ltt.task_type_id = tt.id WHERE l.id = 1;"
+
+	rows, err := db.Query(query, id)
+	if err != nil {
+		return tasks, err
+	}
+
+	for rows.Next() {
+		var taskName string
+		err := rows.Scan(&taskName)
+		if err != nil {
+			return tasks, err
+		}
+
+		tasks = append(tasks, taskName)
+	}
+
+	return tasks, nil
+}
