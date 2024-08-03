@@ -32,17 +32,18 @@ func SetWorkerTaskToResting(worker workers.Worker) error {
 // and set that worker's new task
 func SetWorkerTaskToNewTask(worker workers.Worker, taskType string) error {
 	var verifiedTaskType string
+	var verifiedTaskTypeId int
 
-	// i think a list of all task types isn't right, we need a list of tasks that this location has access to,
-	// which is quite different
-	taskTypes, err := GetListOfTasksFromLocationId(worker.LocationId)
+	//
+	taskTypeMap, err := GetListOfTasksFromLocationId(worker.LocationId)
 	if err != nil {
 		return err
 	}
 	// verify that the taskType param matches a task type in the db.
-	for _, thisType := range taskTypes {
+	for id, thisType := range taskTypeMap {
 		if taskType == thisType {
 			verifiedTaskType = taskType
+			verifiedTaskTypeId = id
 		}
 	}
 	if verifiedTaskType == "" {
@@ -50,7 +51,7 @@ func SetWorkerTaskToNewTask(worker workers.Worker, taskType string) error {
 	}
 
 	//end the old task
-	err = EndCurrentWorkerTask(worker) // currently this function is incomplete, thus, not working
+	err = EndCurrentWorkerTask(worker)
 	if err != nil {
 		return err
 	}
@@ -64,8 +65,11 @@ func SetWorkerTaskToNewTask(worker workers.Worker, taskType string) error {
 	}
 
 	// add new task to db
-	query := "INSERT INTO public.workers_tasks (task_type_id, location_id, worker_id, start_time, start_longitude, start_latitude, end_longitude, end_latitude, is_ongoing) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"
-	db.QueryRow(query, workerLocation.Id, worker.LocationId, worker.Id, time.Now(), workerLocation.Latitude, workerLocation.Longitude, workerLocation.Latitude, workerLocation.Longitude, true)
+	query := "INSERT INTO workers_tasks (task_type_id, location_id, worker_id, start_time, start_longitude, start_latitude, end_longitude, end_latitude, is_ongoing) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"
+	_, err = db.Exec(query, verifiedTaskTypeId, workerLocation.Id, worker.Id, time.Now(), workerLocation.Latitude, workerLocation.Longitude, workerLocation.Latitude, workerLocation.Longitude, true)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -108,11 +112,11 @@ func EndCurrentWorkerTask(worker workers.Worker) error {
 }
 
 // GetListOfTasksFromLocationId gets a list of all tasks that a location has access to, by a locationId
-func GetListOfTasksFromLocationId(id int) ([]string, error) {
-	var tasks []string
+func GetListOfTasksFromLocationId(id int) (map[int]string, error) {
+	var tasks = make(map[int]string)
 	db := database.OpenDatabase()
 	defer db.Close()
-	query := "SELECT tt.name FROM locations l JOIN location_types_tasks ltt ON l.location_type_id = ltt.location_type_id JOIN task_types tt ON ltt.task_type_id = tt.id WHERE l.id = $1"
+	query := "SELECT tt.id, tt.name FROM locations l JOIN location_types_tasks ltt ON l.location_type_id = ltt.location_type_id JOIN task_types tt ON ltt.task_type_id = tt.id WHERE l.id = $1"
 
 	rows, err := db.Query(query, id)
 	if err != nil {
@@ -121,12 +125,14 @@ func GetListOfTasksFromLocationId(id int) ([]string, error) {
 
 	for rows.Next() {
 		var taskName string
-		err := rows.Scan(&taskName)
+		var taskTypeId int
+
+		err := rows.Scan(&taskTypeId, &taskName)
 		if err != nil {
 			return tasks, err
 		}
 
-		tasks = append(tasks, taskName)
+		tasks[taskTypeId] = taskName
 	}
 
 	return tasks, nil
