@@ -70,6 +70,7 @@ func WorkerMenuOptions(user user.User, worker workers.Worker) error {
 			fmt.Printf("%v: %s\n", i, task)
 		}
 		//2. wait for user input.
+
 		userInput, err := util.ReadNumericSelection(len(taskNames))
 		if err != nil {
 			fmt.Println(err)
@@ -81,7 +82,7 @@ func WorkerMenuOptions(user user.User, worker workers.Worker) error {
 		if err != nil {
 			return err
 		}
-		fmt.Println("%s is now %s-ing\n", worker.Name, chosenTask)
+		fmt.Printf("%s is now %s-ing\n", worker.Name, chosenTask)
 
 	} else if userInput == "swap" {
 		err := workers.ToggleWorkingForWorker(worker)

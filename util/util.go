@@ -55,5 +55,5 @@ func ReadNumericSelection(options int) (int, error) {
 		return -1, fmt.Errorf("input was too low or too high")
 	}
 
-	return -1, nil
+	return int(intInput), nil
 }

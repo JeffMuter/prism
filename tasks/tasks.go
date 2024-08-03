@@ -99,7 +99,7 @@ func GetListOfTaskTypes() ([]string, error) {
 func EndCurrentWorkerTask(worker workers.Worker) error {
 	db := database.OpenDatabase()
 	defer db.Close()
-	query := "UPDATE workers_tasks SET is_ongoing = false, end_time = ? WHERE worker_id = ?"
+	query := "UPDATE workers_tasks SET is_ongoing = false, end_time = $1 WHERE worker_id = $2"
 	_, err := db.Exec(query, time.Now(), worker.Id)
 	if err != nil {
 		return err
@@ -112,7 +112,7 @@ func GetListOfTasksFromLocationId(id int) ([]string, error) {
 	var tasks []string
 	db := database.OpenDatabase()
 	defer db.Close()
-	query := "SELECT tt.name FROM locations l JOIN location_types_tasks ltt ON l.location_type_id = ltt.location_type_id JOIN task_types tt ON ltt.task_type_id = tt.id WHERE l.id = 1"
+	query := "SELECT tt.name FROM locations l JOIN location_types_tasks ltt ON l.location_type_id = ltt.location_type_id JOIN task_types tt ON ltt.task_type_id = tt.id WHERE l.id = $1"
 
 	rows, err := db.Query(query, id)
 	if err != nil {
