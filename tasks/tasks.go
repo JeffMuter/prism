@@ -64,7 +64,7 @@ func SetWorkerTaskToNewTask(worker workers.Worker, taskType string) error {
 	}
 
 	// add new task to db
-	query := "INSERT INTO public.workers_tasks (task_type_id, location_id, worker_id, start_time, start_longitude, start_latitude, end_longitude, end_latitude, is_ongoing) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);"
+	query := "INSERT INTO public.workers_tasks (task_type_id, location_id, worker_id, start_time, start_longitude, start_latitude, end_longitude, end_latitude, is_ongoing) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"
 	db.QueryRow(query, workerLocation.Id, worker.LocationId, worker.Id, time.Now(), workerLocation.Latitude, workerLocation.Longitude, workerLocation.Latitude, workerLocation.Longitude, true)
 
 	return nil
@@ -97,6 +97,13 @@ func GetListOfTaskTypes() ([]string, error) {
 
 // EndCurrentWorkerTask is a func to end the current task of the worker.
 func EndCurrentWorkerTask(worker workers.Worker) error {
+	db := database.OpenDatabase()
+	defer db.Close()
+	query := "UPDATE workers_tasks SET is_ongoing = false, end_time = ? WHERE worker_id = ?"
+	_, err := db.Exec(query, time.Now(), worker.Id)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -105,7 +112,7 @@ func GetListOfTasksFromLocationId(id int) ([]string, error) {
 	var tasks []string
 	db := database.OpenDatabase()
 	defer db.Close()
-	query := "SELECT tt.name FROM locations l JOIN location_types_tasks ltt ON l.location_type_id = ltt.location_type_id JOIN task_types tt ON ltt.task_type_id = tt.id WHERE l.id = 1;"
+	query := "SELECT tt.name FROM locations l JOIN location_types_tasks ltt ON l.location_type_id = ltt.location_type_id JOIN task_types tt ON ltt.task_type_id = tt.id WHERE l.id = 1"
 
 	rows, err := db.Query(query, id)
 	if err != nil {

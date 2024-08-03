@@ -81,8 +81,7 @@ func WorkerMenuOptions(user user.User, worker workers.Worker) error {
 		if err != nil {
 			return err
 		}
-
-		//4. end the last task the worker was doing.
+		fmt.Println("%s is now %s-ing\n", worker.Name, chosenTask)
 
 	} else if userInput == "swap" {
 		err := workers.ToggleWorkingForWorker(worker)

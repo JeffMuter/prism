@@ -15,6 +15,7 @@ type Location struct {
 	Id                int
 	DefaultAccessible bool
 	LocationType      string
+	LocationTypeId    int
 	Latitude          float64
 	Longitude         float64
 	Name              string
@@ -57,7 +58,7 @@ func CreateNode(user user.User) error {
 	var newLocationRowId int
 	db.QueryRow(query, "false", "node", user.Latitude, user.Longitude, "new node", "new node description", "node").Scan(&newLocationRowId)
 
-	query = "INSERT INTO user_locations (user_id, location_id) VALUES ($1, $2)"
+	query = "INSERT INTO users_locations (user_id, location_id) VALUES ($1, $2)"
 	db.QueryRow(query, user.Id, newLocationRowId)
 
 	return nil
@@ -71,7 +72,7 @@ func GetAllNodesUserCouldSee(user user.User) []Location {
 	defer db.Close()
 
 	query :=
-		"SELECT name, latitude, longitude, art FROM locations LEFT JOIN user_locations ON locations.id = user_locations.location_id WHERE user_locations.user_id = $1 OR locations.default_accessible = TRUE"
+		"SELECT name, latitude, longitude, art FROM locations LEFT JOIN users_locations ON locations.id = users_locations.location_id WHERE users_locations.user_id = $1 OR locations.default_accessible = TRUE"
 
 	rows, err := db.Query(query, user.Id)
 	if err != nil {
@@ -157,7 +158,7 @@ func ConnectToNode(user user.User) error {
 	defer db.Close()
 
 	// get all locations currently not associated to this user
-	query := "SELECT locations.id, name, latitude, longitude FROM locations LEFT JOIN user_locations ON locations.id = user_locations.location_id AND user_locations.user_id = $1 WHERE user_id IS NULL"
+	query := "SELECT locations.id, name, latitude, longitude FROM locations LEFT JOIN users_locations ON locations.id = users_locations.location_id AND users_locations.user_id = $1 WHERE user_id IS NULL"
 	rows, err := db.Query(query, user.Id)
 	if err != nil {
 		fmt.Println("err querying db for connect to node: ", err)
@@ -172,7 +173,7 @@ func ConnectToNode(user user.User) error {
 			log.Fatal(err)
 		}
 		if location.Latitude < maxLat && location.Latitude > minLat && location.Longitude < maxLong && location.Longitude > minLong {
-			query = "INSERT INTO user_locations (user_id, location_id) VALUES ($1, $2);"
+			query = "INSERT INTO users_locations (user_id, location_id) VALUES ($1, $2);"
 			db.QueryRow(query, user.Id, location.Id)
 			return nil
 		}
@@ -190,14 +191,14 @@ func GetListOfNodesLinkedToUser(user user.User) ([]Location, error) {
 	db := database.OpenDatabase()
 	defer db.Close()
 
-	query := "SELECT locations.id, worker_count, location_type, latitude, longitude, name, description, art FROM locations LEFT JOIN user_locations ON locations.id = user_locations.location_id WHERE user_locations.user_id = $1"
+	query := "SELECT locations.id, worker_count, location_type, location_type_id, latitude, longitude, name, description, art FROM locations LEFT JOIN users_locations ON locations.id = users_locations.location_id WHERE users_locations.user_id = $1"
 	rows, err := db.Query(query, user.Id)
 	if err != nil {
 		return locations, err
 	}
 	for rows.Next() {
 		var location Location
-		err := rows.Scan(&location.Id, &location.WorkerCount, &location.LocationType, &location.Latitude, &location.Longitude, &location.Name, &location.Description, &location.ArtFileName)
+		err := rows.Scan(&location.Id, &location.WorkerCount, &location.LocationType, &location.LocationTypeId, &location.Latitude, &location.Longitude, &location.Name, &location.Description, &location.ArtFileName)
 		if err != nil {
 			return locations, err
 		}
@@ -212,7 +213,7 @@ func RemoveWorkerFromNode(location Location) error {
 	defer db.Close()
 
 	countAfter := location.WorkerCount - 1
-	query := "UPDATE user_locations SET worker_count = $1 WHERE user_locations.id = $2"
+	query := "UPDATE users_locations SET worker_count = $1 WHERE users_locations.id = $2"
 
 	_, err := db.Exec(query, countAfter, location.Id)
 	if err != nil {
@@ -229,7 +230,7 @@ func AddWorkerToNode(location Location) error {
 	defer db.Close()
 
 	countAfter := location.WorkerCount + 1
-	query := "UPDATE user_locations SET worker_count = $1 WHERE user_locations.id = $2"
+	query := "UPDATE users_locations SET worker_count = $1 WHERE users_locations.id = $2"
 
 	_, err := db.Exec(query, countAfter, location.Id)
 	if err != nil {
@@ -245,10 +246,10 @@ func GetTasksForLocation(location Location) ([]string, error) {
 	defer db.Close()
 
 	var taskTypes []string
-	locationType := location.LocationType
-	query := "SELECT tt.name FROM task_types tt JOIN location_types_tasks ltt ON tt.id = ltt.task_type_id JOIN location_types lt ON ltt.location_type_id = lt.id WHERE lt.name = ?;"
+	locationTypeId := location.LocationTypeId
+	query := "SELECT tt.name FROM task_types tt JOIN location_types_tasks ltt ON tt.id = ltt.task_type_id JOIN location_types lt ON ltt.location_type_id = lt.id WHERE lt.id = $1"
 
-	rows, err := db.Query(query, locationType)
+	rows, err := db.Query(query, locationTypeId)
 	if err != nil {
 		return taskTypes, err
 	}
@@ -269,11 +270,11 @@ func GetLocationFromLocationId(id int) (Location, error) {
 	var location Location
 	db := database.OpenDatabase()
 	defer db.Close()
-	query := "SELECT id, location_type, latitude, longitude, name, description, art FROM locations WHERE id = $1"
+	query := "SELECT id, location_type, location_type_id, latitude, longitude, name, description, art FROM locations WHERE id = $1"
 
 	row := db.QueryRow(query, id)
 
-	err := row.Scan(&location.Id, &location.LocationType, &location.Latitude, &location.Longitude, &location.Name, &location.Description, &location.ArtFileName)
+	err := row.Scan(&location.Id, &location.LocationType, &location.LocationTypeId, &location.Latitude, &location.Longitude, &location.Name, &location.Description, &location.ArtFileName)
 	if err != nil {
 		return location, err
 	}
