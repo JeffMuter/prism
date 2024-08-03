@@ -3,6 +3,7 @@ package tasks
 import (
 	"fmt"
 	"prism/database"
+	"prism/nodes"
 	"prism/workers"
 	"time"
 )
@@ -49,11 +50,22 @@ func SetWorkerTaskToNewTask(worker workers.Worker, taskType string) error {
 	}
 
 	//end the old task
-	err = EndCurrentWorkerTask(worker)
+	err = EndCurrentWorkerTask(worker) // currently this function is incomplete, thus, not working
 	if err != nil {
 		return err
 	}
-	// update the db with a new task
+	db := database.OpenDatabase()
+	defer db.Close()
+
+	// need the worker's location for details
+	workerLocation, err := nodes.GetLocationFromLocationId(worker.LocationId)
+	if err != nil {
+		return err
+	}
+
+	// add new task to db
+	query := "INSERT INTO public.workers_tasks (task_type_id, location_id, worker_id, start_time, start_longitude, start_latitude, end_longitude, end_latitude, is_ongoing) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);"
+	db.QueryRow(query, workerLocation.Id, worker.LocationId, worker.Id, time.Now(), workerLocation.Latitude, workerLocation.Longitude, workerLocation.Latitude, workerLocation.Longitude, true)
 
 	return nil
 }
