@@ -281,3 +281,8 @@ func GetLocationFromLocationId(id int) (Location, error) {
 
 	return location, nil
 }
+
+func UpdateLocationResourcesQuantity(location Location) error {
+
+	return nil
+}
