@@ -378,7 +378,15 @@ func GetNamesForResourcesOfTasksFromLocation(id int) ([]string, error) {
 
 	db := database.OpenDatabase()
 	defer db.Close()
-	query := "SELECT DISTINCT r.name FROM workers_tasks wt JOIN task_types tt ON wt.task_type_id = tt.id JOIN task_types_resources ttr ON tt.id = ttr.task_type_id JOIN resources r ON ttr.resource_id = r.id JOIN locations_resources lr ON lr.resource_id = r.id AND lr.location_id = wt.location_id WHERE wt.location_id = $1 AND wt.is_ongoing = TRUE;"
+	// this query is painful as hell, so I need to explain it.
+	// requirement: get all task names of resources which are possibly earnable from all tasks which are ongoing by the location id.
+	// select resource.name
+	// FROM workers_tasks, this is where the location id is from.
+	// join to task_types, but the
+
+	// where ongoing = true
+	// where location_id = id
+	query := "SELECT DISTINCT r.name FROM workers_tasks wt JOIN task_types tt ON wt.task_type_id = tt.id JOIN task_types_resources ttr ON tt.id = ttr.task_type_id JOIN resources r ON ttr.resource_id = r.id WHERE wt.location_id = $1 AND wt.is_ongoing = TRUE;"
 
 	rows, err := db.Query(query, id)
 	if err != nil {
@@ -462,7 +470,7 @@ func GetResourceIdByName(name string) (int, error) {
 
 	db := database.OpenDatabase()
 	defer db.Close()
-	query := "SELECT name FROM resources WHERE name = $1"
+	query := "SELECT id FROM resources WHERE name = $1"
 	row := db.QueryRow(query, name)
 	err := row.Scan(&id)
 	if err != nil {

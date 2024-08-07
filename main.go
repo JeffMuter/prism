@@ -30,6 +30,7 @@ func main() {
 	err = nodes.UpdateLocationResourcesQuantity(locations[0])
 	if err != nil {
 		fmt.Println(":(")
+		fmt.Println(err)
 	}
 
 	workers.GetWorkersRelevantToUser(thisUser)
