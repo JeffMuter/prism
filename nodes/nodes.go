@@ -30,9 +30,10 @@ type Location struct {
 }
 
 type resource struct {
-	name        string
-	lastUpdated time.Time
-	quantity    int
+	locationResourceId int
+	name               string
+	lastUpdated        time.Time
+	quantity           int
 }
 
 type Art struct {
@@ -64,7 +65,10 @@ func CreateNode(user user.User) error {
 	// add node to locations
 	query := "INSERT INTO locations (default_accessible, location_type, latitude, longitude, name, description, art) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id"
 	var newLocationRowId int
-	db.QueryRow(query, "false", "node", user.Latitude, user.Longitude, "new node", "new node description", "node").Scan(&newLocationRowId)
+	err := db.QueryRow(query, "false", "node", user.Latitude, user.Longitude, "new node", "new node description", "node").Scan(&newLocationRowId)
+	if err != nil {
+		return errors.New("error trying to queryRow to insert locations")
+	}
 
 	query = "INSERT INTO users_locations (user_id, location_id) VALUES ($1, $2)"
 	db.QueryRow(query, user.Id, newLocationRowId)
@@ -104,7 +108,7 @@ func SetLocationsArt(locations []Location) []Location {
 	for _, location := range locations {
 		// we want to take the path, go to our assets folder
 		var artSlice []string
-		var artName string = location.ArtFileName
+		var artName = location.ArtFileName
 		txtFilePath, err := util.GetAbsoluteFilepath("/assets/" + artName + ".txt")
 		if err != nil {
 			fmt.Println("txtFilePath err:", txtFilePath, err)
@@ -141,13 +145,13 @@ func SetLocationsArt(locations []Location) []Location {
 // UpdateArtDimensions takes in an art object, and adds the dimension fields of height and width
 func (art Art) UpdateArtDimensions() Art {
 	art.Height = len(art.Art)
-	max := 0
+	maximum := 0
 	for _, line := range art.Art {
-		if len(line) > max {
-			max = len(line)
+		if len(line) > maximum {
+			maximum = len(line)
 		}
 	}
-	art.Width = max
+	art.Width = maximum
 
 	return art
 }
@@ -299,42 +303,70 @@ func UpdateLocationResourcesQuantity(location Location) error {
 	}
 
 	// get the quantities & last_updated from this locations_resources
-	resourceDataCurrentlyAtLocation, err := GetResourceDataByLocationId(location.Id)
+	var resourceData []resource
+	resourceData, err = GetResourceDataByLocationId(location.Id)
 	if err != nil {
 		return err
 	}
 
+	var newResources []resource // for the resources that are not in the db yet, so we can add them seperately
+
 	// we need to make resources, for each potential resource not currently in resource slice.
 	for _, resourceName := range potentialResources {
 		var found bool
-		for _, resource := range resourceDataCurrentlyAtLocation {
+		for _, resource := range resourceData {
 			if resource.name == resourceName {
 				found = true
 				break
 			}
 		}
 		if !found { // if not found, make an add a new resource to the slice of existing.
-			newResource := resource{resourceName, time.Now(), 0}
-			resourceDataCurrentlyAtLocation = append(resourceDataCurrentlyAtLocation, newResource)
+			var resourceId int
+			resourceId, err = GetResourceIdByName(resourceName)
+			if err != nil {
+				return err
+			}
+
+			// we don't have the current resource id... we need it.
+			newResource := resource{resourceId, resourceName, time.Now(), 0}
+			newResources = append(newResources, newResource)
+			resourceData = append(resourceData, newResource)
 		}
 	}
+
+	// add newResources to the locations_resources table
+	err = createNewResources(location.Id, newResources)
 
 	// add placeholder for rate of change / minute of the resource.
 	var mapForResourceAndRateOfChange = make(map[resource]float64)
 
 	var mapOfResourcesAndMinutesPassedSinceUpdate = make(map[resource]int)
 
-	// calculate the # of minutes passed from last_updated to time.Now().
+	// calculate the # of minutes passed from last_updated to time.Now(). Store in map of [resource]minutes
 	now := time.Now()
-	for resource := range potentialResources {
+	for _, resource := range resourceData {
 		timePassed := now.Sub(resource.lastUpdated)
 
 		mapOfResourcesAndMinutesPassedSinceUpdate[resource] = int(timePassed.Minutes())
 	}
 
-	// add that # to the resource quantity.
+	// convert that int minutes value, to the quantity to add to the locations_resources value.
+	for thisResource, thisMinutes := range mapOfResourcesAndMinutesPassedSinceUpdate {
+		var newQuantity int
+		// minutesPassed * rate of change + currentQuantity = updatedQuantity
+		newQuantity = int(float64(thisMinutes)*mapForResourceAndRateOfChange[thisResource]) + thisResource.quantity
+
+		mapOfResourcesAndMinutesPassedSinceUpdate[thisResource] = newQuantity
+	}
 
 	// update the resource, quantity, and last updated to time.Now()
+	for _, resource := range resourceData {
+		resource.quantity = mapOfResourcesAndMinutesPassedSinceUpdate[resource]
+		resource.lastUpdated = now
+	}
+
+	// update the database with this []resource
+	err = UpdateLocationResources(location.Id, resourceData)
 
 	return nil
 }
@@ -369,21 +401,71 @@ func GetResourceDataByLocationId(id int) ([]resource, error) {
 
 	db := database.OpenDatabase()
 	defer db.Close()
-	query := "SELECT r.name, lr.quantity, lr.last_updated FROM locations_resources lr JOIN resources r ON r.id = lr.resource_id WHERE lr.location_id = $1;"
+	query := "SELECT r.id, r.name, lr.quantity, lr.last_updated FROM locations_resources lr JOIN resources r ON r.id = lr.resource_id WHERE lr.location_id = $1;"
 
 	rows, err := db.Query(query, id)
 	if err != nil {
-		return resources, errors.New("issue querying db for values from getting resources by location id.")
+		return resources, errors.New("issue querying db for values from getting resources by location id")
 	}
 
 	for rows.Next() {
 		var resource resource
-		err := rows.Scan(&resource.name, &resource.quantity, &resource.lastUpdated)
+		err := rows.Scan(&resource.locationResourceId, &resource.name, &resource.quantity, &resource.lastUpdated)
 		if err != nil {
-			return resources, errors.New("issue assigning values from row to get resources by location id.")
+			return resources, errors.New("issue assigning values from row to get resources by location id")
 		}
 		resources = append(resources, resource)
 	}
 
 	return resources, nil
+}
+
+// UpdateLocationResources updates the locations_resources table, for each entry of this location. Adds new rows for each resource with a value, not yet on the table
+func UpdateLocationResources(locationId int, resources []resource) error {
+	// remove the element if the quantity is 0 or less.
+	for i, resource := range resources {
+		if resource.quantity < 1 {
+			beforeIndex := resources[:i]
+			afterIndex := resources[i+1:]
+			resources = append(beforeIndex, afterIndex...)
+		}
+	}
+
+	db := database.OpenDatabase()
+	defer db.Close()
+	query := "UPDATE locations_resources lr SET last_updated = $1, quantity = $2 WHERE location_id = $3 AND resource_id = $4;"
+	for _, resource := range resources {
+		_, err := db.Exec(query, resource.lastUpdated, resource.quantity, locationId, resource.locationResourceId)
+		if err != nil {
+			return errors.New("could not update locations_resources")
+		}
+	}
+	return nil
+}
+
+func createNewResources(locationId int, resources []resource) error {
+	db := database.OpenDatabase()
+	defer db.Close()
+	query := "INSERT INTO locations_resources (location_id, resource_id, last_updated, quantity) VALUES ($1, $2, $3, $4)"
+	for i := range resources {
+		err := db.QueryRow(query, locationId, resources[i].locationResourceId, resources[i].lastUpdated, resources[i].quantity)
+		if err != nil {
+			return errors.New("error inserting locations_resources row to db")
+		}
+	}
+	return nil
+}
+
+func GetResourceIdByName(name string) (int, error) {
+	var id int = -1
+
+	db := database.OpenDatabase()
+	defer db.Close()
+	query := "SELECT name FROM resources WHERE name = $1"
+	row := db.QueryRow(query, name)
+	err := row.Scan(&id)
+	if err != nil {
+		return id, errors.New("error selecting name from resources by name")
+	}
+	return id, nil
 }
