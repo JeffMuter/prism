@@ -329,7 +329,7 @@ func UpdateLocationResourcesQuantity(location Location) error {
 			}
 
 			// we don't have the current resource id... we need it.
-			newResource := resource{resourceId, resourceName, time.Now(), 0}
+			newResource := resource{resourceId, resourceName, time.Now().UTC(), 0}
 			newResources = append(newResources, newResource)
 			resourceData = append(resourceData, newResource)
 		}
@@ -340,11 +340,14 @@ func UpdateLocationResourcesQuantity(location Location) error {
 
 	// add placeholder for rate of change / minute of the resource.
 	var mapForResourceAndRateOfChange = make(map[resource]float64)
+	for _, resource := range resourceData {
+		mapForResourceAndRateOfChange[resource] = 1
+	}
 
 	var mapOfResourcesAndMinutesPassedSinceUpdate = make(map[resource]int)
 
 	// calculate the # of minutes passed from last_updated to time.Now(). Store in map of [resource]minutes
-	now := time.Now()
+	now := time.Now().UTC()
 	for _, resource := range resourceData {
 		timePassed := now.Sub(resource.lastUpdated)
 
@@ -361,13 +364,16 @@ func UpdateLocationResourcesQuantity(location Location) error {
 	}
 
 	// update the resource, quantity, and last updated to time.Now()
-	for _, resource := range resourceData {
-		resource.quantity = mapOfResourcesAndMinutesPassedSinceUpdate[resource]
-		resource.lastUpdated = now
+	for i, resource := range resourceData {
+		resourceData[i].quantity = mapOfResourcesAndMinutesPassedSinceUpdate[resource]
+		resourceData[i].lastUpdated = now
 	}
 
 	// update the database with this []resource
 	err = UpdateLocationResources(location.Id, resourceData)
+	if err != nil {
+		return fmt.Errorf("error updating location_resources values: %v", err)
+	}
 
 	return nil
 }
@@ -431,11 +437,11 @@ func GetResourceDataByLocationId(id int) ([]resource, error) {
 
 // UpdateLocationResources updates the locations_resources table, for each entry of this location. Adds new rows for each resource with a value, not yet on the table
 func UpdateLocationResources(locationId int, resources []resource) error {
-	// remove the element if the quantity is 0 or less.
+	// remove the element if the quantity is 0 or less. If 0 or less, then we don't need to update the db with it.
 	for i, resource := range resources {
 		if resource.quantity < 1 {
 			beforeIndex := resources[:i]
-			afterIndex := resources[i+1:]
+			afterIndex := resources[:i+1]
 			resources = append(beforeIndex, afterIndex...)
 		}
 	}
@@ -459,7 +465,7 @@ func createNewResources(locationId int, resources []resource) error {
 	for i := range resources {
 		err := db.QueryRow(query, locationId, resources[i].locationResourceId, resources[i].lastUpdated, resources[i].quantity)
 		if err != nil {
-			return errors.New("error inserting locations_resources row to db")
+			return fmt.Errorf("error inserting locations_resources row to db: %v", err)
 		}
 	}
 	return nil

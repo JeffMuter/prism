@@ -66,7 +66,7 @@ func SetWorkerTaskToNewTask(worker workers.Worker, taskType string) error {
 
 	// add new task to db
 	query := "INSERT INTO workers_tasks (task_type_id, location_id, worker_id, start_time, start_longitude, start_latitude, end_longitude, end_latitude, is_ongoing) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"
-	_, err = db.Exec(query, verifiedTaskTypeId, workerLocation.Id, worker.Id, time.Now(), workerLocation.Latitude, workerLocation.Longitude, workerLocation.Latitude, workerLocation.Longitude, true)
+	_, err = db.Exec(query, verifiedTaskTypeId, workerLocation.Id, worker.Id, time.Now().UTC(), workerLocation.Latitude, workerLocation.Longitude, workerLocation.Latitude, workerLocation.Longitude, true)
 	if err != nil {
 		return err
 	}
@@ -104,7 +104,7 @@ func EndCurrentWorkerTask(worker workers.Worker) error {
 	db := database.OpenDatabase()
 	defer db.Close()
 	query := "UPDATE workers_tasks SET is_ongoing = false, end_time = $1 WHERE worker_id = $2"
-	_, err := db.Exec(query, time.Now(), worker.Id)
+	_, err := db.Exec(query, time.Now().UTC(), worker.Id)
 	if err != nil {
 		return err
 	}
