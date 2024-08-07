@@ -299,11 +299,16 @@ func UpdateLocationResourcesQuantity(location Location) error {
 	}
 
 	// get the quantities & last_updated from this locations_resources
-	mapQuantityLastUpdated, err := GetResourceDataByLocationId
+	resourceDataCurrentlyAtLocation, err := GetResourceDataByLocationId(location.Id)
+	if err != nil {
+		return err
+	}
 
 	// add placeholder for rate of change / minute of the resource.
+	var mapForResourceAndRateOfChange = make(map[resource]float64)
 
 	// calculate the # of minutes passed from last_updated to time.Now().
+	now := time.Now()
 
 	// add that # to the resource quantity.
 
@@ -330,6 +335,30 @@ func GetNamesForResourcesOfTasksFromLocation(id int) ([]string, error) {
 		err = rows.Scan(&resource)
 		if err != nil {
 			return resources, errors.New("error scanning rows in GetResourcesFromLocationIdForUpdating")
+		}
+		resources = append(resources, resource)
+	}
+
+	return resources, nil
+}
+
+func GetResourceDataByLocationId(id int) ([]resource, error) {
+	var resources []resource
+
+	db := database.OpenDatabase()
+	defer db.Close()
+	query := "SELECT r.name, lr.quantity, lr.last_updated FROM locations_resources lr JOIN resources r ON r.id = lr.resource_id WHERE lr.location_id = $1;"
+
+	rows, err := db.Query(query, id)
+	if err != nil {
+		return resources, errors.New("issue querying db for values from getting resources by location id.")
+	}
+
+	for rows.Next() {
+		var resource resource
+		err := rows.Scan(&resource.name, &resource.quantity, &resource.lastUpdated)
+		if err != nil {
+			return resources, errors.New("issue assigning values from row to get resources by location id.")
 		}
 		resources = append(resources, resource)
 	}
