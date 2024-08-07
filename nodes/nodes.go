@@ -304,11 +304,33 @@ func UpdateLocationResourcesQuantity(location Location) error {
 		return err
 	}
 
+	// we need to make resources, for each potential resource not currently in resource slice.
+	for _, resourceName := range potentialResources {
+		var found bool
+		for _, resource := range resourceDataCurrentlyAtLocation {
+			if resource.name == resourceName {
+				found = true
+				break
+			}
+		}
+		if !found { // if not found, make an add a new resource to the slice of existing.
+			newResource := resource{resourceName, time.Now(), 0}
+			resourceDataCurrentlyAtLocation = append(resourceDataCurrentlyAtLocation, newResource)
+		}
+	}
+
 	// add placeholder for rate of change / minute of the resource.
 	var mapForResourceAndRateOfChange = make(map[resource]float64)
 
+	var mapOfResourcesAndMinutesPassedSinceUpdate = make(map[resource]int)
+
 	// calculate the # of minutes passed from last_updated to time.Now().
 	now := time.Now()
+	for resource := range potentialResources {
+		timePassed := now.Sub(resource.lastUpdated)
+
+		mapOfResourcesAndMinutesPassedSinceUpdate[resource] = int(timePassed.Minutes())
+	}
 
 	// add that # to the resource quantity.
 
