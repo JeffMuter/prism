@@ -292,8 +292,14 @@ func GetLocationFromLocationId(id int) (Location, error) {
 
 func UpdateLocationResourcesQuantity(location Location) error {
 
-	// get quantities on the locations
-	GetResourcesFromLocationIdForUpdating
+	// get names of all resources that the current tasks happening at this location could yield
+	potentialResources, err := GetNamesForResourcesOfTasksFromLocation(location.Id)
+	if err != nil {
+		return err
+	}
+
+	// get the quantities & last_updated from this locations_resources
+	mapQuantityLastUpdated, err := GetResourceDataByLocationId
 
 	// add placeholder for rate of change / minute of the resource.
 
@@ -306,26 +312,27 @@ func UpdateLocationResourcesQuantity(location Location) error {
 	return nil
 }
 
-func GetResourcesFromLocationIdForUpdating(id int) (map[string]int, error) {
+func GetNamesForResourcesOfTasksFromLocation(id int) ([]string, error) {
 
-	resourcesQuantities := make(map[string]int)
+	var resources []string
 
 	db := database.OpenDatabase()
 	defer db.Close()
-	// tested this
-	query := "SELECT DISTINCT r.name, lr.quantity, lr.last_updated FROM workers_tasks wt JOIN task_types tt ON wt.task_type_id = tt.id JOIN task_types_resources ttr ON tt.id = ttr.task_type_id JOIN resources r ON ttr.resource_id = r.id JOIN locations_resources lr ON lr.resource_id = r.id AND lr.location_id = wt.location_id WHERE wt.location_id = 3340 AND wt.is_ongoing = TRUE;"
+	query := "SELECT DISTINCT r.name FROM workers_tasks wt JOIN task_types tt ON wt.task_type_id = tt.id JOIN task_types_resources ttr ON tt.id = ttr.task_type_id JOIN resources r ON ttr.resource_id = r.id JOIN locations_resources lr ON lr.resource_id = r.id AND lr.location_id = wt.location_id WHERE wt.location_id = $1 AND wt.is_ongoing = TRUE;"
 
 	rows, err := db.Query(query, id)
 	if err != nil {
-		return tasks, errors.New("failed to selects resources from ongoing tasks related to locationId")
+		return resources, errors.New("failed to selects resource names from ongoing tasks related to locationId")
 	}
 
 	for rows.Next() {
-		err = rows.Scan()
+		var resource string
+		err = rows.Scan(&resource)
 		if err != nil {
-			return resourcesQuantities, errors.New("error scanning rows in GetResourcesFromLocationIdForUpdating")
+			return resources, errors.New("error scanning rows in GetResourcesFromLocationIdForUpdating")
 		}
+		resources = append(resources, resource)
 	}
 
-	return resourcesQuantities, nil
+	return resources, nil
 }
