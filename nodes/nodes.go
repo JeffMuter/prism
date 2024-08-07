@@ -253,6 +253,7 @@ func AddWorkerToNode(location Location) error {
 	return nil
 }
 
+// GetTasksForLocation gets all task names for a location, using the location
 func GetTasksForLocation(location Location) ([]string, error) {
 	db := database.OpenDatabase()
 	defer db.Close()

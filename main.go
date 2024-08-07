@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"prism/menus"
+	"prism/nodes"
 	"prism/render"
 	"prism/user"
 	"prism/workers"
@@ -23,6 +24,12 @@ func main() {
 	thisUser.Latitude, thisUser.Longitude, err = user.Ping()
 	if err != nil {
 		fmt.Println(err)
+	}
+	locations, _ := nodes.GetListOfNodesLinkedToUser(thisUser)
+
+	err = nodes.UpdateLocationResourcesQuantity(locations[0])
+	if err != nil {
+		fmt.Println(":(")
 	}
 
 	workers.GetWorkersRelevantToUser(thisUser)

@@ -1,7 +1,6 @@
 package tasks
 
 import (
-	"errors"
 	"fmt"
 	"prism/database"
 	"prism/nodes"
@@ -134,27 +133,6 @@ func GetListOfTasksFromLocationId(id int) (map[int]string, error) {
 		}
 
 		tasks[taskTypeId] = taskName
-	}
-
-	return tasks, nil
-}
-
-// GetOngoingTasksFromLocation func takes in an id, and spits out all associated tasks.
-func GetOngoingTasksFromLocation(id int) ([]task, error) {
-	var tasks []Task
-
-	db := database.OpenDatabase()
-	defer db.Close()
-	query := "SELECT task_type_id FROM workers_tasks wt JOIN WHERE location_id = $1 AND is_ongoing = TRUE"
-
-	rows, err := db.Query(query, id)
-	if err != nil {
-		return tasks, errors.New("failed to selects tasks by locationId")
-	}
-
-	for rows.Next() {
-		var thisTask Task
-		rows.Scan()
 	}
 
 	return tasks, nil
