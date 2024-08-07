@@ -9,6 +9,7 @@ import (
 	"prism/database"
 	"prism/user"
 	"prism/util"
+	"time"
 )
 
 type Location struct {
@@ -27,6 +28,13 @@ type Location struct {
 	WorkerCount       int
 	Named             string
 }
+
+type resource struct {
+	name        string
+	lastUpdated time.Time
+	quantity    int
+}
+
 type Art struct {
 	Width  int
 	Height int
@@ -284,5 +292,40 @@ func GetLocationFromLocationId(id int) (Location, error) {
 
 func UpdateLocationResourcesQuantity(location Location) error {
 
+	// get quantities on the locations
+	GetResourcesFromLocationIdForUpdating
+
+	// add placeholder for rate of change / minute of the resource.
+
+	// calculate the # of minutes passed from last_updated to time.Now().
+
+	// add that # to the resource quantity.
+
+	// update the resource, quantity, and last updated to time.Now()
+
 	return nil
+}
+
+func GetResourcesFromLocationIdForUpdating(id int) (map[string]int, error) {
+
+	resourcesQuantities := make(map[string]int)
+
+	db := database.OpenDatabase()
+	defer db.Close()
+	// tested this
+	query := "SELECT DISTINCT r.name, lr.quantity, lr.last_updated FROM workers_tasks wt JOIN task_types tt ON wt.task_type_id = tt.id JOIN task_types_resources ttr ON tt.id = ttr.task_type_id JOIN resources r ON ttr.resource_id = r.id JOIN locations_resources lr ON lr.resource_id = r.id AND lr.location_id = wt.location_id WHERE wt.location_id = 3340 AND wt.is_ongoing = TRUE;"
+
+	rows, err := db.Query(query, id)
+	if err != nil {
+		return tasks, errors.New("failed to selects resources from ongoing tasks related to locationId")
+	}
+
+	for rows.Next() {
+		err = rows.Scan()
+		if err != nil {
+			return resourcesQuantities, errors.New("error scanning rows in GetResourcesFromLocationIdForUpdating")
+		}
+	}
+
+	return resourcesQuantities, nil
 }

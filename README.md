@@ -32,4 +32,3 @@ How to Play:
 
 5 run the command: go run main.go
 
-Enjoy!
