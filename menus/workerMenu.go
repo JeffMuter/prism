@@ -20,7 +20,7 @@ func WorkerMenuOptions(user user.User, worker workers.Worker) error {
 	if userInput == "move" {
 		// assign worker to new location
 		// get locations the user can access.
-		locations, err := nodes.GetListOfNodesLinkedToUser(user)
+		locations, err := nodes.GetListOfNodesLinkedToUser(user.Id)
 		if err != nil {
 			return err
 		}

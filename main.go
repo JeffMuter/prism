@@ -25,7 +25,7 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	locations, _ := nodes.GetListOfNodesLinkedToUser(thisUser)
+	locations, _ := nodes.GetListOfNodesLinkedToUser(thisUser.Id)
 
 	err = nodes.UpdateLocationResourcesQuantity(locations[0])
 	if err != nil {

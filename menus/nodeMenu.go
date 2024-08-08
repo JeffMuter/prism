@@ -11,7 +11,7 @@ import (
 
 func DisplayUserNodes(user user.User) {
 	// get a list of locations
-	locations, err := nodes.GetListOfNodesLinkedToUser(user)
+	locations, err := nodes.GetListOfNodesLinkedToUser(user.Id)
 	if err != nil {
 		fmt.Println("error getting locations for the node menu: ", err)
 	}

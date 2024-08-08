@@ -195,16 +195,16 @@ func ConnectToNode(user user.User) error {
 	return errors.New("could not find a node close enough to connect to")
 }
 
-// GetListOfNodesLinkedToUser takes a user, and returns a slice of locations, made from the db, that
+// GetListOfNodesLinkedToUser takes a userId, and returns a slice of locations, made from the db, that
 // are related to that user.
-func GetListOfNodesLinkedToUser(user user.User) ([]Location, error) {
+func GetListOfNodesLinkedToUser(userId int) ([]Location, error) {
 	var locations []Location
 
 	db := database.OpenDatabase()
 	defer db.Close()
 
 	query := "SELECT locations.id, worker_count, location_type, location_type_id, latitude, longitude, name, description, art FROM locations LEFT JOIN users_locations ON locations.id = users_locations.location_id WHERE users_locations.user_id = $1"
-	rows, err := db.Query(query, user.Id)
+	rows, err := db.Query(query, userId)
 	if err != nil {
 		return locations, err
 	}
@@ -293,6 +293,20 @@ func GetLocationFromLocationId(id int) (Location, error) {
 	}
 
 	return location, nil
+}
+
+func UpdateAllLocationsResourcesQuantities(userId int) error {
+	locations, err := GetListOfNodesLinkedToUser(userId)
+	if err != nil {
+		return fmt.Errorf("error to update all locations rq: %v", err)
+	}
+	for _, location := range locations {
+		err = UpdateAllLocationsResourcesQuantities(location.Id)
+		if err != nil {
+			return fmt.Errorf("error updating a locations resource: locationName: %s, error: %v\n", location.Name, err)
+		}
+	}
+	return nil
 }
 
 func UpdateLocationResourcesQuantity(location Location) error {

@@ -22,12 +22,6 @@ type Task struct {
 	EndTime    time.Time
 }
 
-// SetWorkerTaskToResting func is meant to take a worker, and set their task to resting, ending their old task at the
-// same time.
-func SetWorkerTaskToResting(worker workers.Worker) error {
-	return nil
-}
-
 // SetWorkerTaskToNewTask is meant to take a worker and a string, which the string should be the valid name of a task,
 // and set that worker's new task
 func SetWorkerTaskToNewTask(worker workers.Worker, taskType string) error {
