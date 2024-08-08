@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"prism/database"
 	"prism/user"
@@ -34,6 +35,7 @@ type resource struct {
 	name               string
 	lastUpdated        time.Time
 	quantity           int
+	baseRate           float64
 }
 
 type Art struct {
@@ -301,7 +303,7 @@ func UpdateAllLocationsResourcesQuantities(userId int) error {
 		return fmt.Errorf("error to update all locations rq: %v", err)
 	}
 	for _, location := range locations {
-		err = UpdateAllLocationsResourcesQuantities(location.Id)
+		err = UpdateLocationResourcesQuantity(location.Id)
 		if err != nil {
 			return fmt.Errorf("error updating a locations resource: locationName: %s, error: %v\n", location.Name, err)
 		}
@@ -309,48 +311,29 @@ func UpdateAllLocationsResourcesQuantities(userId int) error {
 	return nil
 }
 
-func UpdateLocationResourcesQuantity(location Location) error {
+func UpdateLocationResourcesQuantity(locationId int) error {
 
 	// get names of all resources that the current tasks happening at this location could yield
-	potentialResources, err := GetNamesForResourcesOfTasksFromLocation(location.Id)
+	potentialResources, err := GetNamesForResourcesOfTasksFromLocation(locationId)
 	if err != nil {
-		return err
+		return fmt.Errorf("error getting potential resources for a location based on its ongoing tasks: %v", err)
 	}
 
 	// get the quantities & last_updated from this locations_resources
-	var resourceData []resource
-	resourceData, err = GetResourceDataByLocationId(location.Id)
+	resourceData, err := GetResourceDataByLocationId(locationId)
 	if err != nil {
-		return err
+		return fmt.Errorf("problem getting resourceData, while updating location's resource quantities: %v", err)
 	}
 
-	var newResources []resource // for the resources that are not in the db yet, so we can add them seperately
-
-	// we need to make resources, for each potential resource not currently in resource slice.
-	for _, resourceName := range potentialResources {
-		var found bool
-		for _, resource := range resourceData {
-			if resource.name == resourceName {
-				found = true
-				break
-			}
-		}
-		if !found { // if not found, make an add a new resource to the slice of existing.
-			var resourceId int
-			resourceId, err = GetResourceIdByName(resourceName)
-			if err != nil {
-				return err
-			}
-
-			// we don't have the current resource id... we need it.
-			newResource := resource{resourceId, resourceName, time.Now().UTC(), 0}
-			newResources = append(newResources, newResource)
-			resourceData = append(resourceData, newResource)
-		}
+	newResources, err := findMissingLocationResources(potentialResources, resourceData)
+	if err != nil {
+		return fmt.Errorf("issue finding new resources while updating a location quantities: %v\n", err)
 	}
 
-	// add newResources to the locations_resources table
-	err = createNewResources(location.Id, newResources)
+	err = createNewResources(locationId, newResources)
+	if err != nil {
+		return fmt.Errorf("problem creating new resources while updating location res quantities: %v", err)
+	}
 
 	// add placeholder for rate of change / minute of the resource.
 	var mapForResourceAndRateOfChange = make(map[resource]float64)
@@ -384,7 +367,7 @@ func UpdateLocationResourcesQuantity(location Location) error {
 	}
 
 	// update the database with this []resource
-	err = UpdateLocationResources(location.Id, resourceData)
+	err = UpdateLocationResources(locationId, resourceData)
 	if err != nil {
 		return fmt.Errorf("error updating location_resources values: %v", err)
 	}
@@ -398,14 +381,6 @@ func GetNamesForResourcesOfTasksFromLocation(id int) ([]string, error) {
 
 	db := database.OpenDatabase()
 	defer db.Close()
-	// this query is painful as hell, so I need to explain it.
-	// requirement: get all task names of resources which are possibly earnable from all tasks which are ongoing by the location id.
-	// select resource.name
-	// FROM workers_tasks, this is where the location id is from.
-	// join to task_types, but the
-
-	// where ongoing = true
-	// where location_id = id
 	query := "SELECT DISTINCT r.name FROM workers_tasks wt JOIN task_types tt ON wt.task_type_id = tt.id JOIN task_types_resources ttr ON tt.id = ttr.task_type_id JOIN resources r ON ttr.resource_id = r.id WHERE wt.location_id = $1 AND wt.is_ongoing = TRUE;"
 
 	rows, err := db.Query(query, id)
@@ -497,4 +472,48 @@ func GetResourceIdByName(name string) (int, error) {
 		return id, errors.New("error selecting name from resources by name")
 	}
 	return id, nil
+}
+
+func findMissingLocationResources(potentiallyNewResources []string, existingResources []resource) ([]resource, error) {
+
+	var newResources []resource // for the resources that are not in the db yet, so we can add them seperately
+
+	// we need to make resources, for each potential resource not currently in resource slice.
+	for _, resourceName := range potentiallyNewResources {
+		var found bool
+		for _, resource := range existingResources {
+			if resource.name == resourceName {
+				found = true
+				break
+			}
+		}
+		if !found { // if not found, make an add a new resource to the slice of existing.
+			var resourceId int
+			resourceId, err := GetResourceIdByName(resourceName)
+			if err != nil {
+				return newResources, err
+			}
+
+			// cannot leave baseRate at 0... TODO
+			newResource := resource{resourceId, resourceName, time.Now().UTC(), 0, 0}
+			newResources = append(newResources, newResource)
+		}
+	}
+	return newResources, nil
+}
+
+// calculateEarnings taking in the number of minutes passed, and a list of resources
+func calculateEarnings(resourcesWithMinutes map[resource]int) ([]resource, error) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	var resources []resource
+	for resource, minutes := range resourcesWithMinutes {
+		for i := 0; i < minutes; i++ {
+			if r.Float64() < resource.baseRate {
+				resource.quantity++
+			}
+		}
+		resources = append(resources, resource)
+	}
+
+	return resources, nil
 }

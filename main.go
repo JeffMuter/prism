@@ -27,9 +27,9 @@ func main() {
 	}
 	locations, _ := nodes.GetListOfNodesLinkedToUser(thisUser.Id)
 
-	err = nodes.UpdateLocationResourcesQuantity(locations[0])
+	err = nodes.UpdateAllLocationsResourcesQuantities(thisUser.Id)
 	if err != nil {
-		fmt.Println(":(")
+		err = fmt.Errorf("login issue: updating all user's locations quantities: %v", err)
 		fmt.Println(err)
 	}
 
