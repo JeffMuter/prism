@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"os"
 	"prism/database"
+	"prism/tasks"
 	"prism/user"
 	"prism/util"
 	"time"
@@ -315,35 +316,36 @@ func UpdateAllLocationsResourcesQuantities(userId int) error {
 func UpdateLocationResourcesQuantity(locationId int) error {
 
 	// get names of all resources that the current tasks happening at this location could yield
-	potentialResources, err := GetNamesForResourcesOfTasksFromLocation(locationId)
+	potentialResources, err := tasks.GetOngoingTaskNamesRateMapFromLocationId(locationId)
 	if err != nil {
 		return fmt.Errorf("error getting potential resources for a location based on its ongoing tasks: %v", err)
 	}
 
 	// get the quantities & last_updated from this locations_resources
-	resourceData, err := GetResourceDataByLocationId(locationId)
+	existingResources, err := GetResourceDataByLocationId(locationId)
 	if err != nil {
-		return fmt.Errorf("problem getting resourceData, while updating location's resource quantities: %v", err)
+		return fmt.Errorf("problem getting existingResources, while updating location's resource quantities: %v", err)
 	}
 
-	newResources, err := findMissingLocationResources(potentialResources, resourceData)
+	// get a slice of empty resources to add
+	unassignedResources, err := findMissingLocationResources(potentialResources, existingResources)
 	if err != nil {
 		return fmt.Errorf("issue finding new resources while updating a location quantities: %v\n", err)
 	}
 
-	err = createNewResources(locationId, newResources)
+	err = createNewResources(locationId, unassignedResources)
 	if err != nil {
 		return fmt.Errorf("problem creating new resources while updating location res quantities: %v", err)
 	}
 
 	// calculate the # of minutes passed from last_updated to time.Now(). Store in map of [resource]minutes
-	mapResourceMin := calculateMinutesPassedFromLastUpdate(resourceData)
+	mapResourceMin := calculateMinutesPassedFromLastUpdate(existingResources)
 
 	// taking the resource, and corresponding minutes, adjust each resource to the new quantity
-	resourceData = calculateEarnings(mapResourceMin)
+	existingResources = calculateEarnings(mapResourceMin)
 
 	// update the database with this []resource
-	err = updateLocationResources(locationId, resourceData)
+	err = updateLocationResources(locationId, existingResources)
 	if err != nil {
 		return fmt.Errorf("error updating location_resources values: %v", err)
 	}
@@ -381,7 +383,7 @@ func GetResourceDataByLocationId(id int) ([]resource, error) {
 
 	db := database.OpenDatabase()
 	defer db.Close()
-	query := "SELECT r.id, r.name, lr.quantity, lr.last_updated, ttr.base_rate FROM locations_resources lr JOIN resources r ON r.id = lr.resource_id  WHERE lr.location_id = $1;"
+	query := "SELECT r.id, r.name, lr.quantity, lr.last_updated FROM locations_resources lr JOIN resources r ON r.id = lr.resource_id  WHERE lr.location_id = $1;"
 
 	rows, err := db.Query(query, id)
 	if err != nil {
@@ -452,12 +454,12 @@ func GetResourceIdByName(name string) (int, error) {
 	return id, nil
 }
 
-func findMissingLocationResources(potentiallyNewResources []string, existingResources []resource) ([]resource, error) {
+func findMissingLocationResources(potentialResources map[string]float64, existingResources []resource) ([]resource, error) {
 
 	var newResources []resource // for the resources that are not in the db yet, so we can add them seperately
 
 	// we need to make resources, for each potential resource not currently in resource slice.
-	for _, resourceName := range potentiallyNewResources {
+	for resourceName, rate := range potentialResources {
 		var found bool
 		for _, resource := range existingResources {
 			if resource.name == resourceName {
@@ -473,7 +475,7 @@ func findMissingLocationResources(potentiallyNewResources []string, existingReso
 			}
 
 			// cannot leave baseRate at 0... TODO
-			newResource := resource{resourceId, resourceName, time.Now().UTC(), 0, 0}
+			newResource := resource{resourceId, resourceName, time.Now().UTC(), 0, rate}
 			newResources = append(newResources, newResource)
 		}
 	}

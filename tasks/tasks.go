@@ -133,12 +133,32 @@ func GetListOfTasksFromLocationId(id int) (map[int]string, error) {
 	return tasks, nil
 }
 
-func GetOngoingTasksFromLocationId(locationId int) ([]Task, error) {
-	var tasks []Task
+// GetOngoingTaskNamesRateMapFromLocationId merely takes a location's id, and returns a map of all the names of
+//resources the ongoing tasks at that location can yield, as well as the rates assigned by the task type for that resource.
+
+func GetOngoingTaskNamesRateMapFromLocationId(locationId int) (map[string]float64, error) {
+	var mapNameRate map[string]float64
 
 	db := database.OpenDatabase()
 	defer db.Close()
-	query := "SELECT tt.id, tt.name FROM locations l JOIN location_types_tasks ltt ON l.location_type_id = ltt.location_type_id JOIN task_types tt ON ltt.task_type_id = tt.id WHERE l.id = $1"
+	query := "SELECT r.name, ttr.base_rate FROM workers_tasks wt JOIN task_types tt ON wt.task_type_id = tt.id JOIN task_types_resources ttr ON tt.id = ttr.task_type_id JOIN resources r ON ttr.resource_id = r.id WHERE wt.location_id = $1 AND wt.is_ongoing = TRUE;"
 
-	return tasks, nil
+	rows, err := db.Query(query, locationId)
+	if err != nil {
+		return mapNameRate, err
+	}
+
+	for rows.Next() {
+		var taskName string
+		var baseRate float64
+
+		err := rows.Scan(&taskName, &baseRate)
+		if err != nil {
+			return mapNameRate, err
+		}
+
+		mapNameRate[taskName] = baseRate
+	}
+
+	return mapNameRate, nil
 }
