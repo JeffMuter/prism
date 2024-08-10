@@ -134,7 +134,7 @@ func GetListOfTasksFromLocationId(id int) (map[int]string, error) {
 }
 
 // GetOngoingTaskNamesRateMapFromLocationId merely takes a location's id, and returns a map of all the names of
-//resources the ongoing tasks at that location can yield, as well as the rates assigned by the task type for that resource.
+// resources the ongoing tasks at that location can yield, as well as the rates assigned by the task type for that resource.
 
 func GetOngoingTaskNamesRateMapFromLocationId(locationId int) (map[string]float64, error) {
 	var mapNameRate map[string]float64

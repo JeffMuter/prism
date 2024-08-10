@@ -333,10 +333,14 @@ func UpdateLocationResourcesQuantity(locationId int) error {
 		return fmt.Errorf("issue finding new resources while updating a location quantities: %v\n", err)
 	}
 
+	// create new resources in the db.
 	err = createNewResources(locationId, unassignedResources)
 	if err != nil {
 		return fmt.Errorf("problem creating new resources while updating location res quantities: %v", err)
 	}
+
+	// combine existing, and unassigned resources
+	existingResources = append(existingResources, unassignedResources...)
 
 	// calculate the # of minutes passed from last_updated to time.Now(). Store in map of [resource]minutes
 	mapResourceMin := calculateMinutesPassedFromLastUpdate(existingResources)
