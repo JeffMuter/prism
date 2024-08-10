@@ -311,6 +311,7 @@ func UpdateAllLocationsResourcesQuantities(userId int) error {
 	return nil
 }
 
+// UpdateLocationResourcesQuantity is a function that takes in the id of a Location, and will update all of the locations_resources in the db, based on the tasks currently ongoing. Returns nil if successful.
 func UpdateLocationResourcesQuantity(locationId int) error {
 
 	// get names of all resources that the current tasks happening at this location could yield
@@ -335,39 +336,14 @@ func UpdateLocationResourcesQuantity(locationId int) error {
 		return fmt.Errorf("problem creating new resources while updating location res quantities: %v", err)
 	}
 
-	// add placeholder for rate of change / minute of the resource.
-	var mapForResourceAndRateOfChange = make(map[resource]float64)
-	for _, resource := range resourceData {
-		mapForResourceAndRateOfChange[resource] = 1
-	}
-
-	var mapOfResourcesAndMinutesPassedSinceUpdate = make(map[resource]int)
-
 	// calculate the # of minutes passed from last_updated to time.Now(). Store in map of [resource]minutes
-	now := time.Now().UTC()
-	for _, resource := range resourceData {
-		timePassed := now.Sub(resource.lastUpdated)
+	mapResourceMin := calculateMinutesPassedFromLastUpdate(resourceData)
 
-		mapOfResourcesAndMinutesPassedSinceUpdate[resource] = int(timePassed.Minutes())
-	}
-
-	// convert that int minutes value, to the quantity to add to the locations_resources value.
-	for thisResource, thisMinutes := range mapOfResourcesAndMinutesPassedSinceUpdate {
-		var newQuantity int
-		// minutesPassed * rate of change + currentQuantity = updatedQuantity
-		newQuantity = int(float64(thisMinutes)*mapForResourceAndRateOfChange[thisResource]) + thisResource.quantity
-
-		mapOfResourcesAndMinutesPassedSinceUpdate[thisResource] = newQuantity
-	}
-
-	// update the resource, quantity, and last updated to time.Now()
-	for i, resource := range resourceData {
-		resourceData[i].quantity = mapOfResourcesAndMinutesPassedSinceUpdate[resource]
-		resourceData[i].lastUpdated = now
-	}
+	// taking the resource, and corresponding minutes, adjust each resource to the new quantity
+	resourceData = calculateEarnings(mapResourceMin)
 
 	// update the database with this []resource
-	err = UpdateLocationResources(locationId, resourceData)
+	err = updateLocationResources(locationId, resourceData)
 	if err != nil {
 		return fmt.Errorf("error updating location_resources values: %v", err)
 	}
@@ -375,13 +351,13 @@ func UpdateLocationResourcesQuantity(locationId int) error {
 	return nil
 }
 
-func GetNamesForResourcesOfTasksFromLocation(id int) ([]string, error) {
+func GetNamesForResourcesOfTasksFromLocation(id int) ([]resource, error) {
 
-	var resources []string
+	var resources []resource
 
 	db := database.OpenDatabase()
 	defer db.Close()
-	query := "SELECT DISTINCT r.name FROM workers_tasks wt JOIN task_types tt ON wt.task_type_id = tt.id JOIN task_types_resources ttr ON tt.id = ttr.task_type_id JOIN resources r ON ttr.resource_id = r.id WHERE wt.location_id = $1 AND wt.is_ongoing = TRUE;"
+	query := "SELECT r.name, ttr.base_rate FROM workers_tasks wt JOIN task_types tt ON wt.task_type_id = tt.id JOIN task_types_resources ttr ON tt.id = ttr.task_type_id JOIN resources r ON ttr.resource_id = r.id WHERE wt.location_id = $1 AND wt.is_ongoing = TRUE;"
 
 	rows, err := db.Query(query, id)
 	if err != nil {
@@ -389,8 +365,8 @@ func GetNamesForResourcesOfTasksFromLocation(id int) ([]string, error) {
 	}
 
 	for rows.Next() {
-		var resource string
-		err = rows.Scan(&resource)
+		var resource resource
+		err = rows.Scan(&resource.name, &resource.baseRate)
 		if err != nil {
 			return resources, errors.New("error scanning rows in GetResourcesFromLocationIdForUpdating")
 		}
@@ -405,7 +381,7 @@ func GetResourceDataByLocationId(id int) ([]resource, error) {
 
 	db := database.OpenDatabase()
 	defer db.Close()
-	query := "SELECT r.id, r.name, lr.quantity, lr.last_updated FROM locations_resources lr JOIN resources r ON r.id = lr.resource_id WHERE lr.location_id = $1;"
+	query := "SELECT r.id, r.name, lr.quantity, lr.last_updated, ttr.base_rate FROM locations_resources lr JOIN resources r ON r.id = lr.resource_id  WHERE lr.location_id = $1;"
 
 	rows, err := db.Query(query, id)
 	if err != nil {
@@ -424,8 +400,8 @@ func GetResourceDataByLocationId(id int) ([]resource, error) {
 	return resources, nil
 }
 
-// UpdateLocationResources updates the locations_resources table, for each entry of this location. Adds new rows for each resource with a value, not yet on the table
-func UpdateLocationResources(locationId int, resources []resource) error {
+// updateLocationResources updates the locations_resources table, for each entry of this location. Adds new rows for each resource with a value, not yet on the table
+func updateLocationResources(locationId int, resources []resource) error {
 	// remove the element if the quantity is 0 or less. If 0 or less, then we don't need to update the db with it.
 	for i, resource := range resources {
 		if resource.quantity < 1 {
@@ -438,6 +414,7 @@ func UpdateLocationResources(locationId int, resources []resource) error {
 	db := database.OpenDatabase()
 	defer db.Close()
 	query := "UPDATE locations_resources lr SET last_updated = $1, quantity = $2 WHERE location_id = $3 AND resource_id = $4;"
+
 	for _, resource := range resources {
 		_, err := db.Exec(query, resource.lastUpdated, resource.quantity, locationId, resource.locationResourceId)
 		if err != nil {
@@ -460,6 +437,7 @@ func createNewResources(locationId int, resources []resource) error {
 	return nil
 }
 
+// GetResourceIdByName takes in a string which references a Resource type, and returns the id of the Resource
 func GetResourceIdByName(name string) (int, error) {
 	var id int = -1
 
@@ -503,7 +481,7 @@ func findMissingLocationResources(potentiallyNewResources []string, existingReso
 }
 
 // calculateEarnings taking in the number of minutes passed, and a list of resources
-func calculateEarnings(resourcesWithMinutes map[resource]int) ([]resource, error) {
+func calculateEarnings(resourcesWithMinutes map[resource]int) []resource {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	var resources []resource
 	for resource, minutes := range resourcesWithMinutes {
@@ -515,5 +493,17 @@ func calculateEarnings(resourcesWithMinutes map[resource]int) ([]resource, error
 		resources = append(resources, resource)
 	}
 
-	return resources, nil
+	return resources
+}
+
+func calculateMinutesPassedFromLastUpdate(resources []resource) map[resource]int {
+	var mapResourceMin = make(map[resource]int)
+	now := time.Now().UTC()
+
+	for _, resource := range resources {
+		timePassed := now.Sub(resource.lastUpdated)
+		resource.lastUpdated = now // now done calc minutes since last update, set new time for this loc_res
+		mapResourceMin[resource] = int(timePassed.Minutes())
+	}
+	return mapResourceMin
 }

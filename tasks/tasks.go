@@ -9,17 +9,18 @@ import (
 )
 
 type Task struct {
-	TaskId     int
-	WorkerId   int
-	LocationId int
-	Ongoing    bool
-	Type       string
-	StartLat   float64
-	StartLong  float64
-	EndLat     float64
-	EndLong    float64
-	StartTime  time.Time
-	EndTime    time.Time
+	TaskId         int
+	WorkerId       int
+	LocationId     int
+	Ongoing        bool
+	Type           string
+	StartLat       float64
+	StartLong      float64
+	EndLat         float64
+	EndLong        float64
+	StartTime      time.Time
+	EndTime        time.Time
+	ResourcesRates map[string]float64 // map contains names of tasks as keys, and their base_rates from ttr as the float
 }
 
 // SetWorkerTaskToNewTask is meant to take a worker and a string, which the string should be the valid name of a task,
@@ -128,6 +129,16 @@ func GetListOfTasksFromLocationId(id int) (map[int]string, error) {
 
 		tasks[taskTypeId] = taskName
 	}
+
+	return tasks, nil
+}
+
+func GetOngoingTasksFromLocationId(locationId int) ([]Task, error) {
+	var tasks []Task
+
+	db := database.OpenDatabase()
+	defer db.Close()
+	query := "SELECT tt.id, tt.name FROM locations l JOIN location_types_tasks ltt ON l.location_type_id = ltt.location_type_id JOIN task_types tt ON ltt.task_type_id = tt.id WHERE l.id = $1"
 
 	return tasks, nil
 }
