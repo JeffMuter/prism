@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
+	"prism/locations"
 	"prism/menus"
-	"prism/nodes"
 	"prism/render"
 	"prism/user"
 	"prism/workers"
@@ -25,9 +25,9 @@ func main() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	//locations, _ := nodes.GetListOfNodesLinkedToUser(thisUser.Id)
+	//locations, _ := locations.GetListOfNodesLinkedToUser(thisUser.Id)
 
-	err = nodes.UpdateAllLocationsResourcesQuantities(thisUser.Id)
+	err = locations.UpdateAllLocationsResourcesQuantities(thisUser.Id)
 	if err != nil {
 		err = fmt.Errorf("login issue: updating all user's locations quantities: %v", err)
 		fmt.Println(err)

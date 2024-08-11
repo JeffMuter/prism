@@ -2,7 +2,7 @@ package render
 
 import (
 	"fmt"
-	"prism/nodes"
+	"prism/locations"
 	"prism/operating_system"
 	"prism/user"
 	"prism/util"
@@ -18,7 +18,7 @@ func PaintScreen(thisUser user.User) [][]rune {
 	}
 
 	// get locations near user
-	var locationsToRender []nodes.Location = nodes.GetAllNodesUserCouldSee(thisUser)
+	var locationsToRender []locations.Location = locations.GetAllNodesUserCouldSee(thisUser)
 
 	// set each locations coordinates
 	locationsToRender, err =
@@ -27,7 +27,7 @@ func PaintScreen(thisUser user.User) [][]rune {
 		fmt.Println(err)
 	}
 	// set each location's art file from their ArtName
-	locationsToRender = nodes.SetLocationsArt(locationsToRender)
+	locationsToRender = locations.SetLocationsArt(locationsToRender)
 
 	// create canvas
 	canvas := make([][]rune, termHeight)
@@ -54,8 +54,8 @@ func PaintScreen(thisUser user.User) [][]rune {
 	return canvas
 }
 
-func findLocationsCoordinates(user user.User, unfilteredLocations []nodes.Location, scrWidth, scrHeight int) ([]nodes.Location, error) {
-	var filteredLocations []nodes.Location
+func findLocationsCoordinates(user user.User, unfilteredLocations []locations.Location, scrWidth, scrHeight int) ([]locations.Location, error) {
+	var filteredLocations []locations.Location
 	var degreeRange float64 = 2
 	minLat, maxLat, minLong, maxLong := util.GetMaxLocationRanges(degreeRange, user.Latitude, user.Longitude)
 
@@ -77,7 +77,7 @@ func findLocationsCoordinates(user user.User, unfilteredLocations []nodes.Locati
 	return filteredLocations, nil
 }
 
-func addLocationsToCanvas(canvas [][]rune, locations []nodes.Location) {
+func addLocationsToCanvas(canvas [][]rune, locations []locations.Location) {
 	canvasHeight := len(canvas)
 	canvasWidth := len(canvas[0])
 
@@ -111,7 +111,7 @@ func addLocationsToCanvas(canvas [][]rune, locations []nodes.Location) {
 // orderObjectSlice takes a slice of object, and returns them, where the Ycoordinate sorts them.
 // intention being to have the object closest to the user printed last, and overtop of all other objects that have
 // coordinates closer to the top of the rendered screen.
-func orderLocationsSlice(locations []nodes.Location) []nodes.Location {
+func orderLocationsSlice(locations []locations.Location) []locations.Location {
 
 	sort.SliceStable(locations, func(i, j int) bool {
 		if locations[i].YCoordinate == locations[j].YCoordinate {

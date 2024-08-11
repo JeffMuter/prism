@@ -2,7 +2,7 @@ package menus
 
 import (
 	"fmt"
-	"prism/nodes"
+	"prism/locations"
 	"prism/tasks"
 	"prism/user"
 	"prism/util"
@@ -20,32 +20,32 @@ func WorkerMenuOptions(user user.User, worker workers.Worker) error {
 	if userInput == "move" {
 		// assign worker to new location
 		// get locations the user can access.
-		locations, err := nodes.GetListOfNodesLinkedToUser(user.Id)
+		userLocations, err := locations.GetListOfNodesLinkedToUser(user.Id)
 		if err != nil {
 			return err
 		}
-		// print all nodes to the screen of them to choose an index num
-		DisplayNodes(locations)
+		// print all locations to the screen of them to choose an index num
+		DisplayNodes(userLocations)
 		//read user input for num.
 		userInput, err := util.ReadCommandInput()
 		fmt.Println(err)
-		if intInput, err := strconv.Atoi(userInput); err == nil && intInput < len(locations) && intInput > -1 {
+		if intInput, err := strconv.Atoi(userInput); err == nil && intInput < len(userLocations) && intInput > -1 {
 			// reduce the previous location's worker_count by one
-			var oldLocation = nodes.Location{Id: worker.UserLocationId}
-			err := nodes.RemoveWorkerFromNode(oldLocation)
+			var oldLocation = locations.Location{Id: worker.UserLocationId}
+			err := locations.RemoveWorkerFromNode(oldLocation)
 			if err != nil {
 				fmt.Println("issue removing worker from node after user selected new node to send worker to: ", err)
 				return err
 			}
 			// increase the next location's worker_count by one.
-			newLocation := locations[intInput]
-			err = nodes.AddWorkerToNode(newLocation)
+			newLocation := userLocations[intInput]
+			err = locations.AddWorkerToNode(newLocation)
 			if err != nil {
 				fmt.Println("err while adding worker to node after user selected new node to assign worker to: ", err)
 			}
 
 			// relate the worker to the new user_locations id
-			err = workers.AssignWorkerToLocation(worker, locations[intInput])
+			err = workers.AssignWorkerToLocation(worker, userLocations[intInput])
 			if err != nil {
 				fmt.Println("err assigning worker to new location during worker menu options: ", err)
 				return err
@@ -56,12 +56,12 @@ func WorkerMenuOptions(user user.User, worker workers.Worker) error {
 	} else if userInput == "assign" {
 		// here we need to:
 		// get location from worker.LocationId
-		location, err := nodes.GetLocationFromLocationId(worker.LocationId)
+		location, err := locations.GetLocationFromLocationId(worker.LocationId)
 		if err != nil {
 			return err
 		}
 		// get a list of potential tasks we can do at this node.
-		taskNames, err := nodes.GetTasksForLocation(location)
+		taskNames, err := locations.GetTasksForLocation(location)
 		if err != nil {
 			return err
 		}

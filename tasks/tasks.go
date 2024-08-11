@@ -3,7 +3,7 @@ package tasks
 import (
 	"fmt"
 	"prism/database"
-	"prism/nodes"
+	"prism/locations"
 	"prism/workers"
 	"time"
 )
@@ -46,7 +46,7 @@ func SetWorkerTaskToNewTask(worker workers.Worker, taskType string) error {
 	}
 
 	//end the old task
-	err = EndCurrentWorkerTask(worker)
+	err = endCurrentWorkerTask(worker.Id)
 	if err != nil {
 		return err
 	}
@@ -54,7 +54,7 @@ func SetWorkerTaskToNewTask(worker workers.Worker, taskType string) error {
 	defer db.Close()
 
 	// need the worker's location for details
-	workerLocation, err := nodes.GetLocationFromLocationId(worker.LocationId)
+	workerLocation, err := locations.GetLocationFromLocationId(worker.LocationId)
 	if err != nil {
 		return err
 	}
@@ -94,12 +94,12 @@ func GetListOfTaskTypes() ([]string, error) {
 	return taskTypes, nil
 }
 
-// EndCurrentWorkerTask is a func to end the current task of the worker.
-func EndCurrentWorkerTask(worker workers.Worker) error {
+// endCurrentWorkerTask is a func to end the current task of the worker.
+func endCurrentWorkerTask(workerId int) error {
 	db := database.OpenDatabase()
 	defer db.Close()
 	query := "UPDATE workers_tasks SET is_ongoing = false, end_time = $1 WHERE worker_id = $2"
-	_, err := db.Exec(query, time.Now().UTC(), worker.Id)
+	_, err := db.Exec(query, time.Now().UTC(), workerId)
 	if err != nil {
 		return err
 	}

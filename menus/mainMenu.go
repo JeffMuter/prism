@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"prism/nodes"
+	"prism/locations"
 	"prism/render"
 	"prism/user"
 	"strings"
@@ -29,16 +29,16 @@ func MainMenuListen(thisUser user.User) {
 		if err != nil {
 			fmt.Println(err)
 		}
-		err = nodes.CreateNode(thisUser)
+		err = locations.CreateNode(thisUser)
 		if err != nil {
 			fmt.Println(err)
 		}
 	} else if input == "connect" {
-		err = nodes.ConnectToNode(thisUser)
+		err = locations.ConnectToNode(thisUser)
 		if err != nil {
 			fmt.Println("Issue connecting to node: ", err)
 		}
-	} else if input == "nodes" {
+	} else if input == "locations" {
 		DisplayUserNodes(thisUser)
 	}
 }

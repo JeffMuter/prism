@@ -1,4 +1,4 @@
-package nodes
+package locations
 
 import (
 	"bufio"
@@ -8,7 +8,6 @@ import (
 	"math/rand"
 	"os"
 	"prism/database"
-	"prism/tasks"
 	"prism/user"
 	"prism/util"
 	"time"
@@ -167,7 +166,7 @@ func CreateArtFromStringSlice(artSlice []string) Art {
 }
 
 // ConnectToNode allows a user to see if they can make a new node in this location. Checks a lat/long
-// range, and if no other nodes are inside it, creates the new node.
+// range, and if no other locations are inside it, creates the new node.
 func ConnectToNode(user user.User) error {
 	db := database.OpenDatabase()
 	defer db.Close()
@@ -298,65 +297,6 @@ func GetLocationFromLocationId(id int) (Location, error) {
 	return location, nil
 }
 
-func UpdateAllLocationsResourcesQuantities(userId int) error {
-	locations, err := GetListOfNodesLinkedToUser(userId)
-	if err != nil {
-		return fmt.Errorf("error to update all locations rq: %v", err)
-	}
-	for _, location := range locations {
-		err = UpdateLocationResourcesQuantity(location.Id)
-		if err != nil {
-			return fmt.Errorf("error updating a locations resource: locationName: %s, error: %v\n", location.Name, err)
-		}
-	}
-	return nil
-}
-
-// UpdateLocationResourcesQuantity is a function that takes in the id of a Location, and will update all of the locations_resources in the db, based on the tasks currently ongoing. Returns nil if successful.
-func UpdateLocationResourcesQuantity(locationId int) error {
-
-	// get names of all resources that the current tasks happening at this location could yield
-	potentialResources, err := tasks.GetOngoingTaskNamesRateMapFromLocationId(locationId)
-	if err != nil {
-		return fmt.Errorf("error getting potential resources for a location based on its ongoing tasks: %v", err)
-	}
-
-	// get the quantities & last_updated from this locations_resources
-	existingResources, err := GetResourceDataByLocationId(locationId)
-	if err != nil {
-		return fmt.Errorf("problem getting existingResources, while updating location's resource quantities: %v", err)
-	}
-
-	// get a slice of empty resources to add
-	unassignedResources, err := findMissingLocationResources(potentialResources, existingResources)
-	if err != nil {
-		return fmt.Errorf("issue finding new resources while updating a location quantities: %v\n", err)
-	}
-
-	// create new resources in the db.
-	err = createNewResources(locationId, unassignedResources)
-	if err != nil {
-		return fmt.Errorf("problem creating new resources while updating location res quantities: %v", err)
-	}
-
-	// combine existing, and unassigned resources
-	existingResources = append(existingResources, unassignedResources...)
-
-	// calculate the # of minutes passed from last_updated to time.Now(). Store in map of [resource]minutes
-	mapResourceMin := calculateMinutesPassedFromLastUpdate(existingResources)
-
-	// taking the resource, and corresponding minutes, adjust each resource to the new quantity
-	existingResources = calculateEarnings(mapResourceMin)
-
-	// update the database with this []resource
-	err = updateLocationResources(locationId, existingResources)
-	if err != nil {
-		return fmt.Errorf("error updating location_resources values: %v", err)
-	}
-
-	return nil
-}
-
 func GetNamesForResourcesOfTasksFromLocation(id int) ([]resource, error) {
 
 	var resources []resource
@@ -406,8 +346,8 @@ func GetResourceDataByLocationId(id int) ([]resource, error) {
 	return resources, nil
 }
 
-// updateLocationResources updates the locations_resources table, for each entry of this location. Adds new rows for each resource with a value, not yet on the table
-func updateLocationResources(locationId int, resources []resource) error {
+// UpdateLocationResources updates the locations_resources table, for each entry of this location. Adds new rows for each resource with a value, not yet on the table
+func UpdateLocationResources(locationId int, resources []resource) error {
 	// remove the element if the quantity is 0 or less. If 0 or less, then we don't need to update the db with it.
 	for i, resource := range resources {
 		if resource.quantity < 1 {
@@ -430,7 +370,7 @@ func updateLocationResources(locationId int, resources []resource) error {
 	return nil
 }
 
-func createNewResources(locationId int, resources []resource) error {
+func CreateNewResources(locationId int, resources []resource) error {
 	db := database.OpenDatabase()
 	defer db.Close()
 	query := "INSERT INTO locations_resources (location_id, resource_id, last_updated, quantity) VALUES ($1, $2, $3, $4)"
@@ -458,7 +398,7 @@ func GetResourceIdByName(name string) (int, error) {
 	return id, nil
 }
 
-func findMissingLocationResources(potentialResources map[string]float64, existingResources []resource) ([]resource, error) {
+func FindMissingLocationResources(potentialResources map[string]float64, existingResources []resource) ([]resource, error) {
 
 	var newResources []resource // for the resources that are not in the db yet, so we can add them seperately
 
@@ -486,8 +426,8 @@ func findMissingLocationResources(potentialResources map[string]float64, existin
 	return newResources, nil
 }
 
-// calculateEarnings taking in the number of minutes passed, and a list of resources
-func calculateEarnings(resourcesWithMinutes map[resource]int) []resource {
+// CalculateEarnings taking in the number of minutes passed, and a list of resources
+func CalculateEarnings(resourcesWithMinutes map[resource]int) []resource {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	var resources []resource
 	for resource, minutes := range resourcesWithMinutes {
@@ -502,7 +442,7 @@ func calculateEarnings(resourcesWithMinutes map[resource]int) []resource {
 	return resources
 }
 
-func calculateMinutesPassedFromLastUpdate(resources []resource) map[resource]int {
+func CalculateMinutesPassedFromLastUpdate(resources []resource) map[resource]int {
 	var mapResourceMin = make(map[resource]int)
 	now := time.Now().UTC()
 

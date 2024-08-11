@@ -2,7 +2,7 @@ package menus
 
 import (
 	"fmt"
-	"prism/nodes"
+	"prism/locations"
 	"prism/user"
 	"prism/util"
 	"prism/workers"
@@ -11,7 +11,7 @@ import (
 
 func DisplayUserNodes(user user.User) {
 	// get a list of locations
-	locations, err := nodes.GetListOfNodesLinkedToUser(user.Id)
+	locations, err := locations.GetListOfNodesLinkedToUser(user.Id)
 	if err != nil {
 		fmt.Println("error getting locations for the node menu: ", err)
 	}
@@ -23,13 +23,13 @@ func DisplayUserNodes(user user.User) {
 	nodeMenuListen(user, locations)
 }
 
-func DisplayNodes(locations []nodes.Location) {
+func DisplayNodes(locations []locations.Location) {
 	for i := range locations {
 		fmt.Printf("%v | name: %v\n", i, locations[i].Name)
 	}
 }
 
-func nodeMenuListen(user user.User, locations []nodes.Location) {
+func nodeMenuListen(user user.User, locations []locations.Location) {
 	userInput, err := util.ReadCommandInput()
 	if err != nil {
 		fmt.Println("error with getting user input.", err)

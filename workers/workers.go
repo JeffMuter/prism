@@ -3,7 +3,7 @@ package workers
 import (
 	"fmt"
 	"prism/database"
-	"prism/nodes"
+	"prism/locations"
 	"prism/user"
 	"time"
 )
@@ -24,7 +24,7 @@ type Worker struct {
 	Name           string
 	LocationName   string
 	ArtFilName     string `default:"worker"`
-	Art            nodes.Art
+	Art            locations.Art
 }
 
 func GetWorkersRelevantToUser(user user.User) []Worker {
@@ -79,7 +79,7 @@ func PrintWorkersDetails(workers []Worker) {
 	}
 }
 
-func AssignWorkerToLocation(worker Worker, newLocation nodes.Location) error {
+func AssignWorkerToLocation(worker Worker, newLocation locations.Location) error {
 	// assign a worker to travel to a location
 	// if they have a valid user_locations id, then we remove a worker_count from that location.
 	// add a worker_count to the new location,
