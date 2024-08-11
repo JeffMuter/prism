@@ -137,7 +137,7 @@ func GetListOfTasksFromLocationId(id int) (map[int]string, error) {
 // resources the ongoing tasks at that location can yield, as well as the rates assigned by the task type for that resource.
 
 func GetOngoingTaskNamesRateMapFromLocationId(locationId int) (map[string]float64, error) {
-	var mapNameRate map[string]float64
+	var mapNameRate = make(map[string]float64)
 
 	db := database.OpenDatabase()
 	defer db.Close()

@@ -50,6 +50,8 @@ func UpdateLocationResourcesQuantity(locationId int) error {
 
 	return nil
 }
+
+// UpdateAllLocationsResourcesQuantities updates all locations quantities. Run this on login.
 func UpdateAllLocationsResourcesQuantities(userId int) error {
 	userLocations, err := locations.GetListOfNodesLinkedToUser(userId)
 	if err != nil {
