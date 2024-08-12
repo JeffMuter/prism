@@ -453,3 +453,10 @@ func CalculateMinutesPassedFromLastUpdate(resources []resource) map[resource]int
 	}
 	return mapResourceMin
 }
+
+func AddRatesToResourcesFromMapResourceNameRate(resources []resource, mapResourceRate map[string]float64) []resource {
+	for i := range resources {
+		resources[i].baseRate = mapResourceRate[resources[i].name]
+	}
+	return resources
+}

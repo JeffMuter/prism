@@ -21,6 +21,8 @@ func UpdateLocationResourcesQuantity(locationId int) error {
 		return fmt.Errorf("problem getting existingResources, while updating location's resource quantities: %v", err)
 	}
 
+	existingResources = locations.AddRatesToResourcesFromMapResourceNameRate(existingResources, potentialResources)
+
 	// get a slice of empty resources to add
 	unassignedResources, err := locations.FindMissingLocationResources(potentialResources, existingResources)
 	if err != nil {
