@@ -32,14 +32,14 @@ func WorkerMenuOptions(user user.User, worker workers.Worker) error {
 		if intInput, err := strconv.Atoi(userInput); err == nil && intInput < len(userLocations) && intInput > -1 {
 			// reduce the previous location's worker_count by one
 			var oldLocation = locations.Location{Id: worker.UserLocationId}
-			err := locations.RemoveWorkerFromNode(oldLocation)
+			err := locations.RemoveWorkerFromNode(oldLocation.Id)
 			if err != nil {
 				fmt.Println("issue removing worker from node after user selected new node to send worker to: ", err)
 				return err
 			}
 			// increase the next location's worker_count by one.
 			newLocation := userLocations[intInput]
-			err = locations.AddWorkerToNode(newLocation)
+			err = locations.AddWorkerToNode(newLocation.Id)
 			if err != nil {
 				fmt.Println("err while adding worker to node after user selected new node to assign worker to: ", err)
 			}

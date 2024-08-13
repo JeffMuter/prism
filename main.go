@@ -6,7 +6,6 @@ import (
 	"prism/menus"
 	"prism/render"
 	"prism/user"
-	"prism/workers"
 )
 
 func main() {
@@ -32,8 +31,6 @@ func main() {
 		err = fmt.Errorf("login issue: updating all user's locations quantities: %v", err)
 		fmt.Println(err)
 	}
-
-	workers.GetWorkersRelevantToUser(thisUser)
 
 	render.PaintScreen(thisUser)
 

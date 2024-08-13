@@ -222,14 +222,14 @@ func GetListOfNodesLinkedToUser(userId int) ([]Location, error) {
 }
 
 // RemoveWorkerFromNode reduces worker_count value in the db by 1
-func RemoveWorkerFromNode(location Location) error {
+func RemoveWorkerFromNode(locationId int) error {
+
 	db := database.OpenDatabase()
 	defer db.Close()
 
-	countAfter := location.WorkerCount - 1
-	query := "UPDATE users_locations SET worker_count = $1 WHERE users_locations.id = $2"
+	query := "UPDATE users_locations SET worker_count = worker_count - 1 WHERE users_locations.id = $1"
 
-	_, err := db.Exec(query, countAfter, location.Id)
+	_, err := db.Exec(query, locationId)
 	if err != nil {
 		fmt.Println("Error subtracting from worker_count", err)
 		return err
@@ -239,14 +239,13 @@ func RemoveWorkerFromNode(location Location) error {
 }
 
 // AddWorkerToNode updates the new node in the db to increase by 1.
-func AddWorkerToNode(location Location) error {
+func AddWorkerToNode(locationId int) error {
 	db := database.OpenDatabase()
 	defer db.Close()
 
-	countAfter := location.WorkerCount + 1
-	query := "UPDATE users_locations SET worker_count = $1 WHERE users_locations.id = $2"
+	query := "UPDATE users_locations SET worker_count = worker_count + 1 WHERE users_locations.id = $1"
 
-	_, err := db.Exec(query, countAfter, location.Id)
+	_, err := db.Exec(query, locationId)
 	if err != nil {
 		fmt.Println("Error subtracting from worker_count", err)
 		return err

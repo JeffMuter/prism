@@ -11,16 +11,16 @@ import (
 
 func DisplayUserNodes(user user.User) {
 	// get a list of locations
-	locations, err := locations.GetListOfNodesLinkedToUser(user.Id)
+	userLocations, err := locations.GetListOfNodesLinkedToUser(user.Id)
 	if err != nil {
 		fmt.Println("error getting locations for the node menu: ", err)
 	}
 	// display info on each node.
-	for i := range locations {
-		fmt.Printf("%v | name: %v\n", i, locations[i].Name)
+	for i := range userLocations {
+		fmt.Printf("%v | name: %v\n", i, userLocations[i].Name)
 	}
 	// listen for input
-	nodeMenuListen(user, locations)
+	nodeMenuListen(user, userLocations)
 }
 
 func DisplayNodes(locations []locations.Location) {
