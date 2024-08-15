@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"prism/eggs"
 	"prism/locations"
 	"prism/render"
 	"prism/user"
@@ -34,9 +35,13 @@ func MainMenuListen(thisUser user.User) {
 			fmt.Println(err)
 		}
 	} else if input == "connect" {
-		err = locations.ConnectToNode(thisUser)
+		newLocId, err := locations.ConnectToLocation(thisUser)
 		if err != nil {
 			fmt.Println("Issue connecting to node: ", err)
+		}
+		err = eggs.AddEgg(thisUser.Id, newLocId)
+		if err != nil {
+			fmt.Println(fmt.Errorf("issue adding egg: %v", err))
 		}
 	} else if input == "locations" {
 		DisplayUserNodes(thisUser)

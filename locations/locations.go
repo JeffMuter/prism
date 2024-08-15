@@ -67,14 +67,13 @@ func CreateNode(user user.User) error {
 	// add node to locations
 	query := "INSERT INTO locations (default_accessible, location_type, latitude, longitude, name, description, art) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id"
 	var newLocationRowId int
-	err := db.QueryRow(query, "false", "node", user.Latitude, user.Longitude, "new node", "new node description", "node").Scan(&newLocationRowId)
-	if err != nil {
-		return errors.New("error trying to queryRow to insert locations")
-	}
+	db.QueryRow(query, "false", "node", user.Latitude, user.Longitude, "new node", "new node description", "node").Scan(&newLocationRowId)
 
 	query = "INSERT INTO users_locations (user_id, location_id) VALUES ($1, $2)"
-	db.QueryRow(query, user.Id, newLocationRowId)
-
+	_, err := db.Exec(query, user.Id, newLocationRowId)
+	if err != nil {
+		return fmt.Errorf("error inserting users_locations when creating new location: %v\n", err)
+	}
 	return nil
 }
 
@@ -165,9 +164,10 @@ func CreateArtFromStringSlice(artSlice []string) Art {
 	return thisArt
 }
 
-// ConnectToNode allows a user to see if they can make a new node in this location. Checks a lat/long
-// range, and if no other locations are inside it, creates the new node.
-func ConnectToNode(user user.User) error {
+// ConnectToLocation allows a user to see if they can make a new node in this location. Checks a lat/long
+// range, and if no other locations are inside it, creates the new node. Returns the id of the newly connected location.
+func ConnectToLocation(user user.User) (int, error) {
+	var newLocId int
 	db := database.OpenDatabase()
 	defer db.Close()
 
@@ -175,26 +175,31 @@ func ConnectToNode(user user.User) error {
 	query := "SELECT locations.id, name, latitude, longitude FROM locations LEFT JOIN users_locations ON locations.id = users_locations.location_id AND users_locations.user_id = $1 WHERE user_id IS NULL"
 	rows, err := db.Query(query, user.Id)
 	if err != nil {
-		fmt.Println("err querying db for connect to node: ", err)
+		return newLocId, fmt.Errorf("err querying db for connect to node: %v", err)
 	}
 	// a range of roughly .1 miles in lat/long.
-	minLat, maxLat, minLong, maxLong := util.GetMaxLocationRanges(.0015, user.Latitude, user.Longitude)
+	minLat, maxLat, minLong, maxLong := util.GetMaxLocationRanges(.5, user.Latitude, user.Longitude)
 	var locations []Location
+
 	for rows.Next() {
 		var location Location
 		err := rows.Scan(&location.Id, &location.Name, &location.Latitude, &location.Longitude)
 		if err != nil {
-			log.Fatal(err)
+			return newLocId, fmt.Errorf("error scanning values from row in rows.next, err: %v\n", err)
 		}
 		if location.Latitude < maxLat && location.Latitude > minLat && location.Longitude < maxLong && location.Longitude > minLong {
-			query = "INSERT INTO users_locations (user_id, location_id) VALUES ($1, $2);"
-			db.QueryRow(query, user.Id, location.Id)
-			return nil
+
+			query = "INSERT INTO users_locations (user_id, location_id) VALUES ($1, $2) RETURNING id;"
+			err = db.QueryRow(query, user.Id, location.Id).Scan(&newLocId)
+			if err != nil {
+				return newLocId, fmt.Errorf("error inserting new users_locations while connecting to new location: %v\n", err)
+			}
+			return newLocId, nil
 		}
 		locations = append(locations, location)
 	}
 
-	return errors.New("could not find a node close enough to connect to")
+	return newLocId, errors.New("could not find a node close enough to connect to")
 }
 
 // GetListOfNodesLinkedToUser takes a userId, and returns a slice of locations, made from the db, that

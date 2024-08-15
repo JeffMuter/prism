@@ -16,14 +16,16 @@ func main() {
 		Email:    "1@gmail.com",
 		Password: "1",
 		//set lat & long
+		Latitude:  40.723,
+		Longitude: -74.2860,
 	}
 
 	var err error
 
-	thisUser.Latitude, thisUser.Longitude, err = user.Ping()
-	if err != nil {
-		fmt.Println(err)
-	}
+	//thisUser.Latitude, thisUser.Longitude, err = user.Ping()
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
 	//locations, _ := locations.GetListOfNodesLinkedToUser(thisUser.Id)
 
 	err = logic.UpdateAllLocationsResourcesQuantities(thisUser.Id)
