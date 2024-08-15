@@ -167,7 +167,7 @@ func CreateArtFromStringSlice(artSlice []string) Art {
 // ConnectToLocation allows a user to see if they can make a new node in this location. Checks a lat/long
 // range, and if no other locations are inside it, creates the new node. Returns the id of the newly connected location.
 func ConnectToLocation(user user.User) (int, error) {
-	var newLocId int
+	var newUsersLocsId int
 	db := database.OpenDatabase()
 	defer db.Close()
 
@@ -175,7 +175,7 @@ func ConnectToLocation(user user.User) (int, error) {
 	query := "SELECT locations.id, name, latitude, longitude FROM locations LEFT JOIN users_locations ON locations.id = users_locations.location_id AND users_locations.user_id = $1 WHERE user_id IS NULL"
 	rows, err := db.Query(query, user.Id)
 	if err != nil {
-		return newLocId, fmt.Errorf("err querying db for connect to node: %v", err)
+		return newUsersLocsId, fmt.Errorf("err querying db for connect to node: %v", err)
 	}
 	// a range of roughly .1 miles in lat/long.
 	minLat, maxLat, minLong, maxLong := util.GetMaxLocationRanges(.5, user.Latitude, user.Longitude)
@@ -185,21 +185,21 @@ func ConnectToLocation(user user.User) (int, error) {
 		var location Location
 		err := rows.Scan(&location.Id, &location.Name, &location.Latitude, &location.Longitude)
 		if err != nil {
-			return newLocId, fmt.Errorf("error scanning values from row in rows.next, err: %v\n", err)
+			return newUsersLocsId, fmt.Errorf("error scanning values from row in rows.next, err: %v\n", err)
 		}
 		if location.Latitude < maxLat && location.Latitude > minLat && location.Longitude < maxLong && location.Longitude > minLong {
 
 			query = "INSERT INTO users_locations (user_id, location_id) VALUES ($1, $2) RETURNING id;"
-			err = db.QueryRow(query, user.Id, location.Id).Scan(&newLocId)
+			err = db.QueryRow(query, user.Id, location.Id).Scan(&newUsersLocsId)
 			if err != nil {
-				return newLocId, fmt.Errorf("error inserting new users_locations while connecting to new location: %v\n", err)
+				return newUsersLocsId, fmt.Errorf("error inserting new users_locations while connecting to new location: %v\n", err)
 			}
-			return newLocId, nil
+			return newUsersLocsId, nil
 		}
 		locations = append(locations, location)
 	}
 
-	return newLocId, errors.New("could not find a node close enough to connect to")
+	return newUsersLocsId, errors.New("could not find a node close enough to connect to")
 }
 
 // GetListOfNodesLinkedToUser takes a userId, and returns a slice of locations, made from the db, that
