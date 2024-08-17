@@ -3,6 +3,7 @@ package eggs
 import (
 	"fmt"
 	"prism/database"
+	"prism/util"
 	"time"
 )
 
@@ -17,5 +18,17 @@ func AddEgg(userId int, locationId int) error {
 	if err != nil {
 		return fmt.Errorf("issue adding egg to db: %v\n", err)
 	}
+	return nil
+}
+
+// HatchEgg is a func that 'rolls' a new worker.
+func HatchEgg(eggId int) error {
+	// create a new worker, with randomized stats & attributes.
+	var intelligence, strength, luck, loyalty, charisma int = util.RandParetoNum(), util.RandParetoNum(), util.RandParetoNum(), util.RandParetoNum(), util.RandParetoNum()
+
+	// attach worker to the location the egg is at.
+	// add new worker to db.
+	// remove that egg from user's
+
 	return nil
 }
