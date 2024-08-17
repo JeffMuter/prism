@@ -1,4 +1,4 @@
-package eggs
+package workers
 
 import (
 	"fmt"
@@ -24,7 +24,7 @@ func AddEgg(userId int, locationId int) error {
 // HatchEgg is a func that 'rolls' a new worker.
 func HatchEgg(eggId int) error {
 	// create a new worker, with randomized stats & attributes.
-	var intelligence, strength, luck, loyalty, charisma int = util.RandParetoNum(), util.RandParetoNum(), util.RandParetoNum(), util.RandParetoNum(), util.RandParetoNum()
+	var intelligence, strength, luck, loyalty, charisma int = util.RandParetoNum(1, 10), util.RandParetoNum(1, 10), util.RandParetoNum(1, 10), util.RandParetoNum(1, 10), util.RandParetoNum(1, 10)
 
 	// attach worker to the location the egg is at.
 	// add new worker to db.

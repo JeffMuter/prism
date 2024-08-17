@@ -124,3 +124,7 @@ func ToggleWorkingForWorker(worker Worker) error {
 	fmt.Printf("%s is now %s", worker.Name, statusOfWork)
 	return nil
 }
+
+func CreateWorker() {
+	
+}

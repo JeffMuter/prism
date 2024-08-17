@@ -4,10 +4,10 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"prism/eggs"
 	"prism/locations"
 	"prism/render"
 	"prism/user"
+	"prism/workers"
 	"strings"
 )
 
@@ -39,7 +39,7 @@ func MainMenuListen(thisUser user.User) {
 		if err != nil {
 			fmt.Println("Issue connecting to node: ", err)
 		}
-		err = eggs.AddEgg(thisUser.Id, newLocId)
+		err = workers.AddEgg(thisUser.Id, newLocId)
 		if err != nil {
 			fmt.Println(fmt.Errorf("issue adding egg: %v", err))
 		}

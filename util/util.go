@@ -61,23 +61,22 @@ func ReadNumericSelection(options int) (int, error) {
 	return int(intInput), nil
 }
 
-// RandParetoNum spits out an float64 between 1-10, with 5 being the most likely num, and 1 & 10 being the rarest.
-func RandParetoNum() int {
+// RandParetoNum spits out an integer between min and max, where half of max is the average outcome. between being the most likely num, and 1 & 10 being the rarest.
+func RandParetoNum(min, max int) int {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	mean := 5.0
-	standDev := 2.0
+	var mean = float64(min+max) / 2
+	standDev := float64(min+max) / 4
 	u1 := r.Float64()
 	u2 := r.Float64()
+	z := math.Sqrt(-2*math.Log(u1)) * math.Cos(2*math.Pi*u2)
 	value := mean + z*standDev
 	value = math.Round(value)
 
-	if value < 1 {
-		value = 1
-	} else if value > 10 {
-		value = 10
+	if value < float64(min) {
+		value = float64(min)
+	} else if value > float64(max) {
+		value = float64(max)
 	}
-
-	z := math.Sqrt(-2*math.Log(u1)) * math.Cos(2*math.Pi*u2)
 
 	return int(value)
 }
