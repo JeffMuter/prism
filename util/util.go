@@ -80,3 +80,10 @@ func RandParetoNum(min, max int) int {
 
 	return int(value)
 }
+
+// RandNumBetween takes two ints, and produces a random number between the two.
+func RandNumBetween(min, max int) int {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	value := r.Intn(max-min+1) + min
+	return value
+}

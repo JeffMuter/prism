@@ -39,7 +39,7 @@ func MainMenuListen(thisUser user.User) {
 		if err != nil {
 			fmt.Println("Issue connecting to node: ", err)
 		}
-		err = workers.AddEgg(thisUser.Id, newLocId)
+		err = workers.AddEgg(newLocId)
 		if err != nil {
 			fmt.Println(fmt.Errorf("issue adding egg: %v", err))
 		}
