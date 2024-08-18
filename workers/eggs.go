@@ -29,6 +29,7 @@ func HatchEgg(eggId int) error {
 	var workerReligion string = religions[util.RandNumBetween(0, len(religions)-1)]
 
 	//get name from user input
+	fmt.Println("enter your new worker's name!")
 	workerName, err := util.ReadCommandInput()
 	if err != nil {
 		return fmt.Errorf("issue hatching egg from getting user input: %v\n", err)
@@ -38,20 +39,22 @@ func HatchEgg(eggId int) error {
 	defer db.Close()
 
 	// get the locationId of the egg for the new worker db.
-	query := "SELECT l.id FROM eggs e JOIN users_locations ul ON ul.id = e.users_locations_id JOIN locations l ON l.id = ul.location_id WHERE e.id = $1"
-	var eggLocationId int
-	_ = db.QueryRow(query, eggId).Scan(&eggLocationId)
+	query := "SELECT users_locations_id FROM eggs WHERE id = $1"
+	var eggUserLocationId int
+	_ = db.QueryRow(query, eggId).Scan(&eggUserLocationId)
 
 	// create new worker with all the collected values
-	query = "INSERT INTO workers (name, religion, strength, intelligence, speed, faith, luck, loyalty, charisma) VALUES ($1, $2, $3, $4, $5, $6, $7)"
+	query = "INSERT INTO workers (name, user_locations_id, religion, strength, intelligence, speed, faith, luck, loyalty, charisma) VALUES ($1, $2 ,$3, $4, $5, $6, $7, $8, $9, $10);"
 
-	_, err = db.Exec(query, workerName, workerReligion, strength, intelligence, speed, faith, luck, loyalty, charisma)
+	var workerId int
+	_ = db.QueryRow(query, workerName, eggUserLocationId, workerReligion, strength, intelligence, speed, faith, luck, loyalty, charisma).Scan(&workerId)
+
+	// update the egg's hatched and worker_id value, so that we know the egg has hatched.
+	query = "UPDATE eggs SET hatch_time = $1, worker_id = $2 WHERE id = $3"
+	_, err = db.Query(query, time.Now(), workerId, eggId)
 	if err != nil {
-		return fmt.Errorf("issue when hatching egg, executing insert: %v\n", err)
+		return fmt.Errorf("error updating eggs after making worker: %v\n", err)
 	}
-	// attach worker to the location the egg is at.
-	// add new worker to db.
-	// remove that egg from user's
 
 	return nil
 }
