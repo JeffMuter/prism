@@ -88,3 +88,12 @@ func GetEggsAvailableForUser(userId int) ([]Egg, error) {
 
 	return eggs, nil
 }
+
+func ShowEggsDetails(eggs []Egg) error {
+	for i := range eggs {
+		fmt.Printf(
+			"Available Eggs:\n"+
+				"%d: Location: %s", i, eggs[i].LocationName)
+	}
+	return nil
+}
