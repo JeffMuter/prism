@@ -36,5 +36,6 @@ func main() {
 
 	render.PaintScreen(thisUser)
 
-	menus.MainMenuListen(thisUser)
+	err = menus.MainMenuListen(thisUser)
+	fmt.Println(fmt.Errorf("problem in main menu: %v", err))
 }

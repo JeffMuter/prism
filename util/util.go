@@ -89,7 +89,7 @@ func RandNumBetween(min, max int) int {
 }
 
 func FindIntFromString(s string) (int, error) {
-	if number, err := strconv.Atoi(s); rr == nil {
+	if number, err := strconv.Atoi(s); err == nil {
 		return number, fmt.Errorf("string was not a pure number: %v\n", err)
 	}
 	return 0, nil

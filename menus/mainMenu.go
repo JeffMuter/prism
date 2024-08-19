@@ -14,7 +14,7 @@ import (
 // MainMenuListen listens for user input from the main screen
 // user makes choices about the next action to take in the game,
 // either with maps, or accessing other menus
-func MainMenuListen(thisUser user.User) {
+func MainMenuListen(thisUser user.User) error {
 	reader := bufio.NewReader(os.Stdin)
 
 	input, err := reader.ReadString('\n')
@@ -45,5 +45,11 @@ func MainMenuListen(thisUser user.User) {
 		}
 	} else if input == "locations" {
 		DisplayUserNodes(thisUser)
+	} else if input == "eggs" {
+		err = EggMenuOptions(thisUser)
+		if err != nil {
+			return fmt.Errorf("issue with egg menu: %v", err)
+		}
 	}
+	return nil
 }

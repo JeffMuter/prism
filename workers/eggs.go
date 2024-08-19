@@ -73,7 +73,7 @@ func GetEggsAvailableForUser(userId int) ([]Egg, error) {
 	var eggs []Egg
 	db := database.OpenDatabase()
 	defer db.Close()
-	query := "SELECT ul.named, e.id FROM eggs e JOIN users_locations ul ON ul.id = e.users_locations_id JOIN users u ON u.id = ul.user_id JOIN locations l ON ul.location_id = l.id WHERE u.id = $1 AND e.worker_id IS NULL"
+	query := "SELECT e.id, ul.named FROM eggs e JOIN users_locations ul ON ul.id = e.users_locations_id JOIN users u ON u.id = ul.user_id JOIN locations l ON ul.location_id = l.id WHERE u.id = $1 AND e.worker_id IS NULL"
 	rows, err := db.Query(query, userId)
 	if err != nil {
 		return eggs, fmt.Errorf("error selecting eggs from db: %v\n", err)
@@ -84,6 +84,7 @@ func GetEggsAvailableForUser(userId int) ([]Egg, error) {
 		if err != nil {
 			return eggs, fmt.Errorf("error reading eggs. Current egg: %v\n eggs: %v\nErr: %v", egg, eggs, err)
 		}
+		eggs = append(eggs, egg)
 	}
 
 	return eggs, nil
@@ -93,7 +94,7 @@ func ShowEggsDetails(eggs []Egg) error {
 	for i := range eggs {
 		fmt.Printf(
 			"Available Eggs:\n"+
-				"%d: Location: %s", i, eggs[i].LocationName)
+				"%d: Location: %s\n", i, eggs[i].LocationName)
 	}
 	return nil
 }

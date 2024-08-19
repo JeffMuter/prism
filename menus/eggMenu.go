@@ -31,8 +31,15 @@ func EggMenuOptions(user user.User) error {
 	// if hatch is the first word in the command, and an int is the rest,
 	// we know they're trying to hatch the egg of that index of eggs
 	if hadPrefix {
-		if num, ok := util.FindIntFromString(strings.TrimSpace(after)); ok == nil {
-			workers.HatchEgg(eggs[num].Id)
+		after = strings.TrimSpace(after)
+		num, err := util.FindIntFromString(after)
+		if err != nil {
+			return fmt.Errorf("issue turning user string to hatch egg into int: %v\n", err)
+		} else {
+			err = workers.HatchEgg(eggs[num].Id)
+			if err != nil {
+				return fmt.Errorf("error in hatching egg: %v\n", err)
+			}
 		}
 	}
 
