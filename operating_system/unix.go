@@ -26,22 +26,46 @@ func GetTerminalSize() (int, int, error) {
 }
 
 func GetWifiInfo() (string, error) {
-	cmd := exec.Command("nmcli", "-t", "-f", "ACTIVE,BSSID", "dev", "wifi")
-	stdout, err := cmd.Output()
-	if err != nil {
-		return "", fmt.Errorf("error getting Linux wifi info: %v", err)
-	}
+	if isWSL() {
+		cmd := exec.Command("powershell.exe", "-Command", "Get-NetAdapter -Name '*Wi-Fi*' | Select-Object -ExpandProperty MacAddress")
+		stdout, err := cmd.Output()
+		if err != nil {
+			return "", fmt.Errorf("error getting Wi-Fi info in WSL: %v", err)
+		}
+		return strings.TrimSpace(string(stdout)), nil
+	} else {
+		cmd := exec.Command("nmcli", "-t", "-f", "ACTIVE,BSSID", "dev", "wifi")
+		stdout, err := cmd.Output()
+		if err != nil {
+			return "", fmt.Errorf("error getting Linux wifi info: %v", err)
+		}
 
-	scanner := bufio.NewScanner(strings.NewReader(string(stdout)))
-	for scanner.Scan() {
-		line := scanner.Text()
-		parts := strings.Split(line, ":")
-		if len(parts) > 1 && parts[0] == "yes" {
-			bssid := strings.Join(parts[1:], ":")
-			bssid = strings.ReplaceAll(bssid, "\\", "")
-			return bssid, nil
+		scanner := bufio.NewScanner(strings.NewReader(string(stdout)))
+		for scanner.Scan() {
+			line := scanner.Text()
+			parts := strings.Split(line, ":")
+			if len(parts) > 1 && parts[0] == "yes" {
+				bssid := strings.Join(parts[1:], ":")
+				bssid = strings.ReplaceAll(bssid, "\\", "")
+				return bssid, nil
+			}
 		}
 	}
 
 	return "", fmt.Errorf("no active WiFi connection found")
+}
+func isWSL() bool {
+	f, err := os.Open("/proc/version")
+	if err != nil {
+		return false
+	}
+	defer f.Close()
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		if strings.Contains(scanner.Text(), "Microsoft") {
+			return true
+		}
+	}
+	return false
 }

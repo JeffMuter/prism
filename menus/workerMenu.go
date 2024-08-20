@@ -25,7 +25,7 @@ func WorkerMenuOptions(user user.User, worker workers.Worker) error {
 			return err
 		}
 		// print all locations to the screen of them to choose an index num
-		DisplayNodes(userLocations)
+		DisplayLocations(userLocations)
 		//read user input for num.
 		userInput, err := util.ReadCommandInput()
 		fmt.Println(err)

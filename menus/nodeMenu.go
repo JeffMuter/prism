@@ -9,7 +9,7 @@ import (
 	"strconv"
 )
 
-func DisplayUserNodes(user user.User) {
+func DisplayUserLocations(user user.User) {
 	// get a list of locations
 	userLocations, err := locations.GetListOfNodesLinkedToUser(user.Id)
 	if err != nil {
@@ -20,16 +20,16 @@ func DisplayUserNodes(user user.User) {
 		fmt.Printf("%v | name: %v\n", i, userLocations[i].Name)
 	}
 	// listen for input
-	nodeMenuListen(user, userLocations)
+	locationMenuListen(user, userLocations)
 }
 
-func DisplayNodes(locations []locations.Location) {
+func DisplayLocations(locations []locations.Location) {
 	for i := range locations {
 		fmt.Printf("%v | name: %v\n", i, locations[i].Name)
 	}
 }
 
-func nodeMenuListen(user user.User, locations []locations.Location) {
+func locationMenuListen(user user.User, locations []locations.Location) {
 	userInput, err := util.ReadCommandInput()
 	if err != nil {
 		fmt.Println("error with getting user input.", err)
