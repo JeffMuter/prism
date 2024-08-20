@@ -440,6 +440,7 @@ func CalculateEarnings(resourcesWithMinutes map[resource]int) []resource {
 				resource.quantity++
 			}
 		}
+		resources = append(resources, resource)
 	}
 
 	return resources
