@@ -35,9 +35,10 @@ func AddEgg(usersLocationsId int) error {
 // HatchEgg is a func that 'rolls' a new worker.
 func HatchEgg(eggId int) error {
 	// create a new worker, with randomized stats & attributes.
-	var strength, intelligence, faith, luck, speed, loyalty, charisma int = util.RandParetoNum(1, 10), util.RandParetoNum(1, 10), util.RandParetoNum(1, 10), util.RandParetoNum(1, 10), util.RandParetoNum(1, 10), util.RandParetoNum(1, 10), util.RandParetoNum(1, 10)
+	var randTime = util.InitializeTime()
+	var strength, intelligence, faith, luck, speed, loyalty, charisma int = util.RandNormalizedNum(randTime, 1, 10), util.RandNormalizedNum(randTime, 1, 10), util.RandNormalizedNum(randTime, 1, 10), util.RandNormalizedNum(randTime, 1, 10), util.RandNormalizedNum(randTime, 1, 10), util.RandNormalizedNum(randTime, 1, 10), util.RandNormalizedNum(randTime, 1, 10)
 	var religions = []string{"christian", "beastialism", "reversion"}
-	var workerReligion string = religions[util.RandNumBetween(0, len(religions)-1)]
+	var workerReligion string = religions[util.RandNumBetween(util.InitializeTime(), 0, len(religions)-1)]
 
 	//get name from user input
 	fmt.Println("enter your new worker's name!")
@@ -55,7 +56,7 @@ func HatchEgg(eggId int) error {
 	_ = db.QueryRow(query, eggId).Scan(&eggUserLocationId)
 
 	// create new worker with all the collected values
-	query = "INSERT INTO workers (name, user_locations_id, religion, strength, intelligence, speed, faith, luck, loyalty, charisma) VALUES ($1, $2 ,$3, $4, $5, $6, $7, $8, $9, $10);"
+	query = "INSERT INTO workers (name, user_locations_id, religion, strength, intelligence, speed, faith, luck, loyalty, charisma) VALUES ($1, $2 ,$3, $4, $5, $6, $7, $8, $9, $10) RETURNING id;"
 
 	var workerId int
 	_ = db.QueryRow(query, workerName, eggUserLocationId, workerReligion, strength, intelligence, speed, faith, luck, loyalty, charisma).Scan(&workerId)

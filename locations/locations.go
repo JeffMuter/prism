@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"math/rand"
 	"os"
 	"prism/database"
 	"prism/user"
@@ -326,6 +325,7 @@ func GetNamesForResourcesOfTasksFromLocation(id int) ([]resource, error) {
 	return resources, nil
 }
 
+// GetResourceDataByLocationId takes a location id as an int, and fills all the fields of a resource, returning a slice of them.
 func GetResourceDataByLocationId(id int) ([]resource, error) {
 	var resources []resource
 
@@ -432,15 +432,14 @@ func FindMissingLocationResources(potentialResources map[string]float64, existin
 
 // CalculateEarnings taking in the number of minutes passed, and a list of resources
 func CalculateEarnings(resourcesWithMinutes map[resource]int) []resource {
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	randTime := util.InitializeTime()
 	var resources []resource
 	for resource, minutes := range resourcesWithMinutes {
 		for i := 0; i < minutes; i++ {
-			if r.Float64() < resource.baseRate {
+			if randTime.Float64() < resource.baseRate {
 				resource.quantity++
 			}
 		}
-		resources = append(resources, resource)
 	}
 
 	return resources

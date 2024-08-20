@@ -20,7 +20,6 @@ type Worker struct {
 	Intelligence   int
 	CreatedAt      time.Time
 	Religion       string
-	Age            int
 	Name           string
 	LocationName   string
 	ArtFilName     string `default:"worker"`
@@ -33,7 +32,7 @@ func GetWorkersRelevantToUser(user user.User) []Worker {
 	db := database.OpenDatabase()
 	defer db.Close()
 
-	query := "SELECT  workers.id, name, age, religion, work_status, injured, intelligence, strength, faith, named, users_locations.id, users_locations.location_id  FROM workers LEFT JOIN users_locations ON workers.user_locations_id = users_locations.id WHERE user_id = $1"
+	query := "SELECT  workers.id, name, religion, work_status, injured, intelligence, strength, faith, named, users_locations.id, users_locations.location_id  FROM workers LEFT JOIN users_locations ON workers.user_locations_id = users_locations.id WHERE user_id = $1"
 
 	rows, err := db.Query(query, user.Id)
 	if err != nil {
@@ -41,7 +40,7 @@ func GetWorkersRelevantToUser(user user.User) []Worker {
 	}
 	for rows.Next() {
 		var worker Worker
-		rows.Scan(&worker.Id, &worker.Name, &worker.Age, &worker.Religion, &worker.WorkStatus, &worker.InjuredStatus, &worker.Intelligence, &worker.Strength, &worker.Faith, &worker.LocationName, &worker.UserLocationId, &worker.LocationId)
+		rows.Scan(&worker.Id, &worker.Name, &worker.Religion, &worker.WorkStatus, &worker.InjuredStatus, &worker.Intelligence, &worker.Strength, &worker.Faith, &worker.LocationName, &worker.UserLocationId, &worker.LocationId)
 		workers = append(workers, worker)
 	}
 
@@ -50,7 +49,7 @@ func GetWorkersRelevantToUser(user user.User) []Worker {
 
 func GetWorkersRelatedToLocation(locationId int) []Worker {
 	var workers []Worker
-	query := "SELECT workers.id, name, age, religion, work_status, injured, intelligence, strength, faith, named, users_locations.id, users_locations.location_id FROM workers LEFT JOIN users_locations ON workers.user_locations_id = users_locations.id WHERE location_id = $1"
+	query := "SELECT workers.id, name, religion, work_status, injured, intelligence, strength, faith, named, users_locations.id, users_locations.location_id FROM workers LEFT JOIN users_locations ON workers.user_locations_id = users_locations.id WHERE location_id = $1"
 	db := database.OpenDatabase()
 	defer db.Close()
 
@@ -60,7 +59,7 @@ func GetWorkersRelatedToLocation(locationId int) []Worker {
 	}
 	for rows.Next() {
 		var worker Worker
-		rows.Scan(&worker.Id, &worker.Name, &worker.Age, &worker.Religion, &worker.WorkStatus, &worker.InjuredStatus, &worker.Intelligence, &worker.Strength, &worker.Faith, &worker.LocationName, &worker.UserLocationId, &worker.LocationId)
+		rows.Scan(&worker.Id, &worker.Name, &worker.Religion, &worker.WorkStatus, &worker.InjuredStatus, &worker.Intelligence, &worker.Strength, &worker.Faith, &worker.LocationName, &worker.UserLocationId, &worker.LocationId)
 		workers = append(workers, worker)
 	}
 
@@ -113,7 +112,7 @@ func ToggleWorkingForWorker(worker Worker) error {
 	query := "UPDATE workers SET work_status = NOT work_status WHERE workers.id = $1"
 	_, err := db.Exec(query, worker.Id)
 	if err != nil {
-		return fmt.Errorf("Error toggling worker work_status: %v", err)
+		return fmt.Errorf("error toggling worker work_status: %v", err)
 	}
 	var statusOfWork string
 	if worker.WorkStatus {
@@ -126,5 +125,5 @@ func ToggleWorkingForWorker(worker Worker) error {
 }
 
 func CreateWorker() {
-	
+
 }

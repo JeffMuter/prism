@@ -36,6 +36,9 @@ func UpdateLocationResourcesQuantity(locationId int) error {
 	// combine existing, and unassigned resources
 	existingResources = append(existingResources, unassignedResources...)
 
+	// match base_rate of potentialResources to existingResources
+	existingResources = locations.AddRatesToResourcesFromMapResourceNameRate(existingResources, potentialResources)
+
 	// calculate the # of minutes passed from last_updated to time.Now(). Store in map of [resource]minutes
 	mapResourceMin := locations.CalculateMinutesPassedFromLastUpdate(existingResources)
 

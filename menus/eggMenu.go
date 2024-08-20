@@ -15,6 +15,10 @@ func EggMenuOptions(user user.User) error {
 		return fmt.Errorf("issue getting eggs available for user: %v\n", err)
 	}
 
+	if len(eggs) == 0 {
+		return fmt.Errorf("no existing eggs to be found")
+	}
+
 	err = workers.ShowEggsDetails(eggs)
 	if err != nil {
 		return fmt.Errorf("issue showing eggs: %v\n", err)

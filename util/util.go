@@ -61,36 +61,37 @@ func ReadNumericSelection(options int) (int, error) {
 	return int(intInput), nil
 }
 
-// RandParetoNum spits out an integer between min and max, where half of max is the average outcome. between being the most likely num, and 1 & 10 being the rarest.
-func RandParetoNum(min, max int) int {
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+// RandNormalizedNum spits out an integer between min and max, where half of max is the average outcome. between being the most likely num, and 1 & 10 being the rarest.
+func RandNormalizedNum(rand *rand.Rand, min, max int) int {
 	var mean = float64(min+max) / 2
-	standDev := float64(min+max) / 4
-	u1 := r.Float64()
-	u2 := r.Float64()
-	z := math.Sqrt(-2*math.Log(u1)) * math.Cos(2*math.Pi*u2)
-	value := mean + z*standDev
-	value = math.Round(value)
+	standDev := float64(max-min) / 6
+	for {
+		u1 := rand.Float64()
+		u2 := rand.Float64()
+		z := math.Sqrt(-2*math.Log(u1)) * math.Cos(2*math.Pi*u2)
+		value := mean + z*standDev
+		value = math.Round(value)
 
-	if value < float64(min) {
-		value = float64(min)
-	} else if value > float64(max) {
-		value = float64(max)
+		if value >= float64(min) && value <= float64(max) {
+			return int(value)
+		}
 	}
-
-	return int(value)
 }
 
 // RandNumBetween takes two ints, and produces a random number between the two.
-func RandNumBetween(min, max int) int {
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	value := r.Intn(max-min+1) + min
+func RandNumBetween(rand *rand.Rand, min, max int) int {
+	value := rand.Intn(max-min+1) + min
 	return value
 }
 
 func FindIntFromString(s string) (int, error) {
 	if number, err := strconv.Atoi(s); err == nil {
-		return number, fmt.Errorf("string was not a pure number: %v\n", err)
+		return number, nil
 	}
-	return 0, nil
+	return 0, fmt.Errorf("could not find pure int in string value\n")
+}
+
+// InitializeTime creates a *rand.Rand based on the time, to use to generate random numbers.
+func InitializeTime() *rand.Rand {
+	return rand.New(rand.NewSource(time.Now().UnixNano()))
 }
