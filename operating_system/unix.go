@@ -24,9 +24,10 @@ func GetTerminalSize() (int, int, error) {
 	}
 	return int(ws.Col), int(ws.Row), nil
 }
-
 func GetWifiInfo() (string, error) {
 	if isWSL() {
+		fmt.Println("WSL detected")
+		// Use PowerShell to get the Wi-Fi info on WSL
 		cmd := exec.Command("powershell.exe", "-Command", "Get-NetAdapter -Name '*Wi-Fi*' | Select-Object -ExpandProperty MacAddress")
 		stdout, err := cmd.Output()
 		if err != nil {
@@ -34,6 +35,7 @@ func GetWifiInfo() (string, error) {
 		}
 		return strings.TrimSpace(string(stdout)), nil
 	} else {
+		// Linux system, use nmcli
 		cmd := exec.Command("nmcli", "-t", "-f", "ACTIVE,BSSID", "dev", "wifi")
 		stdout, err := cmd.Output()
 		if err != nil {
@@ -51,9 +53,9 @@ func GetWifiInfo() (string, error) {
 			}
 		}
 	}
-
 	return "", fmt.Errorf("no active WiFi connection found")
 }
+
 func isWSL() bool {
 	f, err := os.Open("/proc/version")
 	if err != nil {
@@ -63,7 +65,9 @@ func isWSL() bool {
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
-		if strings.Contains(scanner.Text(), "Microsoft") {
+		line := scanner.Text()
+		// Check for "Microsoft" or "WSL" in the /proc/version output
+		if strings.Contains(line, "Microsoft") || strings.Contains(line, "WSL") {
 			return true
 		}
 	}

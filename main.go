@@ -6,6 +6,8 @@ import (
 	"prism/menus"
 	"prism/render"
 	"prism/user"
+
+	"github.com/gostaticanalysis/nilerr"
 )
 
 func main() {
@@ -15,7 +17,6 @@ func main() {
 		Username: "1",
 		Email:    "1@gmail.com",
 		Password: "1",
-		//set lat & long
 	}
 
 	var err error
@@ -27,7 +28,7 @@ func main() {
 
 	err = logic.UpdateAllLocationsResourcesQuantities(thisUser.Id)
 	if err != nil {
-		err = fmt.Errorf("login issue: updating all user's locations quantities: %v", err)
+		err = fmt.Errorf("error updating all user's locations quantities: %v", err)
 		fmt.Println(err)
 	}
 

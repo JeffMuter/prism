@@ -9,9 +9,9 @@ import (
 const (
 	host     = "localhost"
 	port     = 5432
-	user     = "postgres"
-	password = "postgres1"
-	dbname   = "postgres"
+	user     = "emerald"
+	password = "Everythingx12"
+	dbname   = "prism"
 )
 
 func OpenDatabase() *sql.DB {
