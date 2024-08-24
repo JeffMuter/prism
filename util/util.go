@@ -12,6 +12,16 @@ import (
 	"time"
 )
 
+// Printable is mostly used for the default printing pattern of a struct. Such as the name of a location.
+type Printable interface {
+	stringToPrint() string
+}
+
+// PrintableDetail is used to print the more detailed version of something
+type PrintableDetail interface {
+	detailedStringToPrint() string
+}
+
 func GetAbsoluteFilepath(relativeFilepath string) (string, error) {
 	workingDir, err := os.Getwd()
 	if err != nil {
@@ -40,25 +50,6 @@ func ReadCommandInput() (string, error) {
 		fmt.Println("Invalid input: ", err)
 	}
 	return strings.TrimSpace(input), nil
-}
-
-func ReadNumericSelection(options int) (int, error) {
-	input, err := ReadCommandInput()
-	if err != nil {
-		return -1, err
-	}
-	// convert input to int
-	intInput, err := strconv.ParseInt(input, 10, 64)
-	if err != nil {
-		return -1, err
-	}
-
-	// make sure input isn't out of bounds.
-	if intInput < 0 || intInput >= int64(options) {
-		return -1, fmt.Errorf("input was too low or too high")
-	}
-
-	return int(intInput), nil
 }
 
 // RandNormalizedNum spits out an integer between min and max, where half of max is the average outcome. between being the most likely num, and 1 & 10 being the rarest.
@@ -94,4 +85,47 @@ func FindIntFromString(s string) (int, error) {
 // InitializeTime creates a *rand.Rand based on the time, to use to generate random numbers.
 func InitializeTime() *rand.Rand {
 	return rand.New(rand.NewSource(time.Now().UnixNano()))
+}
+
+// ReadNumericSelection() is a func that takes in a max num, like 3, and tha assumption is you've already printed a list of something, and you're passing in the max # the user could select. Here we read the input of the user, check, and convert that string to an int, so you can option[result] to find the user's selection.
+func ReadNumericSelection(options int) (int, error) {
+	input, err := ReadCommandInput()
+	if err != nil {
+		return -1, err
+	}
+	// convert input to int
+	intInput, err := strconv.ParseInt(input, 10, 64)
+	if err != nil {
+		return -1, err
+	}
+
+	// make sure input isn't out of bounds.
+	if intInput < 0 || intInput >= int64(options) {
+		return -1, fmt.Errorf("input was too low or too high")
+	}
+
+	return int(intInput), nil
+}
+
+func PrintNumericSelection(printables []Printable) (int, error) {
+	// this part prints the printable in the format we like
+	for _, printable := range printables {
+		fmt.Printf()
+	}
+
+	// this part handles the user selection
+	var numericSelection int64
+	var stringSelection string
+
+	stringSelection, err := ReadCommandInput()
+	if err != nil {
+		return -1, fmt.Errorf("prinnumsel error getting input from user: %w", err)
+	}
+
+	numericSelection, err = strconv.ParseInt(stringSelection, 10, 64)
+	if err != nil {
+		return -1, fmt.Errorf("prinnumsel error parsing input to int: %w,", err)
+	}
+
+	return int(numericSelection), nil
 }

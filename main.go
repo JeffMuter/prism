@@ -6,8 +6,6 @@ import (
 	"prism/menus"
 	"prism/render"
 	"prism/user"
-
-	"github.com/gostaticanalysis/nilerr"
 )
 
 func main() {

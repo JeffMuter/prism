@@ -9,8 +9,8 @@ import (
 const (
 	host     = "localhost"
 	port     = 5432
-	user     = "emerald"
-	password = "Everythingx12"
+	user     = "postgres"
+	password = "postgres1"
 	dbname   = "prism"
 )
 
