@@ -50,11 +50,11 @@ func MainMenuListen(thisUser user.User) error {
 		if err != nil {
 			return fmt.Errorf("issue with egg menu: %v", err)
 		}
-	} else if input == "home" {
-		err = homeMenuOptions()
-		if err != nil {
-			fmt.Println(fmt.Errorf("error from home menu in main menu: %v\n", err))
-		}
+		//	} else if input == "home" {
+		//		err = homeMenuOptions()
+		//		if err != nil {
+		//			fmt.Println(fmt.Errorf("error from home menu in main menu: %v\n", err))
+		//		}
 	}
 	return nil
 }

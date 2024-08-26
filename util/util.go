@@ -109,8 +109,14 @@ func ReadNumericSelection(options int) (int, error) {
 
 func PrintNumericSelection(printables []Printable) (int, error) {
 	// this part prints the printable in the format we like
-	for _, printable := range printables {
-		fmt.Printf()
+
+	if len(printables) == 0 {
+		fmt.Println("no values to print :(")
+		return -1, fmt.Errorf("prinumsel error, len of printables == 0")
+	}
+
+	for i, printable := range printables {
+		fmt.Printf("%d: %s\n", i, printable.stringToPrint())
 	}
 
 	// this part handles the user selection
