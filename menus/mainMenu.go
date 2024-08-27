@@ -50,6 +50,7 @@ func MainMenuListen(thisUser user.User) error {
 		if err != nil {
 			return fmt.Errorf("issue with egg menu: %v", err)
 		}
+		// uncomment this when the home options is working, else err
 		//	} else if input == "home" {
 		//		err = homeMenuOptions()
 		//		if err != nil {

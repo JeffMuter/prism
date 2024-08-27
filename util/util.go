@@ -14,12 +14,7 @@ import (
 
 // Printable is mostly used for the default printing pattern of a struct. Such as the name of a location.
 type Printable interface {
-	stringToPrint() string
-}
-
-// PrintableDetail is used to print the more detailed version of something
-type PrintableDetail interface {
-	detailedStringToPrint() string
+	StringToPrint() string
 }
 
 func GetAbsoluteFilepath(relativeFilepath string) (string, error) {
@@ -109,29 +104,27 @@ func ReadNumericSelection(options int) (int, error) {
 
 func PrintNumericSelection(printables []Printable) (int, error) {
 	// this part prints the printable in the format we like
-
 	if len(printables) == 0 {
 		fmt.Println("no values to print :(")
-		return -1, fmt.Errorf("prinumsel error, len of printables == 0")
+		return 0, fmt.Errorf("prinumsel error, len of printables == 0")
 	}
 
 	for i, printable := range printables {
-		fmt.Printf("%d: %s\n", i, printable.stringToPrint())
+		fmt.Printf("%d: %s\n", i, printable.StringToPrint())
 	}
 
-	// this part handles the user selection
-	var numericSelection int64
-	var stringSelection string
-
+	// second part reads input, converts to int
 	stringSelection, err := ReadCommandInput()
 	if err != nil {
-		return -1, fmt.Errorf("prinnumsel error getting input from user: %w", err)
+		return 0, fmt.Errorf("prinnumsel error getting input from user: %w", err)
 	}
 
-	numericSelection, err = strconv.ParseInt(stringSelection, 10, 64)
+	numericSelection, err := strconv.Atoi(stringSelection)
 	if err != nil {
-		return -1, fmt.Errorf("prinnumsel error parsing input to int: %w,", err)
+		return 0, fmt.Errorf("prinnumsel error parsing input of, %s to int: %w,", stringSelection, err)
+	} else if numericSelection < 0 || numericSelection > len(printables) {
+		return 0, fmt.Errorf("error, num of options, %d, input, %d: %w", len(printables), numericSelection, err)
 	}
 
-	return int(numericSelection), nil
+	return numericSelection, nil
 }

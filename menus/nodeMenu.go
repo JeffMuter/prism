@@ -19,6 +19,9 @@ func DisplayUserLocations(user user.User) {
 	for i := range userLocations {
 		fmt.Printf("%v | name: %v\n", i, userLocations[i].Name)
 	}
+	// implement new print concept via interfaces.
+	util.PrintNumericSelection(locations.MakeLocsPrintable(userLocations))
+
 	// listen for input
 	locationMenuListen(user, userLocations)
 }

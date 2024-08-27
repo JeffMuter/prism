@@ -74,6 +74,7 @@ func CreateNode(user user.User) error {
 		return fmt.Errorf("error inserting users_locations when creating new location: %v\n", err)
 	}
 	return nil
+
 }
 
 // GetAllNodesUserCouldSee used to get locations from the database, placed into a location type.
@@ -97,6 +98,7 @@ func GetAllNodesUserCouldSee(user user.User) []Location {
 		if err != nil {
 			log.Fatal(err)
 		}
+
 		locations = append(locations, location)
 	}
 	return locations
