@@ -43,7 +43,7 @@ type Art struct {
 	Art    []string
 }
 
-func CreateNode(user user.User) error {
+func CreateLocation(user user.User) error {
 	//this num signifies 10 miles in lat/long degrees. We're using this to
 	// determine the max / min lat&long to determine if the node we want to place is too close to another node.
 	var latLongRange float64 = 0.145
@@ -203,9 +203,9 @@ func ConnectToLocation(user user.User) (int, error) {
 	return newUsersLocsId, errors.New("could not find a node close enough to connect to")
 }
 
-// GetListOfNodesLinkedToUser takes a userId, and returns a slice of locations, made from the db, that
+// GetLocationsForUser takes a userId, and returns a slice of locations, made from the db, that
 // are related to that user.
-func GetListOfNodesLinkedToUser(userId int) ([]Location, error) {
+func GetLocationsForUser(userId int) ([]Location, error) {
 	var locations []Location
 
 	db := database.OpenDatabase()

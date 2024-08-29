@@ -30,7 +30,7 @@ func MainMenuListen(thisUser user.User) error {
 		if err != nil {
 			fmt.Println(err)
 		}
-		err = locations.CreateNode(thisUser)
+		err = locations.CreateLocation(thisUser)
 		if err != nil {
 			fmt.Println(err)
 		}

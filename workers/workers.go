@@ -14,6 +14,7 @@ type Worker struct {
 	UserId         int
 	LocationId     int
 	WorkStatus     bool
+	WorkType       string
 	InjuredStatus  bool
 	Strength       int
 	Faith          int
@@ -49,7 +50,14 @@ func GetWorkersRelevantToUser(user user.User) []Worker {
 
 func GetWorkersRelatedToLocation(locationId int) []Worker {
 	var workers []Worker
-	query := "SELECT workers.id, name, religion, work_status, injured, intelligence, strength, faith, named, users_locations.id, users_locations.location_id FROM workers LEFT JOIN users_locations ON workers.user_locations_id = users_locations.id WHERE location_id = $1"
+
+	query := `SELECT w.id, w.name, religion, work_status, injured, intelligence, strength, faith, named, ul.id, ul.location_id, tt.name 
+	FROM workers w
+	JOIN users_locations ul ON w.user_locations_id = ul.id 
+	JOIN workers_tasks wt ON w.id = wt.worker_id 
+	JOIN task_types tt ON wt.task_type_id = tt.id 
+	WHERE ul.location_id = $1;`
+
 	db := database.OpenDatabase()
 	defer db.Close()
 
@@ -59,10 +67,9 @@ func GetWorkersRelatedToLocation(locationId int) []Worker {
 	}
 	for rows.Next() {
 		var worker Worker
-		rows.Scan(&worker.Id, &worker.Name, &worker.Religion, &worker.WorkStatus, &worker.InjuredStatus, &worker.Intelligence, &worker.Strength, &worker.Faith, &worker.LocationName, &worker.UserLocationId, &worker.LocationId)
+		rows.Scan(&worker.Id, &worker.Name, &worker.Religion, &worker.WorkStatus, &worker.InjuredStatus, &worker.Intelligence, &worker.Strength, &worker.Faith, &worker.LocationName, &worker.UserLocationId, &worker.LocationId, &worker.WorkType)
 		workers = append(workers, worker)
 	}
-
 	return workers
 }
 

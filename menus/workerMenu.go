@@ -4,15 +4,32 @@ import (
 	"fmt"
 	"prism/locations"
 	"prism/tasks"
-	"prism/user"
 	"prism/util"
 	"prism/workers"
 	"strconv"
 )
 
+// DisplayWorkersAtLocation shows the user all workers at a given location, then gives them options to choose from for said workers
+func displayWorkersAtLocation(loc locations.Location) error {
+	locationWorkers := workers.GetWorkersRelatedToLocation(loc.Id)
+	// print workers from print func for workers.
+	printables := workers.MakeWorkersPrintable(locationWorkers, workers.WorkerStateFactory{})
+	chosenWorkerIndex, err := util.PrintNumericSelection(printables)
+	if err != nil {
+		return fmt.Errorf("error printing workers & getting the selection: %w,", err)
+	}
+
+	var workers []workers.Worker
+	workers = append(workers, locationWorkers[chosenWorkerIndex])
+
+	err = workerMenuOptions(locationWorkers[chosenWorkerIndex].UserId, locationWorkers[chosenWorkerIndex])
+
+	return nil
+}
+
 // WorkerMenuOptions is meant to handle the input / output for the menu options when a user is making decisions
 // on an isolated worker
-func WorkerMenuOptions(user user.User, worker workers.Worker) error {
+func workerMenuOptions(userId int, worker workers.Worker) error {
 	userInput, err := util.ReadCommandInput()
 	if err != nil {
 		fmt.Println(err)
@@ -20,7 +37,7 @@ func WorkerMenuOptions(user user.User, worker workers.Worker) error {
 	if userInput == "move" {
 		// assign worker to new location
 		// get locations the user can access.
-		userLocations, err := locations.GetListOfNodesLinkedToUser(user.Id)
+		userLocations, err := locations.GetLocationsForUser(userId)
 		if err != nil {
 			return err
 		}
