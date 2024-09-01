@@ -211,16 +211,21 @@ func GetLocationsForUser(userId int) ([]Location, error) {
 	db := database.OpenDatabase()
 	defer db.Close()
 
-	query := "SELECT locations.id, worker_count, location_type, location_type_id, latitude, longitude, name, description, art FROM locations LEFT JOIN users_locations ON locations.id = users_locations.location_id WHERE users_locations.user_id = $1"
+	query := `SELECT locations.id, worker_count, location_type, 
+		location_type_id, latitude, longitude, 
+		name, description, art, ul.named
+	FROM locations l
+	LEFT JOIN users_locations ul ON l.id = ul.location_id 
+	WHERE ul.user_id = $1`
 	rows, err := db.Query(query, userId)
 	if err != nil {
-		return locations, err
+		return locations, fmt.Errorf("error querying db for locations: %w\n query: %s", err, query)
 	}
 	for rows.Next() {
 		var location Location
-		err := rows.Scan(&location.Id, &location.WorkerCount, &location.LocationType, &location.LocationTypeId, &location.Latitude, &location.Longitude, &location.Name, &location.Description, &location.ArtFileName)
+		err := rows.Scan(&location.Id, &location.WorkerCount, &location.LocationType, &location.LocationTypeId, &location.Latitude, &location.Longitude, &location.Name, &location.Description, &location.ArtFileName, &location.Named)
 		if err != nil {
-			return locations, err
+			return locations, fmt.Errorf("error scanning sql row: %w", err)
 		}
 		locations = append(locations, location)
 	}
@@ -262,7 +267,7 @@ func AddWorkerToNode(locationId int) error {
 
 // GetTasksForLocation gets all task names for a location, using the location
 func GetTaskNamesForLocationType(locationTypeId int) ([]string, error) {
-	fmt.Println("yah")
+	fmt.Printf("getting task name from id: %d\n", locationTypeId)
 	db := database.OpenDatabase()
 	defer db.Close()
 

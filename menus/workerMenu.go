@@ -32,11 +32,13 @@ func displayWorkersAtLocation(loc locations.Location) error {
 // WorkerMenuOptions is meant to handle the input / output for the menu options when a user is making decisions
 // on an isolated worker
 func workerMenuOptions(userId int, worker workers.Worker) error {
+	fmt.Printf("Choose an option for %s\n", worker.Name)
 	userInput, err := util.ReadCommandInput()
 	if err != nil {
 		fmt.Println(err)
 	}
 	if userInput == "move" {
+		fmt.Println("Pick a location to move to:")
 		// move worker to new location
 		// get locations the user can access.
 		userLocations, err := locations.GetLocationsForUser(userId)
@@ -82,11 +84,10 @@ func workerMenuOptions(userId int, worker workers.Worker) error {
 		// get a list of potential tasks we can do at this node.
 		taskNames, err := locations.GetTaskNamesForLocationType(location.LocationTypeId)
 		if err != nil {
-			return err
+			return fmt.Errorf("error getting task names for task assignment: %w", err)
 		} else if len(taskNames) < 1 {
 			return fmt.Errorf("no tasknames returned: %w", err)
 		}
-		fmt.Printf("num of tasks: %d", len(taskNames))
 		// display tasks
 		for i, task := range taskNames {
 			fmt.Printf("%v: %s\n", i, task)
