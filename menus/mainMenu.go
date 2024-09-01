@@ -19,7 +19,7 @@ func MainMenuListen(thisUser user.User) error {
 
 	input, err := reader.ReadString('\n')
 	if err != nil {
-		fmt.Println("Invalid input: ", err)
+		return fmt.Errorf("error reading input: %w", err)
 	}
 	input = strings.TrimSpace(input)
 
@@ -28,34 +28,38 @@ func MainMenuListen(thisUser user.User) error {
 	} else if input == "new location" {
 		thisUser.Latitude, thisUser.Longitude, err = user.Ping()
 		if err != nil {
-			fmt.Println(err)
+			return fmt.Errorf("error pinging user loc: %w,", err)
 		}
 		err = locations.CreateLocation(thisUser)
 		if err != nil {
-			fmt.Println(err)
+			return fmt.Errorf("error creating location: %w,", err)
 		}
 	} else if input == "connect" {
 		newLocId, err := locations.ConnectToLocation(thisUser)
 		if err != nil {
-			fmt.Println("Issue connecting to node: ", err)
+			return fmt.Errorf("error connecting to loc: %w,", err)
 		}
 		err = workers.AddEgg(newLocId)
 		if err != nil {
-			fmt.Println(fmt.Errorf("issue adding egg: %v", err))
+			return fmt.Errorf("error adding egg: %w,", err)
 		}
 	} else if input == "locations" {
-		DisplayUserLocations(thisUser)
+		err = DisplayUserLocations(thisUser) // this obviously needs an error here
+		if err != nil {
+			return fmt.Errorf("error displaying user locations: %w,", err)
+		}
 	} else if input == "eggs" {
 		err = EggMenuOptions(thisUser)
 		if err != nil {
-			return fmt.Errorf("issue with egg menu: %v", err)
+			return fmt.Errorf("issue with egg menu: %w", err)
 		}
 		// uncomment this when the home options is working, else err
 		//	} else if input == "home" {
 		//		err = homeMenuOptions()
 		//		if err != nil {
-		//			fmt.Println(fmt.Errorf("error from home menu in main menu: %v\n", err))
-		//		}
+		//			fmt.Println(fmt.Errorf("error from home menu in main menu: %v\n", err))		//		}
+	} else {
+		return fmt.Errorf("invalid input: %s,", input)
 	}
 	return nil
 }

@@ -11,16 +11,18 @@ import (
 
 // DisplayWorkersAtLocation shows the user all workers at a given location, then gives them options to choose from for said workers
 func displayWorkersAtLocation(loc locations.Location) error {
-	locationWorkers := workers.GetWorkersRelatedToLocation(loc.Id)
+	fmt.Printf("Your workers at %s:\n", loc.Named)
+	locationWorkers, err := workers.GetWorkersRelatedToLocation(loc.Id)
+	if err != nil {
+		return fmt.Errorf("error getting workers related to this location: %w\nlocationId: %d", err, loc.Id)
+	}
+	fmt.Println(len(locationWorkers))
 	// print workers from print func for workers.
 	printables := workers.MakeWorkersPrintable(locationWorkers, workers.WorkerStateFactory{})
 	chosenWorkerIndex, err := util.PrintNumericSelection(printables)
 	if err != nil {
 		return fmt.Errorf("error printing workers & getting the selection: %w,", err)
 	}
-
-	var workers []workers.Worker
-	workers = append(workers, locationWorkers[chosenWorkerIndex])
 
 	err = workerMenuOptions(locationWorkers[chosenWorkerIndex].UserId, locationWorkers[chosenWorkerIndex])
 
@@ -35,7 +37,7 @@ func workerMenuOptions(userId int, worker workers.Worker) error {
 		fmt.Println(err)
 	}
 	if userInput == "move" {
-		// assign worker to new location
+		// move worker to new location
 		// get locations the user can access.
 		userLocations, err := locations.GetLocationsForUser(userId)
 		if err != nil {
@@ -58,7 +60,7 @@ func workerMenuOptions(userId int, worker workers.Worker) error {
 			newLocation := userLocations[intInput]
 			err = locations.AddWorkerToNode(newLocation.Id)
 			if err != nil {
-				fmt.Println("err while adding worker to node after user selected new node to assign worker to: ", err)
+				fmt.Println("err while adding worker to node after user selected new node to move worker to: ", err)
 			}
 
 			// relate the worker to the new user_locations id
@@ -70,23 +72,28 @@ func workerMenuOptions(userId int, worker workers.Worker) error {
 		} else {
 			fmt.Println("incorrect input")
 		}
-	} else if userInput == "assign" {
-		// here we need to:
-		// get location from worker.LocationId
+	} else if userInput == "assign" { // assign a worker to a new type of work
+		fmt.Printf("Tasks to assign the worker %s to do:\n", worker.Name)
+
 		location, err := locations.GetLocationFromLocationId(worker.LocationId)
 		if err != nil {
 			return err
 		}
 		// get a list of potential tasks we can do at this node.
-		taskNames, err := locations.GetTasksForLocation(location)
+		taskNames, err := locations.GetTaskNamesForLocationType(location.LocationTypeId)
 		if err != nil {
 			return err
+		} else if len(taskNames) < 1 {
+			return fmt.Errorf("no tasknames returned: %w", err)
 		}
+		fmt.Printf("num of tasks: %d", len(taskNames))
 		// display tasks
 		for i, task := range taskNames {
 			fmt.Printf("%v: %s\n", i, task)
 		}
 		//2. wait for user input.
+
+		// TODO: replace with printable interface solution, but now for tasks
 
 		userInput, err := util.ReadNumericSelection(len(taskNames))
 		if err != nil {

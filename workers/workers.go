@@ -27,7 +27,7 @@ type Worker struct {
 	Art            locations.Art
 }
 
-func GetWorkersRelevantToUser(user user.User) []Worker {
+func GetWorkersRelevantToUser(user user.User) ([]Worker, error) {
 	var workers []Worker
 
 	db := database.OpenDatabase()
@@ -37,40 +37,58 @@ func GetWorkersRelevantToUser(user user.User) []Worker {
 
 	rows, err := db.Query(query, user.Id)
 	if err != nil {
-		fmt.Println("error querying: ", err)
+		return workers, fmt.Errorf("error querying db: %w\nquery: %s,", err, query)
 	}
 	for rows.Next() {
 		var worker Worker
-		rows.Scan(&worker.Id, &worker.Name, &worker.Religion, &worker.WorkStatus, &worker.InjuredStatus, &worker.Intelligence, &worker.Strength, &worker.Faith, &worker.LocationName, &worker.UserLocationId, &worker.LocationId)
+		err = rows.Scan(&worker.Id, &worker.Name, &worker.Religion, &worker.WorkStatus, &worker.InjuredStatus, &worker.Intelligence, &worker.Strength, &worker.Faith, &worker.LocationName, &worker.UserLocationId, &worker.LocationId)
+		if err != nil {
+			return workers, fmt.Errorf("error assigning vars from sql row scan: %w,", err)
+		}
 		workers = append(workers, worker)
 	}
 
-	return workers
+	return workers, nil
 }
 
-func GetWorkersRelatedToLocation(locationId int) []Worker {
+func GetWorkersRelatedToLocation(locationId int) ([]Worker, error) {
 	var workers []Worker
-
-	query := `SELECT w.id, w.name, religion, work_status, injured, intelligence, strength, faith, named, ul.id, ul.location_id, tt.name 
-	FROM workers w
-	JOIN users_locations ul ON w.user_locations_id = ul.id 
-	JOIN workers_tasks wt ON w.id = wt.worker_id 
-	JOIN task_types tt ON wt.task_type_id = tt.id 
-	WHERE ul.location_id = $1;`
+	// complicated query,but the left joins allow us to get workers who have yet to be assigned a task ever.
+	query := `SELECT 
+		w.id, 
+		w.name, 
+		w.religion, 
+		w.work_status, 
+		w.injured, 
+		w.intelligence, 
+		w.strength, 
+		w.faith, 
+		ul.named,
+		ul.id AS user_location_id, 
+		ul.location_id, 
+		tt.name AS task_name
+		FROM workers w
+		JOIN users_locations ul ON w.user_locations_id = ul.id 
+		LEFT JOIN workers_tasks wt ON w.id = wt.worker_id AND wt.end_time IS NULL
+		LEFT JOIN task_types tt ON wt.task_type_id = tt.id 
+		WHERE ul.location_id = $1;`
 
 	db := database.OpenDatabase()
 	defer db.Close()
 
 	rows, err := db.Query(query, locationId)
 	if err != nil {
-		fmt.Println("Error getting rows from query to db: ", err)
+		return workers, fmt.Errorf("Error getting rows from query to db: %w\nquery: %s", err, query)
 	}
 	for rows.Next() {
 		var worker Worker
 		rows.Scan(&worker.Id, &worker.Name, &worker.Religion, &worker.WorkStatus, &worker.InjuredStatus, &worker.Intelligence, &worker.Strength, &worker.Faith, &worker.LocationName, &worker.UserLocationId, &worker.LocationId, &worker.WorkType)
+		if err != nil {
+			return workers, fmt.Errorf("error scanning sql row: %w\nquery: %s,", err, query)
+		}
 		workers = append(workers, worker)
 	}
-	return workers
+	return workers, nil
 }
 
 func PrintWorkerDetails(worker Worker) {

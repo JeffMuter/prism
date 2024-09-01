@@ -261,12 +261,12 @@ func AddWorkerToNode(locationId int) error {
 }
 
 // GetTasksForLocation gets all task names for a location, using the location
-func GetTasksForLocation(location Location) ([]string, error) {
+func GetTaskNamesForLocationType(locationTypeId int) ([]string, error) {
+	fmt.Println("yah")
 	db := database.OpenDatabase()
 	defer db.Close()
 
 	var taskTypes []string
-	locationTypeId := location.LocationTypeId
 	query := "SELECT tt.name FROM task_types tt JOIN location_types_tasks ltt ON tt.id = ltt.task_type_id JOIN location_types lt ON ltt.location_type_id = lt.id WHERE lt.id = $1"
 
 	rows, err := db.Query(query, locationTypeId)
