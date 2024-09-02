@@ -3,6 +3,7 @@ package locations
 import (
 	"prism/database"
 	"testing"
+	"time"
 )
 
 func TestGetResourceIdByName(t *testing.T) {
@@ -21,10 +22,32 @@ func TestGetResourceIdByName(t *testing.T) {
 
 func TestCreateNewResources(t *testing.T) {
 	db := database.GetDB()
-	tx, err := db.Begin()
+	_, err := db.Exec("DELETE FROM locations_resources WHERE location_id = $1", 1)
 	if err != nil {
-
+		t.Fatalf("failed to clear locations_resources table of location_id: %d: %v", 1, err)
 	}
-	defer db.Close()
-	tx, err
+
+	now := time.Now()
+
+	resources := []resource{
+		{
+			locationResourceId: 1,
+			name:               "Iron",
+			lastUpdated:        now.Add(-12 * time.Hour),
+			quantity:           10,
+			baseRate:           2.5,
+		},
+		{
+			locationResourceId: 2,
+			name:               "Copper",
+			lastUpdated:        now.Add(-24 * time.Hour),
+			quantity:           20,
+			baseRate:           1.8,
+		},
+	}
+	err = CreateNewResources(1, resources)
+	if err != nil {
+		t.Fatalf("CreateNewResources failed: %v", err)
+	}
+
 }

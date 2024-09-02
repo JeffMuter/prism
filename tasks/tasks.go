@@ -32,7 +32,7 @@ func SetWorkerTaskToNewTask(worker workers.Worker, taskType string) error {
 	//
 	taskTypeMap, err := GetListOfTasksFromLocationId(worker.LocationId)
 	if err != nil {
-		return err
+		return fmt.Errorf("error getting list of tasks from loc id: %w,", err)
 	}
 	// verify that the taskType param matches a task type in the db.
 	for id, thisType := range taskTypeMap {
@@ -48,7 +48,7 @@ func SetWorkerTaskToNewTask(worker workers.Worker, taskType string) error {
 	//end the old task
 	err = endCurrentWorkerTask(worker.Id)
 	if err != nil {
-		return err
+		return fmt.Errorf("error ending worker's (id: %d) task: %w,", worker.Id, err)
 	}
 	db := database.GetDB()
 	defer db.Close()
@@ -56,14 +56,14 @@ func SetWorkerTaskToNewTask(worker workers.Worker, taskType string) error {
 	// need the worker's location for details
 	workerLocation, err := locations.GetLocationFromLocationId(worker.LocationId)
 	if err != nil {
-		return err
+		return fmt.Errorf("error getting loc from the worker's id (id: %d): %w,", worker.LocationId, err)
 	}
 
 	// add new task to db
 	query := "INSERT INTO workers_tasks (task_type_id, location_id, worker_id, start_time, start_longitude, start_latitude, end_longitude, end_latitude, is_ongoing) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"
 	_, err = db.Exec(query, verifiedTaskTypeId, workerLocation.Id, worker.Id, time.Now().UTC(), workerLocation.Latitude, workerLocation.Longitude, workerLocation.Latitude, workerLocation.Longitude, true)
 	if err != nil {
-		return err
+		return fmt.Errorf("error executing query to insert a new task into tasks table: %w,", err)
 	}
 
 	return nil
@@ -101,7 +101,7 @@ func endCurrentWorkerTask(workerId int) error {
 	query := "UPDATE workers_tasks SET is_ongoing = false, end_time = $1 WHERE worker_id = $2"
 	_, err := db.Exec(query, time.Now().UTC(), workerId)
 	if err != nil {
-		return err
+		return fmt.Errorf("error executing query to update / end the worker's current task: %w,", err)
 	}
 	return nil
 }
@@ -115,7 +115,7 @@ func GetListOfTasksFromLocationId(id int) (map[int]string, error) {
 
 	rows, err := db.Query(query, id)
 	if err != nil {
-		return tasks, err
+		return tasks, fmt.Errorf("error querying to get task names and id's from a loc id: %w,", err)
 	}
 
 	for rows.Next() {

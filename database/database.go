@@ -17,7 +17,7 @@ const (
 
 var db *sql.DB
 
-func OpenDatabase() {
+func OpenDatabase() error {
 	var err error
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
 		"password=%s dbname=%s sslmode=disable",
@@ -25,13 +25,16 @@ func OpenDatabase() {
 
 	db, err = sql.Open("postgres", psqlInfo)
 	if err != nil {
-		fmt.Println("unable to connect to db...", err)
+		fmt.Errorf("error unable to connect to db... %w,", err)
+
 	}
 
 	err = db.Ping()
 	if err != nil {
 		fmt.Println("unable to ping db...", err)
+		return fmt.Errorf("error pinging db: %w", err)
 	}
+	return nil
 }
 
 func GetDB() *sql.DB {

@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"prism/database"
 	"prism/logic"
 	"prism/menus"
 	"prism/render"
@@ -10,14 +12,17 @@ import (
 
 func main() {
 
+	err := database.OpenDatabase()
+	if err != nil {
+		log.Fatalf("db connections failed...: %v", err)
+	}
+
 	var thisUser = user.User{
 		Id:       1,
 		Username: "1",
 		Email:    "1@gmail.com",
 		Password: "1",
 	}
-
-	var err error
 
 	thisUser.Latitude, thisUser.Longitude, err = user.Ping()
 	if err != nil {
