@@ -60,7 +60,7 @@ func CreateLocation(user user.User) error {
 		}
 	}
 
-	db := database.OpenDatabase()
+	db := database.GetDB()
 	defer db.Close()
 
 	// add node to locations
@@ -81,7 +81,7 @@ func CreateLocation(user user.User) error {
 func GetAllNodesUserCouldSee(user user.User) []Location {
 	var locations []Location
 
-	db := database.OpenDatabase()
+	db := database.GetDB()
 	defer db.Close()
 
 	query :=
@@ -169,7 +169,7 @@ func CreateArtFromStringSlice(artSlice []string) Art {
 // range, and if no other locations are inside it, creates the new node. Returns the id of the newly connected location.
 func ConnectToLocation(user user.User) (int, error) {
 	var newUsersLocsId int
-	db := database.OpenDatabase()
+	db := database.GetDB()
 	defer db.Close()
 
 	// get all locations currently not associated to this user
@@ -208,7 +208,7 @@ func ConnectToLocation(user user.User) (int, error) {
 func GetLocationsForUser(userId int) ([]Location, error) {
 	var locations []Location
 
-	db := database.OpenDatabase()
+	db := database.GetDB()
 	defer db.Close()
 
 	query := `SELECT locations.id, worker_count, location_type, 
@@ -235,7 +235,7 @@ func GetLocationsForUser(userId int) ([]Location, error) {
 // RemoveWorkerFromNode reduces worker_count value in the db by 1
 func RemoveWorkerFromNode(locationId int) error {
 
-	db := database.OpenDatabase()
+	db := database.GetDB()
 	defer db.Close()
 
 	query := "UPDATE users_locations SET worker_count = worker_count - 1 WHERE users_locations.id = $1"
@@ -251,7 +251,7 @@ func RemoveWorkerFromNode(locationId int) error {
 
 // AddWorkerToNode updates the new node in the db to increase by 1.
 func AddWorkerToNode(locationId int) error {
-	db := database.OpenDatabase()
+	db := database.GetDB()
 	defer db.Close()
 
 	query := "UPDATE users_locations SET worker_count = worker_count + 1 WHERE users_locations.id = $1"
@@ -268,7 +268,7 @@ func AddWorkerToNode(locationId int) error {
 // GetTasksForLocation gets all task names for a location, using the location
 func GetTaskNamesForLocationType(locationTypeId int) ([]string, error) {
 	fmt.Printf("getting task name from id: %d\n", locationTypeId)
-	db := database.OpenDatabase()
+	db := database.GetDB()
 	defer db.Close()
 
 	var taskTypes []string
@@ -293,7 +293,7 @@ func GetTaskNamesForLocationType(locationTypeId int) ([]string, error) {
 
 func GetLocationFromLocationId(id int) (Location, error) {
 	var location Location
-	db := database.OpenDatabase()
+	db := database.GetDB()
 	defer db.Close()
 	query := "SELECT id, location_type, location_type_id, latitude, longitude, name, description, art FROM locations WHERE id = $1"
 
@@ -311,7 +311,7 @@ func GetNamesForResourcesOfTasksFromLocation(id int) ([]resource, error) {
 
 	var resources []resource
 
-	db := database.OpenDatabase()
+	db := database.GetDB()
 	defer db.Close()
 	query := "SELECT r.name, ttr.base_rate FROM workers_tasks wt JOIN task_types tt ON wt.task_type_id = tt.id JOIN task_types_resources ttr ON tt.id = ttr.task_type_id JOIN resources r ON ttr.resource_id = r.id WHERE wt.location_id = $1 AND wt.is_ongoing = TRUE;"
 
@@ -336,7 +336,7 @@ func GetNamesForResourcesOfTasksFromLocation(id int) ([]resource, error) {
 func GetResourceDataByLocationId(id int) ([]resource, error) {
 	var resources []resource
 
-	db := database.OpenDatabase()
+	db := database.GetDB()
 	defer db.Close()
 	query := "SELECT r.id, r.name, lr.quantity, lr.last_updated FROM locations_resources lr JOIN resources r ON r.id = lr.resource_id  WHERE lr.location_id = $1;"
 
@@ -368,7 +368,7 @@ func UpdateLocationResources(locationId int, resources []resource) error {
 		}
 	}
 
-	db := database.OpenDatabase()
+	db := database.GetDB()
 	defer db.Close()
 	query := "UPDATE locations_resources lr SET last_updated = $1, quantity = $2 WHERE location_id = $3 AND resource_id = $4;"
 
@@ -381,12 +381,13 @@ func UpdateLocationResources(locationId int, resources []resource) error {
 	return nil
 }
 
+// CreateNewResources takes a loc id, and a slice of resources, and iinserts them into the db on locations_resources table, using fields of the resource to populate the db info. Specifically to only be used on new resources that currently don't exist for this locations
 func CreateNewResources(locationId int, resources []resource) error {
-	db := database.OpenDatabase()
+	db := database.GetDB()
 	defer db.Close()
 	query := "INSERT INTO locations_resources (location_id, resource_id, last_updated, quantity) VALUES ($1, $2, $3, $4)"
 	for i := range resources {
-		err := db.QueryRow(query, locationId, resources[i].locationResourceId, resources[i].lastUpdated, resources[i].quantity)
+		_, err := db.Exec(query, locationId, resources[i].locationResourceId, resources[i].lastUpdated, resources[i].quantity)
 		if err != nil {
 			return fmt.Errorf("error inserting locations_resources row to db: %v", err)
 		}
@@ -396,15 +397,15 @@ func CreateNewResources(locationId int, resources []resource) error {
 
 // GetResourceIdByName takes in a string which references a Resource type, and returns the id of the Resource
 func GetResourceIdByName(name string) (int, error) {
-	var id int = -1
+	var id = 0
 
-	db := database.OpenDatabase()
+	db := database.GetDB()
 	defer db.Close()
 	query := "SELECT id FROM resources WHERE name = $1"
 	row := db.QueryRow(query, name)
 	err := row.Scan(&id)
 	if err != nil {
-		return id, errors.New("error selecting name from resources by name")
+		return id, fmt.Errorf("error scanning sql row while getting resource id from name string: %w,", err)
 	}
 	return id, nil
 }

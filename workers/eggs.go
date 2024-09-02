@@ -21,7 +21,7 @@ type Egg struct {
 // AddEgg receives the user's id, and the location the egg was discovered, and creates a new egg for that user at that
 // location. Returns error if process fails
 func AddEgg(usersLocationsId int) error {
-	db := database.OpenDatabase()
+	db := database.GetDB()
 	defer db.Close()
 	query := "INSERT INTO eggs (users_locations_id, discovery_time) VALUES ($1, $2);"
 
@@ -47,7 +47,7 @@ func HatchEgg(eggId int) error {
 		return fmt.Errorf("issue hatching egg from getting user input: %v\n", err)
 	}
 
-	db := database.OpenDatabase()
+	db := database.GetDB()
 	defer db.Close()
 
 	// get the locationId of the egg for the new worker db.
@@ -72,7 +72,7 @@ func HatchEgg(eggId int) error {
 
 func GetEggsAvailableForUser(userId int) ([]Egg, error) {
 	var eggs []Egg
-	db := database.OpenDatabase()
+	db := database.GetDB()
 	defer db.Close()
 	query := "SELECT e.id, ul.named FROM eggs e JOIN users_locations ul ON ul.id = e.users_locations_id JOIN users u ON u.id = ul.user_id JOIN locations l ON ul.location_id = l.id WHERE u.id = $1 AND e.worker_id IS NULL"
 	rows, err := db.Query(query, userId)

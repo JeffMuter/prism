@@ -15,21 +15,25 @@ const (
 	dbname   = "prism"
 )
 
-func OpenDatabase() *sql.DB {
+var db *sql.DB
 
+func OpenDatabase() {
+	var err error
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
 		"password=%s dbname=%s sslmode=disable",
 		host, port, user, password, dbname)
 
-	db, err := sql.Open("postgres", psqlInfo)
+	db, err = sql.Open("postgres", psqlInfo)
 	if err != nil {
-		panic(err)
+		fmt.Println("unable to connect to db...", err)
 	}
 
 	err = db.Ping()
 	if err != nil {
-		panic(err)
+		fmt.Println("unable to ping db...", err)
 	}
+}
 
+func GetDB() *sql.DB {
 	return db
 }

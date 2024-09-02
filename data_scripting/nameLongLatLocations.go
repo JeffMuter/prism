@@ -15,7 +15,7 @@ import (
 // line into the db's locations
 
 func AddLocationsToDb() {
-	db := database.OpenDatabase()
+	db := database.GetDB()
 	defer db.Close()
 
 	file, err := os.Open("data_scripting/city.txt")

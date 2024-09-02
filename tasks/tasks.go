@@ -50,7 +50,7 @@ func SetWorkerTaskToNewTask(worker workers.Worker, taskType string) error {
 	if err != nil {
 		return err
 	}
-	db := database.OpenDatabase()
+	db := database.GetDB()
 	defer db.Close()
 
 	// need the worker's location for details
@@ -73,7 +73,7 @@ func SetWorkerTaskToNewTask(worker workers.Worker, taskType string) error {
 func GetListOfTaskTypes() ([]string, error) {
 	query := "SELECT name FROM task_types"
 
-	db := database.OpenDatabase()
+	db := database.GetDB()
 	defer db.Close()
 
 	var taskTypes []string
@@ -96,7 +96,7 @@ func GetListOfTaskTypes() ([]string, error) {
 
 // endCurrentWorkerTask is a func to end the current task of the worker.
 func endCurrentWorkerTask(workerId int) error {
-	db := database.OpenDatabase()
+	db := database.GetDB()
 	defer db.Close()
 	query := "UPDATE workers_tasks SET is_ongoing = false, end_time = $1 WHERE worker_id = $2"
 	_, err := db.Exec(query, time.Now().UTC(), workerId)
@@ -109,7 +109,7 @@ func endCurrentWorkerTask(workerId int) error {
 // GetListOfTasksFromLocationId gets a list of all tasks that a location has access to, by a locationId
 func GetListOfTasksFromLocationId(id int) (map[int]string, error) {
 	var tasks = make(map[int]string)
-	db := database.OpenDatabase()
+	db := database.GetDB()
 	defer db.Close()
 	query := "SELECT tt.id, tt.name FROM locations l JOIN location_types_tasks ltt ON l.location_type_id = ltt.location_type_id JOIN task_types tt ON ltt.task_type_id = tt.id WHERE l.id = $1"
 
@@ -139,7 +139,7 @@ func GetListOfTasksFromLocationId(id int) (map[int]string, error) {
 func GetOngoingTaskNamesRateMapFromLocationId(locationId int) (map[string]float64, error) {
 	var mapNameRate = make(map[string]float64)
 
-	db := database.OpenDatabase()
+	db := database.GetDB()
 	defer db.Close()
 	query := "SELECT r.name, ttr.base_rate FROM workers_tasks wt JOIN task_types tt ON wt.task_type_id = tt.id JOIN task_types_resources ttr ON tt.id = ttr.task_type_id JOIN resources r ON ttr.resource_id = r.id WHERE wt.location_id = $1 AND wt.is_ongoing = TRUE;"
 
