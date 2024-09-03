@@ -6,7 +6,6 @@ import (
 	"prism/tasks"
 	"prism/util"
 	"prism/workers"
-	"strconv"
 )
 
 // DisplayWorkersAtLocation shows the user all workers at a given location, then gives them options to choose from for said workers
@@ -39,41 +38,26 @@ func workerMenuOptions(userId int, worker workers.Worker) error {
 	}
 	if userInput == "move" {
 		fmt.Println("Pick a location to move to:")
-		// move worker to new location
-		// get locations the user can access.
-		userLocations, err := locations.GetLocationsForUser(userId)
+		//display locations
+		usersLocations, err := locations.GetLocationsForUser(userId)
 		if err != nil {
-			return err
+			return fmt.Errorf("error getting user's locations: %w,", err)
 		}
-		// print all locations to the screen of them to choose an index num
-		DisplayLocations(userLocations)
-		//read user input for num.
-		userInput, err := util.ReadCommandInput()
-		fmt.Println(err)
-		if intInput, err := strconv.Atoi(userInput); err == nil && intInput < len(userLocations) && intInput > -1 {
-			// reduce the previous location's worker_count by one
-			var oldLocation = locations.Location{Id: worker.UserLocationId}
-			err := locations.RemoveWorkerFromNode(oldLocation.Id)
-			if err != nil {
-				fmt.Println("issue removing worker from node after user selected new node to send worker to: ", err)
-				return err
-			}
-			// increase the next location's worker_count by one.
-			newLocation := userLocations[intInput]
-			err = locations.AddWorkerToNode(newLocation.Id)
-			if err != nil {
-				fmt.Println("err while adding worker to node after user selected new node to move worker to: ", err)
-			}
+		fmt.Println(len(usersLocations))
 
-			// relate the worker to the new user_locations id
-			err = workers.AssignWorkerToLocation(worker, userLocations[intInput])
-			if err != nil {
-				fmt.Println("err assigning worker to new location during worker menu options: ", err)
-				return err
-			}
-		} else {
-			fmt.Println("incorrect input")
+		printables := locations.MakeLocsPrintable(usersLocations, locations.SomeDetailsPrintFactory{})
+
+		locationChosenIndex, err := util.PrintNumericSelection(printables)
+		if err != nil {
+			return fmt.Errorf("error getting user index choice for list of printed options: %w,", err)
 		}
+
+		// relate the worker to the new user_locations id
+		err = workers.AssignWorkerToLocation(worker, usersLocations[locationChosenIndex])
+		if err != nil {
+			return fmt.Errorf("error assigning worker to a new loc: %w,", err)
+		}
+
 	} else if userInput == "assign" { // assign a worker to a new type of work
 		fmt.Printf("Tasks to assign the worker %s to do:\n", worker.Name)
 

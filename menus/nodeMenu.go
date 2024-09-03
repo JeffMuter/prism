@@ -3,19 +3,18 @@ package menus
 import (
 	"fmt"
 	"prism/locations"
-	"prism/user"
 	"prism/util"
 )
 
 // gets all user locations, and allows users to choose options based on those locations
-func DisplayUserLocations(user user.User) error {
+func DisplayUserLocations(userId int) error {
 	// get a list of locations
-	userLocations, err := locations.GetLocationsForUser(user.Id)
+	userLocations, err := locations.GetLocationsForUser(userId)
 	if err != nil {
 		return fmt.Errorf("error getting locations for the node menu %w: ", err)
 	}
-	// display info on each node.
 
+	// display info on each node.
 	printables := locations.MakeLocsPrintable(userLocations, locations.SomeDetailsPrintFactory{})
 	locationChosenIndex, err := util.PrintNumericSelection(printables)
 	if err != nil {

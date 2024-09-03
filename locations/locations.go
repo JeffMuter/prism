@@ -217,6 +217,7 @@ func GetLocationsForUser(userId int) ([]Location, error) {
 
 	db := database.GetDB()
 
+	fmt.Println(userId)
 	query := `SELECT 
 		l.id, 
 		ul.worker_count, 
