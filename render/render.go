@@ -9,28 +9,32 @@ import (
 	"sort"
 )
 
-func PaintScreen(thisUser user.User) [][]rune {
+func PaintScreen(thisUser user.User) ([][]rune, error) {
+	var canvas [][]rune
 
 	//get terminal info
 	termWidth, termHeight, err := operating_system.GetTerminalSize()
 	if err != nil {
-		fmt.Println("issue getting screen dimensions for rendering")
+		return canvas, fmt.Errorf("error getting screen dimensions for rendering: %w,", err)
 	}
 
 	// get locations near user
 	locationsToRender, err := locations.GetAllNodesUserCouldSee(thisUser)
+	if err != nil {
+		return canvas, fmt.Errorf("error getting loc's near to user: %w,", err)
+	}
 
 	// set each locations coordinates
 	locationsToRender, err =
 		findLocationsCoordinates(thisUser, locationsToRender, termWidth, termHeight)
 	if err != nil {
-		fmt.Println(err)
+		return canvas, fmt.Errorf("error getting coordinates for loc's: %w,", err)
 	}
 	// set each location's art file from their ArtName
 	locationsToRender = locations.SetLocationsArt(locationsToRender)
 
 	// create canvas
-	canvas := make([][]rune, termHeight)
+	canvas = make([][]rune, termHeight)
 	for i := range canvas {
 		canvas[i] = make([]rune, termWidth)
 		for j := range canvas[i] {
@@ -45,13 +49,11 @@ func PaintScreen(thisUser user.User) [][]rune {
 	//addWorkersToCanvas(canvas, workersToRender)
 	addUserToCanvas(canvas, thisUser)
 
-	fmt.Printf("Canvas dimensions: %v, %v\n", len(canvas), len(canvas[0]))
-
 	for i := range canvas {
 		fmt.Println(string(canvas[len(canvas)-1-i]))
 	}
 
-	return canvas
+	return canvas, nil
 }
 
 func findLocationsCoordinates(user user.User, unfilteredLocations []locations.Location, scrWidth, scrHeight int) ([]locations.Location, error) {

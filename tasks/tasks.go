@@ -51,7 +51,6 @@ func SetWorkerTaskToNewTask(worker workers.Worker, taskType string) error {
 		return fmt.Errorf("error ending worker's (id: %d) task: %w,", worker.Id, err)
 	}
 	db := database.GetDB()
-	defer db.Close()
 
 	// need the worker's location for details
 	workerLocation, err := locations.GetLocationFromLocationId(worker.LocationId)
@@ -74,7 +73,6 @@ func GetListOfTaskTypes() ([]string, error) {
 	query := "SELECT name FROM task_types"
 
 	db := database.GetDB()
-	defer db.Close()
 
 	var taskTypes []string
 
@@ -97,7 +95,6 @@ func GetListOfTaskTypes() ([]string, error) {
 // endCurrentWorkerTask is a func to end the current task of the worker.
 func endCurrentWorkerTask(workerId int) error {
 	db := database.GetDB()
-	defer db.Close()
 	query := "UPDATE workers_tasks SET is_ongoing = false, end_time = $1 WHERE worker_id = $2"
 	_, err := db.Exec(query, time.Now().UTC(), workerId)
 	if err != nil {
@@ -110,7 +107,6 @@ func endCurrentWorkerTask(workerId int) error {
 func GetListOfTasksFromLocationId(id int) (map[int]string, error) {
 	var tasks = make(map[int]string)
 	db := database.GetDB()
-	defer db.Close()
 	query := "SELECT tt.id, tt.name FROM locations l JOIN location_types_tasks ltt ON l.location_type_id = ltt.location_type_id JOIN task_types tt ON ltt.task_type_id = tt.id WHERE l.id = $1"
 
 	rows, err := db.Query(query, id)
@@ -140,7 +136,6 @@ func GetOngoingTaskNamesRateMapFromLocationId(locationId int) (map[string]float6
 	var mapNameRate = make(map[string]float64)
 
 	db := database.GetDB()
-	defer db.Close()
 	query := "SELECT r.name, ttr.base_rate FROM workers_tasks wt JOIN task_types tt ON wt.task_type_id = tt.id JOIN task_types_resources ttr ON tt.id = ttr.task_type_id JOIN resources r ON ttr.resource_id = r.id WHERE wt.location_id = $1 AND wt.is_ongoing = TRUE;"
 
 	rows, err := db.Query(query, locationId)

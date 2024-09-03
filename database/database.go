@@ -25,7 +25,7 @@ func OpenDatabase() error {
 
 	db, err = sql.Open("postgres", psqlInfo)
 	if err != nil {
-		fmt.Errorf("error unable to connect to db... %w,", err)
+		return fmt.Errorf("error unable to connect to db... %w,", err)
 
 	}
 

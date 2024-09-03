@@ -16,7 +16,6 @@ import (
 
 func AddLocationsToDb() {
 	db := database.GetDB()
-	defer db.Close()
 
 	file, err := os.Open("data_scripting/city.txt")
 	if err != nil {

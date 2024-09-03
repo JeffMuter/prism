@@ -31,7 +31,6 @@ func GetWorkersRelevantToUser(user user.User) ([]Worker, error) {
 	var workers []Worker
 
 	db := database.GetDB()
-	defer db.Close()
 
 	query := "SELECT  workers.id, name, religion, work_status, injured, intelligence, strength, faith, named, users_locations.id, users_locations.location_id  FROM workers LEFT JOIN users_locations ON workers.user_locations_id = users_locations.id WHERE user_id = $1"
 
@@ -74,7 +73,6 @@ func GetWorkersRelatedToLocation(locationId int) ([]Worker, error) {
 		WHERE ul.location_id = $1;`
 
 	db := database.GetDB()
-	defer db.Close()
 
 	rows, err := db.Query(query, locationId)
 	if err != nil {
@@ -109,7 +107,6 @@ func AssignWorkerToLocation(worker Worker, newLocation locations.Location) error
 	// add a worker_count to the new location,
 	// then add the user_locations.id to the worker in the db and object
 	db := database.GetDB()
-	defer db.Close()
 	var newUserLocationId int
 
 	query := "SELECT users_locations.id FROM users_locations WHERE location_id = $1"
@@ -133,7 +130,6 @@ func AssignWorkerToLocation(worker Worker, newLocation locations.Location) error
 // which indicates if they're mining materials or not.
 func ToggleWorkingForWorker(worker Worker) error {
 	db := database.GetDB()
-	defer db.Close()
 	query := "UPDATE workers SET work_status = NOT work_status WHERE workers.id = $1"
 	_, err := db.Exec(query, worker.Id)
 	if err != nil {
