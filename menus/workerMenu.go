@@ -15,7 +15,7 @@ func displayWorkersAtLocation(loc locations.Location) error {
 	if err != nil {
 		return fmt.Errorf("error getting workers related to this location: %w\nlocationId: %d", err, loc.Id)
 	}
-	fmt.Println(len(locationWorkers))
+	fmt.Println(len(locationWorkers), "len of locWorkers")
 	// print workers from print func for workers.
 	printables := workers.MakeWorkersPrintable(locationWorkers, workers.WorkerStateFactory{})
 	chosenWorkerIndex, err := util.PrintNumericSelection(printables)
@@ -37,8 +37,9 @@ func workerMenuOptions(userId int, worker workers.Worker) error {
 		fmt.Println(err)
 	}
 	if userInput == "move" {
-		fmt.Println("Pick a location to move to:")
+		fmt.Println("nPick a location to move to:")
 		//display locations
+		fmt.Printf("user id: %d\n", userId)
 		usersLocations, err := locations.GetLocationsForUser(userId)
 		if err != nil {
 			return fmt.Errorf("error getting user's locations: %w,", err)

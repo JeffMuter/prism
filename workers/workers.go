@@ -63,9 +63,10 @@ func GetWorkersRelatedToLocation(locationId int) ([]Worker, error) {
 		w.strength, 
 		w.faith, 
 		ul.named,
-		ul.id AS user_location_id, 
+		ul.id, 
+		ul.user_id,
 		ul.location_id, 
-		tt.name AS task_name
+		tt.name
 		FROM workers w
 		JOIN users_locations ul ON w.user_locations_id = ul.id 
 		LEFT JOIN workers_tasks wt ON w.id = wt.worker_id AND wt.end_time IS NULL
@@ -80,11 +81,22 @@ func GetWorkersRelatedToLocation(locationId int) ([]Worker, error) {
 	}
 	for rows.Next() {
 		var worker Worker
-		rows.Scan(&worker.Id, &worker.Name, &worker.Religion, &worker.WorkStatus, &worker.InjuredStatus, &worker.Intelligence, &worker.Strength, &worker.Faith, &worker.LocationName, &worker.UserLocationId, &worker.LocationId, &worker.WorkType)
+		err := rows.Scan(&worker.Id,
+			&worker.Name,
+			&worker.Religion,
+			&worker.WorkStatus,
+			&worker.InjuredStatus,
+			&worker.Intelligence,
+			&worker.Strength,
+			&worker.Faith,
+			&worker.LocationName,
+			&worker.UserLocationId,
+			&worker.UserId,
+			&worker.LocationId,
+			&worker.WorkType)
 		if err != nil {
 			return workers, fmt.Errorf("error scanning sql row: %w\nquery: %s,", err, query)
 		}
-		workers = append(workers, worker)
 	}
 	return workers, nil
 }

@@ -54,10 +54,10 @@ func HatchEgg(eggId int) error {
 	_ = db.QueryRow(query, eggId).Scan(&eggUserLocationId)
 
 	// create new worker with all the collected values
-	query = "INSERT INTO workers (name, user_locations_id, religion, strength, intelligence, speed, faith, luck, loyalty, charisma) VALUES ($1, $2 ,$3, $4, $5, $6, $7, $8, $9, $10) RETURNING id;"
+	query = "INSERT INTO workers (name, user_locations_id, religion, strength, intelligence, speed, faith, luck, loyalty, charisma, task_type) VALUES ($1, $2 ,$3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id;"
 
 	var workerId int
-	_ = db.QueryRow(query, workerName, eggUserLocationId, workerReligion, strength, intelligence, speed, faith, luck, loyalty, charisma).Scan(&workerId)
+	row := db.QueryRow(query, workerName, eggUserLocationId, workerReligion, strength, intelligence, speed, faith, luck, loyalty, charisma, "resting").Scan(&workerId)
 
 	// update the egg's hatched and worker_id value, so that we know the egg has hatched.
 	query = "UPDATE eggs SET hatch_time = $1, worker_id = $2 WHERE id = $3"
@@ -65,6 +65,11 @@ func HatchEgg(eggId int) error {
 	if err != nil {
 		return fmt.Errorf("error updating eggs after making worker: %v\n", err)
 	}
+
+	//create a task for the new worker, give them a status of resting
+	var newWorkerId int
+	query = `INSERT INTO`
+
 	return nil
 }
 
