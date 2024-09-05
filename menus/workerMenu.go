@@ -79,17 +79,6 @@ func workerMenuOptions(userId int, worker workers.Worker) error {
 		} else if len(possibleTasks) < 1 {
 			return fmt.Errorf("no tasknames returned: %w", err)
 		}
-		// display tasks
-		//		for i, task := range taskNames {
-		//			fmt.Printf("%v: %s\n", i, task)
-		//		}
-		//2. wait for user input.
-
-		//		userInput, err := util.ReadNumericSelection(len(taskNames))
-		//		if err != nil {
-		//			fmt.Println(err)
-		//		}
-		// TODO: replace with printable interface solution, but now for tasks
 
 		printables := tasks.MakeTasksPrintable(possibleTasks, tasks.NameTaskFactory{})
 		chosenTaskIndex, err := util.PrintNumericSelection(printables)

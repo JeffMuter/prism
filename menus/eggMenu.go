@@ -5,7 +5,6 @@ import (
 	"prism/user"
 	"prism/util"
 	"prism/workers"
-	"strings"
 )
 
 func EggMenuOptions(user user.User) error {
@@ -19,33 +18,18 @@ func EggMenuOptions(user user.User) error {
 		return fmt.Errorf("no existing eggs to be found")
 	}
 
-	err = workers.ShowEggsDetails(eggs)
+	printables := workers.MakeEggsPrintable(eggs, workers.EggStateFactory{})
+	chosenEggIndex, err := util.PrintNumericSelection(printables)
 	if err != nil {
-		return fmt.Errorf("issue showing eggs: %v\n", err)
+		return fmt.Errorf("error getting the index from printable eggs: %w,", err)
 	}
-
-	//get input from user
-	input, err := util.ReadCommandInput()
-	if err != nil {
-		return fmt.Errorf("error reading user input in egg menu: %v\n", err)
-	}
-
-	after, hadPrefix := strings.CutPrefix(input, "hatch")
+	chosenEgg := eggs[chosenEggIndex]
 
 	// if hatch is the first word in the command, and an int is the rest,
 	// we know they're trying to hatch the egg of that index of eggs
-	if hadPrefix {
-		after = strings.TrimSpace(after)
-		num, err := util.FindIntFromString(after)
-		if err != nil {
-			return fmt.Errorf("issue turning user string to hatch egg into int: %v\n", err)
-		} else {
-			err = workers.HatchEgg(eggs[num].Id)
-			if err != nil {
-				return fmt.Errorf("error in hatching egg: %v\n", err)
-			}
-		}
+	err = workers.HatchEgg(chosenEgg.Id)
+	if err != nil {
+		return fmt.Errorf("error in hatching egg: %v\n", err)
 	}
-
 	return nil
 }

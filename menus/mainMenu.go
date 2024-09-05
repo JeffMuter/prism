@@ -49,7 +49,7 @@ func MainMenuListen(thisUser user.User) error {
 		}
 	} else if input == "locations" {
 		fmt.Println("printing nearby locations")
-		err = DisplayUserLocations(thisUser.Id)
+		err = LocationMenu(thisUser.Id)
 		if err != nil {
 			return fmt.Errorf("error displaying user locations: %w,", err)
 		}

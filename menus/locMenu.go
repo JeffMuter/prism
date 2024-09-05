@@ -7,7 +7,7 @@ import (
 )
 
 // gets all user locations, and allows users to choose options based on those locations
-func DisplayUserLocations(userId int) error {
+func LocationMenu(userId int) error {
 	// get a list of locations
 	userLocations, err := locations.GetLocationsForUser(userId)
 	if err != nil {
@@ -32,10 +32,4 @@ func DisplayUserLocations(userId int) error {
 	}
 
 	return nil
-}
-
-func DisplayLocations(locations []locations.Location) {
-	for i := range locations {
-		fmt.Printf("%v | name: %v\n", i, locations[i].Name)
-	}
 }
