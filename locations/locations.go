@@ -26,6 +26,7 @@ type Location struct {
 	XCoordinate       int
 	WorkerCount       int
 	Named             string
+	Resources         []resource
 }
 
 type resource struct {
@@ -360,7 +361,7 @@ func GetNamesForResourcesOfTasksFromLocation(id int) ([]resource, error) {
 }
 
 // GetResourceDataByLocationId takes a location id as an int, and fills all the fields of a resource, returning a slice of them.
-func GetResourceDataByLocationId(id int) ([]resource, error) {
+func GetResourceDataByLocationId(locId int) ([]resource, error) {
 	var resources []resource
 
 	db := database.GetDB()
@@ -369,7 +370,7 @@ func GetResourceDataByLocationId(id int) ([]resource, error) {
 	JOIN resources r ON r.id = lr.resource_id 
 	WHERE lr.location_id = $1;`
 
-	rows, err := db.Query(query, id)
+	rows, err := db.Query(query, locId)
 	if err != nil {
 		return resources, errors.New("issue querying db for values from getting resources by location id")
 	}
@@ -504,4 +505,8 @@ func AddRatesToResourcesFromMapResourceNameRate(resources []resource, mapResourc
 		resources[i].baseRate = mapResourceRate[resources[i].name]
 	}
 	return resources
+}
+func SetResourceDetailsForLocations(locs ...Location) ([]Location, error) {
+	var setLocs []Location
+	return setLocs, nil
 }

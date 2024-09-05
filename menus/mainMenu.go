@@ -1,12 +1,11 @@
 package menus
 
 import (
-	"bufio"
 	"fmt"
-	"os"
 	"prism/locations"
 	"prism/render"
 	"prism/user"
+	"prism/util"
 	"prism/workers"
 	"strings"
 )
@@ -16,16 +15,15 @@ import (
 // either with maps, or accessing other menus
 func MainMenuListen(thisUser user.User) error {
 	fmt.Println("Welcome to Prism. Choose a command to begin:")
-	reader := bufio.NewReader(os.Stdin)
 
-	input, err := reader.ReadString('\n')
+	input, err := util.ReadCommandInput()
 	if err != nil {
 		return fmt.Errorf("error reading input: %w", err)
 	}
 	input = strings.TrimSpace(input)
 
 	if input == "ping" {
-		fmt.Println("getting you location...")
+		fmt.Println("updating your location...")
 		render.PaintScreen(thisUser) // repaints the screen
 	} else if input == "new location" {
 		fmt.Println("attempting to create a new location...")
