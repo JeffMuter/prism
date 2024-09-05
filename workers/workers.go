@@ -53,25 +53,26 @@ func GetWorkersRelevantToUser(user user.User) ([]Worker, error) {
 func GetWorkersRelatedToLocation(locationId int) ([]Worker, error) {
 	var workers []Worker
 	// complicated query,but the left joins allow us to get workers who have yet to be assigned a task ever.
-	query := `SELECT 
-		w.id, 
-		w.name, 
-		w.religion, 
-		w.work_status, 
-		w.injured, 
-		w.intelligence, 
-		w.strength, 
-		w.faith, 
-		ul.named,
-		ul.id, 
-		ul.user_id,
-		ul.location_id, 
-		tt.name
-		FROM workers w
-		JOIN users_locations ul ON w.user_locations_id = ul.id 
-		LEFT JOIN workers_tasks wt ON w.id = wt.worker_id AND wt.end_time IS NULL
-		LEFT JOIN task_types tt ON wt.task_type_id = tt.id 
-		WHERE ul.location_id = $1;`
+	query := `SELECT
+                w.id,
+                w.name,
+                w.religion,
+                w.work_status,
+                w.injured,
+                w.intelligence,
+                w.strength,
+                w.faith,
+                ul.named,
+                ul.id,
+                ul.user_id,
+                ul.location_id,
+		wt.task_type_id,
+                tt.name
+                FROM workers w
+                JOIN users_locations ul ON w.user_locations_id = ul.id
+                RIGHT JOIN workers_tasks wt ON w.id = wt.worker_id AND wt.end_time IS NULL
+                LEFT JOIN task_types tt ON wt.task_type_id = tt.id
+                WHERE ul.location_id = $1;`
 
 	db := database.GetDB()
 
@@ -97,6 +98,7 @@ func GetWorkersRelatedToLocation(locationId int) ([]Worker, error) {
 		if err != nil {
 			return workers, fmt.Errorf("error scanning sql row: %w\nquery: %s,", err, query)
 		}
+		workers = append(workers, worker)
 	}
 	return workers, nil
 }
@@ -113,7 +115,7 @@ func PrintWorkersDetails(workers []Worker) {
 	}
 }
 
-func AssignWorkerToLocation(worker Worker, newLocation locations.Location) error {
+func MoveWorkerToLocation(worker Worker, newLocation locations.Location) error {
 	// assign a worker to travel to a location
 	// if they have a valid user_locations id, then we remove a worker_count from that location.
 	// add a worker_count to the new location,

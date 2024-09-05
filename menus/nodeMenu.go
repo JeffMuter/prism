@@ -21,7 +21,15 @@ func DisplayUserLocations(userId int) error {
 		return fmt.Errorf("error finding user selected location: %w,", err)
 	}
 	// call worker menu here, pass in the location
-	displayWorkersAtLocation(userLocations[locationChosenIndex])
+	chosenWorker, err := displayWorkersAtLocation(userLocations[locationChosenIndex])
+	if err != nil {
+		return fmt.Errorf("error displaying workers at this loc (locId: %d): %w,", userLocations[locationChosenIndex].Id, err)
+	}
+
+	err = workerMenuOptions(userId, chosenWorker)
+	if err != nil {
+		return fmt.Errorf("error from the worker (workerId: %d) menu options: %w,", chosenWorker.Id, err)
+	}
 
 	return nil
 }

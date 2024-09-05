@@ -9,23 +9,24 @@ import (
 )
 
 // DisplayWorkersAtLocation shows the user all workers at a given location, then gives them options to choose from for said workers
-func displayWorkersAtLocation(loc locations.Location) error {
+func displayWorkersAtLocation(loc locations.Location) (workers.Worker, error) {
+	var chosenWorker workers.Worker
+	fmt.Printf("loc id: %d\n", loc.Id)
 	fmt.Printf("Your workers at %s:\n", loc.Named)
+
 	locationWorkers, err := workers.GetWorkersRelatedToLocation(loc.Id)
 	if err != nil {
-		return fmt.Errorf("error getting workers related to this location: %w\nlocationId: %d", err, loc.Id)
+		return chosenWorker, fmt.Errorf("error getting workers related to this location: %w\nlocationId: %d", err, loc.Id)
 	}
 	fmt.Println(len(locationWorkers), "len of locWorkers")
 	// print workers from print func for workers.
 	printables := workers.MakeWorkersPrintable(locationWorkers, workers.WorkerStateFactory{})
 	chosenWorkerIndex, err := util.PrintNumericSelection(printables)
 	if err != nil {
-		return fmt.Errorf("error printing workers & getting the selection: %w,", err)
+		return chosenWorker, fmt.Errorf("error printing workers & getting the selection: %w,", err)
 	}
 
-	err = workerMenuOptions(locationWorkers[chosenWorkerIndex].UserId, locationWorkers[chosenWorkerIndex])
-
-	return nil
+	return locationWorkers[chosenWorkerIndex], nil
 }
 
 // WorkerMenuOptions is meant to handle the input / output for the menu options when a user is making decisions
@@ -39,24 +40,29 @@ func workerMenuOptions(userId int, worker workers.Worker) error {
 	if userInput == "move" {
 		fmt.Println("nPick a location to move to:")
 		//display locations
-		fmt.Printf("user id: %d\n", userId)
 		usersLocations, err := locations.GetLocationsForUser(userId)
 		if err != nil {
 			return fmt.Errorf("error getting user's locations: %w,", err)
 		}
-		fmt.Println(len(usersLocations))
 
 		printables := locations.MakeLocsPrintable(usersLocations, locations.SomeDetailsPrintFactory{})
-
 		locationChosenIndex, err := util.PrintNumericSelection(printables)
 		if err != nil {
 			return fmt.Errorf("error getting user index choice for list of printed options: %w,", err)
 		}
 
 		// relate the worker to the new user_locations id
-		err = workers.AssignWorkerToLocation(worker, usersLocations[locationChosenIndex])
+		err = workers.MoveWorkerToLocation(worker, usersLocations[locationChosenIndex])
 		if err != nil {
 			return fmt.Errorf("error assigning worker to a new loc: %w,", err)
+		}
+
+		// set worker task requires an updated location id.
+		worker.LocationId = usersLocations[locationChosenIndex].Id
+
+		err = tasks.SetWorkerTaskToNewTask(worker, "resting")
+		if err != nil {
+			return fmt.Errorf("error setting worker's new task to resting.")
 		}
 
 	} else if userInput == "assign" { // assign a worker to a new type of work
