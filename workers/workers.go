@@ -66,7 +66,6 @@ func GetWorkersRelatedToLocation(locationId int) ([]Worker, error) {
                 ul.id,
                 ul.user_id,
                 ul.location_id,
-		wt.task_type_id,
                 tt.name
                 FROM workers w
                 JOIN users_locations ul ON w.user_locations_id = ul.id
