@@ -9,7 +9,7 @@ import (
 )
 
 type Task struct {
-	TaskId         int
+	Id             int
 	WorkerId       int
 	LocationId     int
 	Ongoing        bool
@@ -19,8 +19,10 @@ type Task struct {
 	EndLat         float64
 	EndLong        float64
 	StartTime      time.Time
-	EndTime        time.Time
+	EndTime        *time.Time
 	ResourcesRates map[string]float64 // map contains names of tasks as keys, and their base_rates from ttr as the float
+	WorkerName     string
+	Duration       int // used to calculate the num of minutes the task went on for.
 }
 
 // SetWorkerTaskToNewTask is meant to take a worker and a string, which the string should be the valid name of a task,
@@ -30,7 +32,7 @@ func SetWorkerTaskToNewTask(worker workers.Worker, taskType string) error {
 	var verifiedTaskTypeId int
 
 	//
-	taskTypeMap, err := GetListOfTasksFromLocationId(worker.LocationId)
+	taskTypeMap, err := GetMapTaskTypeIdTaskNameFromLocationId(worker.LocationId)
 	if err != nil {
 		return fmt.Errorf("error getting list of tasks from loc id: %w,", err)
 	}
@@ -94,6 +96,9 @@ func GetListOfTaskTypes() ([]string, error) {
 
 // endCurrentWorkerTask is a func to end the current task of the worker.
 func endCurrentWorkerTask(workerId int) error {
+
+	// TODO: I think we should add that the task type gets created & set to resting.
+
 	db := database.GetDB()
 	query := "UPDATE workers_tasks SET is_ongoing = false, end_time = $1 WHERE worker_id = $2"
 	_, err := db.Exec(query, time.Now().UTC(), workerId)
@@ -103,8 +108,41 @@ func endCurrentWorkerTask(workerId int) error {
 	return nil
 }
 
-// GetListOfTasksFromLocationId gets a list of all tasks that a location has access to, by a locationId
-func GetListOfTasksFromLocationId(id int) (map[int]string, error) {
+// Get ongoing tasks at a location
+func GetOngoingTasksFromLocid(locId int) ([]Task, error) {
+	var ongoingTasks []Task
+
+	db := database.GetDB()
+	query := `SELECT 
+		wt.id, 
+		w.name, 
+		tt.name, 
+		wt.start_time
+	FROM workers_tasks wt 
+	JOIN task_types tt ON wt.task_type_id = tt.id
+	JOIN workers w ON wt.worker_id = w.id
+	WHERE wt.location_id = $1
+	AND wt.end_time IS NOT NULL;`
+
+	rows, err := db.Query(query, locId)
+	if err != nil {
+		return ongoingTasks, fmt.Errorf("error querying sql for ongoing tasks: %w\n", err)
+	}
+
+	for rows.Next() {
+		var thisTask Task
+		err = rows.Scan(&thisTask.Id, &thisTask.WorkerName, &thisTask.Type, &thisTask.StartTime)
+		if err != nil {
+			return ongoingTasks, fmt.Errorf("error scanning rows of tasks: %w\n", err)
+		}
+		ongoingTasks = append(ongoingTasks, thisTask)
+	}
+
+	return ongoingTasks, nil
+}
+
+// GetMapTaskTypeIdTaskNameFromLocationId gets a list of all tasks that a location has access to, by a locationId
+func GetMapTaskTypeIdTaskNameFromLocationId(id int) (map[int]string, error) {
 	var tasks = make(map[int]string)
 	db := database.GetDB()
 	query := "SELECT tt.id, tt.name FROM locations l JOIN location_types_tasks ltt ON l.location_type_id = ltt.location_type_id JOIN task_types tt ON ltt.task_type_id = tt.id WHERE l.id = $1"
@@ -156,4 +194,16 @@ func GetOngoingTaskNamesRateMapFromLocationId(locationId int) (map[string]float6
 	}
 
 	return mapNameRate, nil
+}
+func setTaskDuration(unsetTasks ...Task) []Task {
+	var setTasks []Task
+	for _, task := range unsetTasks {
+		if task.EndTime != nil { // if end time is
+			task.Duration = task.EndTime.Minute() - task.StartTime.Minute()
+		} else {
+			task.Duration = time.Now().Minute() - task.StartTime.Minute()
+		}
+		setTasks = append(setTasks, task)
+	}
+	return setTasks
 }

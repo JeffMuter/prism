@@ -11,8 +11,9 @@ type PrintableTaskFactory interface {
 
 // types of printables for tasks
 type nameTask struct{ Task }
+type NameTaskFactory struct{}
 
-func (factory nameTask) CreatePrintable(task Task) util.Printable {
+func (factory NameTaskFactory) CreatePrintable(task Task) util.Printable {
 	return nameTask{Task: task}
 }
 func (task nameTask) StringToPrint() string {

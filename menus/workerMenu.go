@@ -73,32 +73,33 @@ func workerMenuOptions(userId int, worker workers.Worker) error {
 			return err
 		}
 		// get a list of potential tasks we can do at this node.
-		taskNames, err := locations.GetTaskNamesForLocationType(location.LocationTypeId)
+		possibleTasks, err := tasks.GetOngoingTasksFromLocid(location.Id)
 		if err != nil {
 			return fmt.Errorf("error getting task names for task assignment: %w", err)
-		} else if len(taskNames) < 1 {
+		} else if len(possibleTasks) < 1 {
 			return fmt.Errorf("no tasknames returned: %w", err)
 		}
 		// display tasks
-		for i, task := range taskNames {
-			fmt.Printf("%v: %s\n", i, task)
-		}
+		//		for i, task := range taskNames {
+		//			fmt.Printf("%v: %s\n", i, task)
+		//		}
 		//2. wait for user input.
 
+		//		userInput, err := util.ReadNumericSelection(len(taskNames))
+		//		if err != nil {
+		//			fmt.Println(err)
+		//		}
 		// TODO: replace with printable interface solution, but now for tasks
 
-		userInput, err := util.ReadNumericSelection(len(taskNames))
-		if err != nil {
-			fmt.Println(err)
-		}
+		printables := tasks.MakeTasksPrintable(possibleTasks, tasks.NameTaskFactory{})
+		chosenTaskIndex, err := util.PrintNumericSelection(printables)
 		//3. using this input, we assign the worker to a new task.
-		chosenTask := taskNames[userInput]
 
-		err = tasks.SetWorkerTaskToNewTask(worker, chosenTask)
+		err = tasks.SetWorkerTaskToNewTask(worker, possibleTasks[chosenTaskIndex].Type)
 		if err != nil {
 			return err
 		}
-		fmt.Printf("%s is now %s-ing\n", worker.Name, chosenTask)
+		fmt.Printf("%s is now %s-ing\n", worker.Name, possibleTasks[chosenTaskIndex].Type)
 
 	} else if userInput == "swap" {
 		err := workers.ToggleWorkingForWorker(worker)
