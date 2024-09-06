@@ -524,3 +524,9 @@ func SetResourceDetailsForLocations(locs ...*Location) ([]Location, error) {
 
 	return setLocs, nil
 }
+
+// SetLocResources()
+func SetLocResources(loc *Location, recs []Resource) error {
+	loc.Resources = recs
+	return nil
+}

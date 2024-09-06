@@ -29,7 +29,9 @@ func (factory SomeDetailsPrintFactory) CreatePrintable(loc Location) util.Printa
 }
 
 func (loc someDetailsPrint) StringToPrint() string {
-	return fmt.Sprintf("  %s  | %s  | ", loc.Name, loc.LocationType)
+	// currently no location Resources field are coming through, all set to 0
+	// TODO: this instead needs to spit out this, and all resources for this location...
+	return fmt.Sprintf("  %s  | %s  | Recources: %s |", loc.Name, loc.LocationType, createSomeDetailsThatAddsResources(loc))
 }
 
 func MakeLocsPrintable(locs []Location, factory PrintableLocFactory) []util.Printable {
@@ -39,4 +41,14 @@ func MakeLocsPrintable(locs []Location, factory PrintableLocFactory) []util.Prin
 		nPrints = append(nPrints, printer)
 	}
 	return nPrints
+}
+
+func createSomeDetailsThatAddsResources(loc someDetailsPrint) string {
+	var formatString string
+
+	for _, thisRec := range loc.Resources {
+		formatString += fmt.Sprintf(" %s | %d |", thisRec.name, thisRec.quantity)
+	}
+
+	return formatString
 }

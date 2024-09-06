@@ -13,8 +13,13 @@ func LocationMenu(userId int) error {
 		return fmt.Errorf("error getting locations for the node menu %w: ", err)
 	}
 
-	// TODO: need to update the locations to have their corresponding resources.
-
+	for i := range userLocations {
+		recs, err := locations.GetResourceDataByLocationId(userLocations[i].Id)
+		if err != nil {
+			return fmt.Errorf("error could not get resources related to locId (locId: %d): %w,", userLocations[i].Id, err)
+		}
+		userLocations[i].Resources = recs
+	}
 	// TODO: pseudo: need to display these with resources. Currently just the name & detail
 	// display info on each node.
 	printables := locations.MakeLocsPrintable(userLocations, locations.SomeDetailsPrintFactory{})
