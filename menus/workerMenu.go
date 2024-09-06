@@ -68,16 +68,23 @@ func workerMenuOptions(userId int, worker workers.Worker) error {
 	} else if userInput == "assign" { // assign a worker to a new type of work
 		fmt.Printf("Tasks to assign the worker %s to do:\n", worker.Name)
 
-		location, err := locations.GetLocationFromLocationId(worker.LocationId)
-		if err != nil {
-			return err
-		}
+		//		location, err := locations.GetLocationFromLocationId(worker.LocationId)
+		//		if err != nil {
+		//			return err
+		//		}
 		// get a list of potential tasks we can do at this node.
-		possibleTasks, err := tasks.GetOngoingTasksFromLocid(location.Id)
+		possibleTasksMap, err := tasks.GetMapTaskTypeIdTaskNameFromLocationId(worker.LocationId)
 		if err != nil {
 			return fmt.Errorf("error getting task names for task assignment: %w", err)
-		} else if len(possibleTasks) < 1 {
+		} else if len(possibleTasksMap) < 1 {
 			return fmt.Errorf("no tasknames returned: %w", err)
+		}
+
+		var possibleTasks []tasks.Task
+		for _, taskName := range possibleTasksMap {
+			var thisTask tasks.Task
+			thisTask.Type = taskName
+			possibleTasks = append(possibleTasks, thisTask)
 		}
 
 		printables := tasks.MakeTasksPrintable(possibleTasks, tasks.NameTaskFactory{})

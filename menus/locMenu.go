@@ -8,12 +8,14 @@ import (
 
 // gets all user locations, and allows users to choose options based on those locations
 func LocationMenu(userId int) error {
-	// get a list of locations
 	userLocations, err := locations.GetLocationsForUser(userId)
 	if err != nil {
 		return fmt.Errorf("error getting locations for the node menu %w: ", err)
 	}
 
+	// TODO: need to update the locations to have their corresponding resources.
+
+	// TODO: pseudo: need to display these with resources. Currently just the name & detail
 	// display info on each node.
 	printables := locations.MakeLocsPrintable(userLocations, locations.SomeDetailsPrintFactory{})
 	locationChosenIndex, err := util.PrintNumericSelection(printables)

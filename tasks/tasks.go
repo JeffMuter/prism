@@ -108,7 +108,7 @@ func endCurrentWorkerTask(workerId int) error {
 	return nil
 }
 
-// Get ongoing tasks at a location
+// Get ongoing tasks at a location from loc id.
 func GetOngoingTasksFromLocid(locId int) ([]Task, error) {
 	var ongoingTasks []Task
 
@@ -119,10 +119,10 @@ func GetOngoingTasksFromLocid(locId int) ([]Task, error) {
 		tt.name, 
 		wt.start_time
 	FROM workers_tasks wt 
-	JOIN task_types tt ON wt.task_type_id = tt.id
-	JOIN workers w ON wt.worker_id = w.id
+	RIGHT JOIN task_types tt ON wt.task_type_id = tt.id
+	RIGHT JOIN workers w ON wt.worker_id = w.id
 	WHERE wt.location_id = $1
-	AND wt.end_time IS NOT NULL;`
+	AND wt.end_time IS NULL;`
 
 	rows, err := db.Query(query, locId)
 	if err != nil {
@@ -195,7 +195,7 @@ func GetOngoingTaskNamesRateMapFromLocationId(locationId int) (map[string]float6
 
 	return mapNameRate, nil
 }
-func setTaskDuration(unsetTasks ...Task) []Task {
+func SetTaskDuration(unsetTasks ...Task) []Task {
 	var setTasks []Task
 	for _, task := range unsetTasks {
 		if task.EndTime != nil { // if end time is

@@ -26,10 +26,10 @@ type Location struct {
 	XCoordinate       int
 	WorkerCount       int
 	Named             string
-	Resources         []resource
+	Resources         []Resource
 }
 
-type resource struct {
+type Resource struct {
 	locationResourceId int
 	name               string
 	lastUpdated        time.Time
@@ -330,9 +330,9 @@ func GetLocationFromLocationId(id int) (Location, error) {
 	return location, nil
 }
 
-func GetNamesForResourcesOfTasksFromLocation(id int) ([]resource, error) {
+func GetNamesForResourcesOfTasksFromLocation(id int) ([]Resource, error) {
 
-	var resources []resource
+	var resources []Resource
 
 	db := database.GetDB()
 	query := `SELECT r.name, ttr.base_rate 
@@ -349,7 +349,7 @@ func GetNamesForResourcesOfTasksFromLocation(id int) ([]resource, error) {
 	}
 
 	for rows.Next() {
-		var resource resource
+		var resource Resource
 		err = rows.Scan(&resource.name, &resource.baseRate)
 		if err != nil {
 			return resources, errors.New("error scanning rows in GetResourcesFromLocationIdForUpdating")
@@ -361,8 +361,8 @@ func GetNamesForResourcesOfTasksFromLocation(id int) ([]resource, error) {
 }
 
 // GetResourceDataByLocationId takes a location id as an int, and fills all the fields of a resource, returning a slice of them.
-func GetResourceDataByLocationId(locId int) ([]resource, error) {
-	var resources []resource
+func GetResourceDataByLocationId(locId int) ([]Resource, error) {
+	var resources []Resource
 
 	db := database.GetDB()
 	query := `SELECT r.id, r.name, lr.quantity, lr.last_updated 
@@ -376,10 +376,10 @@ func GetResourceDataByLocationId(locId int) ([]resource, error) {
 	}
 
 	for rows.Next() {
-		var resource resource
+		var resource Resource
 		err := rows.Scan(&resource.locationResourceId, &resource.name, &resource.quantity, &resource.lastUpdated)
 		if err != nil {
-			return resources, errors.New("issue assigning values from row to get resources by location id")
+			return resources, fmt.Errorf("error scanning resource fields from row: %w,", err)
 		}
 		resources = append(resources, resource)
 	}
@@ -388,7 +388,7 @@ func GetResourceDataByLocationId(locId int) ([]resource, error) {
 }
 
 // UpdateLocationResources updates the locations_resources table, for each entry of this location. Adds new rows for each resource with a value, not yet on the table
-func UpdateLocationResources(locationId int, resources []resource) error {
+func UpdateLocationResources(locationId int, resources []Resource) error {
 	// remove the element if the quantity is 0 or less. If 0 or less, then we don't need to update the db with it.
 	for i, resource := range resources {
 		if resource.quantity < 1 {
@@ -414,7 +414,7 @@ func UpdateLocationResources(locationId int, resources []resource) error {
 }
 
 // CreateNewResources takes a loc id, and a slice of resources, and iinserts them into the db on locations_resources table, using fields of the resource to populate the db info. Specifically to only be used on new resources that currently don't exist for this locations
-func CreateNewResources(locationId int, resources []resource) error {
+func CreateNewResources(locationId int, resources []Resource) error {
 	db := database.GetDB()
 	query := `INSERT INTO locations_resources 
 	(location_id, resource_id, last_updated, quantity) 
@@ -422,7 +422,7 @@ func CreateNewResources(locationId int, resources []resource) error {
 	for i := range resources {
 		_, err := db.Exec(query, locationId, resources[i].locationResourceId, resources[i].lastUpdated, resources[i].quantity)
 		if err != nil {
-			return fmt.Errorf("error inserting locations_resources row to db: %v", err)
+			return fmt.Errorf("error inserting locations_resources row to db: %w", err)
 		}
 	}
 	return nil
@@ -444,9 +444,10 @@ func GetResourceIdByName(name string) (int, error) {
 	return id, nil
 }
 
-func FindMissingLocationResources(potentialResources map[string]float64, existingResources []resource) ([]resource, error) {
+// FindMissingLocationResources()
+func FindMissingLocationResources(potentialResources map[string]float64, existingResources []Resource) ([]Resource, error) {
 
-	var newResources []resource // for the resources that are not in the db yet, so we can add them seperately
+	var newResources []Resource // for the resources that are not in the db yet, so we can add them seperately
 
 	// we need to make resources, for each potential resource not currently in resource slice.
 	for resourceName, rate := range potentialResources {
@@ -461,11 +462,11 @@ func FindMissingLocationResources(potentialResources map[string]float64, existin
 			var resourceId int
 			resourceId, err := GetResourceIdByName(resourceName)
 			if err != nil {
-				return newResources, err
+				return newResources, fmt.Errorf("error getting a resource's Id by using its name (name: %s): %w,", resourceName, err)
 			}
 
 			// cannot leave baseRate at 0... TODO
-			newResource := resource{resourceId, resourceName, time.Now().UTC(), 0, rate}
+			newResource := Resource{resourceId, resourceName, time.Now().UTC(), 0, rate}
 			newResources = append(newResources, newResource)
 		}
 	}
@@ -473,9 +474,9 @@ func FindMissingLocationResources(potentialResources map[string]float64, existin
 }
 
 // CalculateEarnings taking in the number of minutes passed, and a list of resources
-func CalculateEarnings(resourcesWithMinutes map[resource]int) []resource {
+func CalculateEarnings(resourcesWithMinutes map[Resource]int) []Resource {
 	randTime := util.InitializeTime()
-	var resources []resource
+	var resources []Resource
 	for resource, minutes := range resourcesWithMinutes {
 		for i := 0; i < minutes; i++ {
 			if randTime.Float64() < resource.baseRate {
@@ -488,8 +489,9 @@ func CalculateEarnings(resourcesWithMinutes map[resource]int) []resource {
 	return resources
 }
 
-func CalculateMinutesPassedFromLastUpdate(resources []resource) map[resource]int {
-	var mapResourceMin = make(map[resource]int)
+func CalculateMinutesPassedFromLastUpdate(resources []Resource) map[Resource]int {
+
+	var mapResourceMin = make(map[Resource]int)
 	now := time.Now().UTC()
 
 	for _, resource := range resources {
@@ -500,13 +502,25 @@ func CalculateMinutesPassedFromLastUpdate(resources []resource) map[resource]int
 	return mapResourceMin
 }
 
-func AddRatesToResourcesFromMapResourceNameRate(resources []resource, mapResourceRate map[string]float64) []resource {
+// AddRatesToResourcesFromMapResourceNameRate is a func that takes resources, and a map of resource name & rate of generation, and applies those to a resource, returning the corresponding slice
+func AddRatesToResourcesFromMapResourceNameRate(resources []Resource, mapResourceRate map[string]float64) []Resource {
 	for i := range resources {
 		resources[i].baseRate = mapResourceRate[resources[i].name]
 	}
 	return resources
 }
-func SetResourceDetailsForLocations(locs ...Location) ([]Location, error) {
+
+// SetResourceDetailsForLocations() func takes any num of Location type, and sets the resources for that Location, returning them as a slice.
+func SetResourceDetailsForLocations(locs ...*Location) ([]Location, error) {
 	var setLocs []Location
+
+	for _, loc := range locs {
+		locResources, err := GetResourceDataByLocationId(loc.Id)
+		if err != nil {
+			return setLocs, fmt.Errorf("error setting resources for loc (locId: %d): %w,", loc.Id, err)
+		}
+		loc.Resources = locResources
+	}
+
 	return setLocs, nil
 }
