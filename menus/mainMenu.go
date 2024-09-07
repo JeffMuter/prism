@@ -26,12 +26,18 @@ func MainMenuListen(thisUser user.User) error {
 		fmt.Println("updating your location...")
 		render.PaintScreen(thisUser) // repaints the screen
 	} else if input == "new location" {
-		fmt.Println("attempting to create a new location...")
+		fmt.Println("What will the name of this location be?...")
+		name, err := util.ReadCommandInput()
+		if err != nil {
+			return fmt.Errorf("error getting input from the user: %w,", err)
+		}
+		// TODO: select a loc type... but how?...
+
 		thisUser.Latitude, thisUser.Longitude, err = user.Ping()
 		if err != nil {
 			return fmt.Errorf("error pinging user loc: %w,", err)
 		}
-		err = locations.CreateLocation(thisUser)
+		err = locations.CreateLocation(thisUser, name)
 		if err != nil {
 			return fmt.Errorf("error creating location: %w,", err)
 		}
@@ -56,6 +62,12 @@ func MainMenuListen(thisUser user.User) error {
 		err = EggMenuOptions(thisUser)
 		if err != nil {
 			return fmt.Errorf("issue with egg menu: %w", err)
+		}
+	} else if input == "create home" {
+		fmt.Println("Select a location to make into your home:")
+		err = setHomeLocation(thisUser.Id)
+		if err != nil {
+			return fmt.Errorf("error turning a location into home type: %w", err)
 		}
 	} else {
 		return fmt.Errorf("invalid input: %s,", input)

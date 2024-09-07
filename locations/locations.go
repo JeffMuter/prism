@@ -43,7 +43,7 @@ type Art struct {
 	Art    []string
 }
 
-func CreateLocation(user user.User) error {
+func CreateLocation(user user.User, name string) error {
 	//this num signifies 10 miles in lat/long degrees. We're using this to
 	// determine the max / min lat&long to determine if the node we want to place is too close to another node.
 	var latLongRange float64 = 0.145
@@ -71,9 +71,9 @@ func CreateLocation(user user.User) error {
 	db.QueryRow(query, "false", "node", user.Latitude, user.Longitude, "new node", "new node description", "node").Scan(&newLocationRowId)
 
 	query = `INSERT INTO users_locations 
-	(user_id, location_id) 
-	VALUES ($1, $2)`
-	_, err = db.Exec(query, user.Id, newLocationRowId)
+	(user_id, location_id, named) 
+	VALUES ($1, $2, $3)`
+	_, err = db.Exec(query, user.Id, newLocationRowId, name)
 	if err != nil {
 		return fmt.Errorf("error inserting users_locations when creating new location: %v\n", err)
 	}

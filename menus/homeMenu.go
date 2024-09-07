@@ -2,19 +2,24 @@ package menus
 
 import (
 	"fmt"
-	"prism/user"
+	"prism/locations"
+	"prism/util"
 )
 
-// TODO: let's make sure we're using the whole user as well.
-func homeMenuOptions(thisUser user.User) error {
+func setHomeLocation(userId int) error {
 	// SetHomeLocation is a func that allows the user to set an existing location to become the home location.
-	//	userLocations, err := locations.GetLocationsForUser(thisUser.Id)
-	//	if err != nil {
-	//		return fmt.Errorf("homeMenuOptions err to get list of locations for user: %d, error: %w\n", thisUser.Id, err)
-	//	}
+	userLocations, err := locations.GetLocationsForUser(userId)
+	if err != nil {
+		return fmt.Errorf("error getting locations for the node menu %w: ", err)
+	}
+	printables := locations.MakeLocsPrintable(userLocations, locations.SomeDetailsPrintFactory{})
+	locationChosenIndex, err := util.PrintNumericSelection(printables)
+	if err != nil {
+		return fmt.Errorf("error finding user selected location: %w,", err)
+	}
 
-	// printable locations for the next steps
+	err = locations.SetHomeLocation(userLocations[locationChosenIndex].Id)
 
-	fmt.Println("home menu func hasn't been implemented yet... ", thisUser.Id)
+	fmt.Println("home menu func hasn't been implemented yet... ", userId)
 	return nil
 }

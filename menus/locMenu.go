@@ -20,8 +20,6 @@ func LocationMenu(userId int) error {
 		}
 		userLocations[i].Resources = recs
 	}
-	// TODO: pseudo: need to display these with resources. Currently just the name & detail
-	// display info on each node.
 	printables := locations.MakeLocsPrintable(userLocations, locations.SomeDetailsPrintFactory{})
 	locationChosenIndex, err := util.PrintNumericSelection(printables)
 	if err != nil {
