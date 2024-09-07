@@ -53,10 +53,11 @@ func MainMenuListen(thisUser user.User) error {
 			return fmt.Errorf("error pinging user loc: %w,", err)
 		}
 
-		err = locations.CreateLocation(thisUser, locName, locTypeMap[locTypeName])
+		usersLocsId, err := locations.CreateLocation(thisUser, locName, locTypeMap[locTypeName])
 		if err != nil {
 			return fmt.Errorf("error creating location: %w,", err)
 		}
+		err = workers.AddEgg(usersLocsId)
 	} else if input == "connect" {
 		fmt.Println("connecting to any nearby locations...")
 		newLocId, err := locations.ConnectToLocation(thisUser)
