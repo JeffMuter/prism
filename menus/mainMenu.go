@@ -27,17 +27,33 @@ func MainMenuListen(thisUser user.User) error {
 		render.PaintScreen(thisUser) // repaints the screen
 	} else if input == "new location" {
 		fmt.Println("What will the name of this location be?...")
-		name, err := util.ReadCommandInput()
+		locName, err := util.ReadCommandInput()
 		if err != nil {
 			return fmt.Errorf("error getting input from the user: %w,", err)
 		}
-		// TODO: select a loc type... but how?...
+		// TODO: add geolocation based location type determination & options.
+
+		// TODO: select a loc type... just completely fake it for now.
+		locTypeMap := map[string]int{
+			"mine":   2,
+			"farm":   3,
+			"lumber": 4,
+		}
+		for key := range locTypeMap {
+			fmt.Println(key)
+		}
+		fmt.Println("select a type of location to make...")
+		locTypeName, err := util.ReadCommandInput()
+		if err != nil {
+			return fmt.Errorf("error reading user input: %w,", err)
+		}
 
 		thisUser.Latitude, thisUser.Longitude, err = user.Ping()
 		if err != nil {
 			return fmt.Errorf("error pinging user loc: %w,", err)
 		}
-		err = locations.CreateLocation(thisUser, name)
+
+		err = locations.CreateLocation(thisUser, locName, locTypeMap[locTypeName])
 		if err != nil {
 			return fmt.Errorf("error creating location: %w,", err)
 		}

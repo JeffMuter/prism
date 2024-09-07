@@ -43,7 +43,7 @@ type Art struct {
 	Art    []string
 }
 
-func CreateLocation(user user.User, name string) error {
+func CreateLocation(user user.User, locName string, locTypeId int) error {
 	//this num signifies 10 miles in lat/long degrees. We're using this to
 	// determine the max / min lat&long to determine if the node we want to place is too close to another node.
 	var latLongRange float64 = 0.145
@@ -64,16 +64,16 @@ func CreateLocation(user user.User, name string) error {
 
 	// add node to locations
 	query := `INSERT INTO locations 
-		(default_accessible, location_type, latitude, longitude, name, description, art) 
-	VALUES ($1, $2, $3, $4, $5, $6, $7) 
+		(default_accessible, location_type, latitude, longitude, name, description, art, location_type_id) 
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
 	RETURNING id`
 	var newLocationRowId int
-	db.QueryRow(query, "false", "node", user.Latitude, user.Longitude, "new node", "new node description", "node").Scan(&newLocationRowId)
+	db.QueryRow(query, "false", "???", user.Latitude, user.Longitude, "new node", "new node description", "node", locTypeId).Scan(&newLocationRowId)
 
 	query = `INSERT INTO users_locations 
 	(user_id, location_id, named) 
 	VALUES ($1, $2, $3)`
-	_, err = db.Exec(query, user.Id, newLocationRowId, name)
+	_, err = db.Exec(query, user.Id, newLocationRowId, locName)
 	if err != nil {
 		return fmt.Errorf("error inserting users_locations when creating new location: %v\n", err)
 	}
