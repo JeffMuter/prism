@@ -12,7 +12,7 @@ import (
 func displayWorkersAtLocation(loc locations.Location) (workers.Worker, error) {
 	var chosenWorker workers.Worker
 	fmt.Printf("loc id: %d\n", loc.Id)
-	fmt.Printf("Your workers at %s:\n", loc.Named)
+	fmt.Printf("Your workers at %s:\n", loc.Name)
 
 	locationWorkers, err := workers.GetWorkersRelatedToLocation(loc.Id)
 	if err != nil {

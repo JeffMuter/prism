@@ -19,7 +19,7 @@ func PaintScreen(thisUser user.User) ([][]rune, error) {
 	}
 
 	// get locations near user
-	locationsToRender, err := locations.GetAllNodesUserCouldSee(thisUser)
+	locationsToRender, err := locations.GetAllLocations(thisUser)
 	if err != nil {
 		return canvas, fmt.Errorf("error getting loc's near to user: %w,", err)
 	}

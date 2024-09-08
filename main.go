@@ -35,7 +35,11 @@ func main() {
 		fmt.Println(err)
 	}
 
-	render.PaintScreen(thisUser)
+	_, err = render.PaintScreen(thisUser)
+	if err != nil {
+		err = fmt.Errorf("error from painting screen: %w\n", err)
+		fmt.Println(err)
+	}
 
 	err = menus.MainMenuListen(thisUser)
 	if err != nil {

@@ -18,7 +18,7 @@ func (factory NamePrintFactory) CreatePrintable(loc Location) util.Printable {
 	return namePrint{Location: loc}
 }
 func (loc namePrint) StringToPrint() string {
-	return fmt.Sprintf("%s", loc.Named)
+	return fmt.Sprintf("%s", loc.Name)
 }
 
 type someDetailsPrint struct{ Location }

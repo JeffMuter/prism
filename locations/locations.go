@@ -25,7 +25,7 @@ type Location struct {
 	YCoordinate       int
 	XCoordinate       int
 	WorkerCount       int
-	Named             string
+	name              string
 	Resources         []Resource
 }
 
@@ -54,7 +54,7 @@ func CreateLocation(user user.User, locName string, locTypeId int) (int, error) 
 	// call func to get the vars for the lat/long range
 	minLat, maxLat, minLong, maxLong := util.GetMaxLocationRanges(latLongRange, user.Latitude, user.Longitude)
 
-	locations, err := GetAllNodesUserCouldSee(user)
+	locations, err := GetAllLocations(user)
 
 	// check each location, if any node is too close, cancel the process
 	for _, loc := range locations {
@@ -67,13 +67,14 @@ func CreateLocation(user user.User, locName string, locTypeId int) (int, error) 
 
 	// add node to locations
 	query := `INSERT INTO locations 
-		(default_accessible, location_type, latitude, longitude, name, description, art, location_type_id) 
+		(default_accessible, latitude, longitude, name, description, art, location_type_id) 
 	VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
 	RETURNING id`
-	db.QueryRow(query, "false", "???", user.Latitude, user.Longitude, "new node", "new node description", "node", locTypeId).Scan(&newLocationRowId)
+	// TODO: cannot be using all these lame hard coded values here...
+	db.QueryRow(query, "false", user.Latitude, user.Longitude, locName, "new node description", "node", locTypeId).Scan(&newLocationRowId)
 
 	query = `INSERT INTO users_locations 
-	(user_id, location_id, named) 
+	(user_id, location_id, name) 
 	VALUES ($1, $2, $3) RETURNING id`
 	err = db.QueryRow(query, user.Id, newLocationRowId, locName).Scan(&newUsersLocsId)
 	if err != nil {
@@ -82,14 +83,20 @@ func CreateLocation(user user.User, locName string, locTypeId int) (int, error) 
 	return newUsersLocsId, nil
 }
 
-// GetAllNodesUserCouldSee used to get locations from the database, placed into a location type.
-func GetAllNodesUserCouldSee(user user.User) ([]Location, error) {
+// GetAllLocations used to get locations from the database, placed into a location type.
+func GetAllLocations(user user.User) ([]Location, error) {
 	var locations []Location
 
 	db := database.GetDB()
 
-	query :=
-		"SELECT name, latitude, longitude, art FROM locations LEFT JOIN users_locations ON locations.id = users_locations.location_id WHERE users_locations.user_id = $1 OR locations.default_accessible = TRUE"
+	query := `SELECT ul.name, l.latitude, l.longitude, l.art 
+	FROM locations l 
+	LEFT JOIN users_locations ul ON l.id = ul.location_id 
+	WHERE ul.name IS NOT NULL 
+	AND (
+	ul.user_id = $1 
+	OR l.default_accessible = TRUE
+	)`
 
 	rows, err := db.Query(query, user.Id)
 	if err != nil {
@@ -223,14 +230,13 @@ func GetLocationsForUser(userId int) ([]Location, error) {
 	query := `SELECT 
 		l.id, 
 		ul.worker_count, 
-		l.location_type, 
 		l.location_type_id, 
 		l.latitude, 
 		l.longitude, 
 		l.name, 
 		l.description, 
 		l.art, 
-		ul.named
+		ul.name
 	FROM locations l
 	JOIN users_locations ul ON l.id = ul.location_id 
 	WHERE ul.user_id = $1;`
@@ -241,7 +247,7 @@ func GetLocationsForUser(userId int) ([]Location, error) {
 	}
 	for rows.Next() {
 		var location Location
-		err := rows.Scan(&location.Id, &location.WorkerCount, &location.LocationType, &location.LocationTypeId, &location.Latitude, &location.Longitude, &location.Name, &location.Description, &location.ArtFileName, &location.Named)
+		err := rows.Scan(&location.Id, &location.WorkerCount, &location.LocationTypeId, &location.Latitude, &location.Longitude, &location.Name, &location.Description, &location.ArtFileName, &location.Name)
 		if err != nil {
 			return locations, fmt.Errorf("error scanning sql row: %w", err)
 		}
@@ -317,13 +323,13 @@ func GetTaskNamesForLocationType(locationTypeId int) ([]string, error) {
 func GetLocationFromLocationId(id int) (Location, error) {
 	var location Location
 	db := database.GetDB()
-	query := `SELECT id, location_type, location_type_id, latitude, longitude, name, description, art 
+	query := `SELECT id, location_type_id, latitude, longitude, name, description, art 
 	FROM locations 
 	WHERE id = $1`
 
 	row := db.QueryRow(query, id)
 
-	err := row.Scan(&location.Id, &location.LocationType, &location.LocationTypeId, &location.Latitude, &location.Longitude, &location.Name, &location.Description, &location.ArtFileName)
+	err := row.Scan(&location.Id, &location.LocationTypeId, &location.Latitude, &location.Longitude, &location.Name, &location.Description, &location.ArtFileName)
 	if err != nil {
 		return location, err
 	}
