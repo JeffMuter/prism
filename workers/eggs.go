@@ -35,9 +35,9 @@ func AddEgg(usersLocationsId int) error {
 func HatchEgg(eggId int) error {
 	// create a new worker, with randomized stats & attributes.
 	var randTime = util.InitializeTime()
-	var strength, intelligence, faith, luck, speed, loyalty, charisma int = util.RandNormalizedNum(randTime, 1, 10), util.RandNormalizedNum(randTime, 1, 10), util.RandNormalizedNum(randTime, 1, 10), util.RandNormalizedNum(randTime, 1, 10), util.RandNormalizedNum(randTime, 1, 10), util.RandNormalizedNum(randTime, 1, 10), util.RandNormalizedNum(randTime, 1, 10)
+	var strength, intelligence, faith, luck, speed, loyalty, charisma = util.RandNormalizedNum(randTime, 1, 10), util.RandNormalizedNum(randTime, 1, 10), util.RandNormalizedNum(randTime, 1, 10), util.RandNormalizedNum(randTime, 1, 10), util.RandNormalizedNum(randTime, 1, 10), util.RandNormalizedNum(randTime, 1, 10), util.RandNormalizedNum(randTime, 1, 10)
 	var religions = []string{"christian", "beastialism", "reversion"}
-	var workerReligion string = religions[util.RandNumBetween(util.InitializeTime(), 0, len(religions)-1)]
+	var workerReligion = religions[util.RandNumBetween(util.InitializeTime(), 0, len(religions)-1)]
 
 	//get name from user input
 	fmt.Println("enter your new worker's name!")
@@ -51,13 +51,19 @@ func HatchEgg(eggId int) error {
 	// get the locationId of the egg for the new worker db.
 	query := "SELECT users_locations_id FROM eggs WHERE id = $1"
 	var eggUserLocationId int
-	_ = db.QueryRow(query, eggId).Scan(&eggUserLocationId)
+	err = db.QueryRow(query, eggId).Scan(&eggUserLocationId)
+	if err != nil {
+		return fmt.Errorf("error selecting ul.id from this egg: %w,", err)
+	}
 
 	// create new worker with all the collected values
-	query = "INSERT INTO workers (name, user_locations_id, religion, strength, intelligence, speed, faith, luck, loyalty, charisma, task_type) VALUES ($1, $2 ,$3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id;"
+	query = "INSERT INTO workers (name, user_locations_id, religion, strength, intelligence, speed, faith, luck, loyalty, charisma) VALUES ($1, $2 ,$3, $4, $5, $6, $7, $8, $9, $10) RETURNING id;"
 
 	var workerId int
-	_ = db.QueryRow(query, workerName, eggUserLocationId, workerReligion, strength, intelligence, speed, faith, luck, loyalty, charisma, "resting").Scan(&workerId)
+	err = db.QueryRow(query, workerName, eggUserLocationId, workerReligion, strength, intelligence, speed, faith, luck, loyalty, charisma).Scan(&workerId)
+	if err != nil {
+		return fmt.Errorf("error inserting new worker: %w,", err)
+	}
 
 	// update the egg's hatched and worker_id value, so that we know the egg has hatched.
 	query = "UPDATE eggs SET hatch_time = $1, worker_id = $2 WHERE id = $3"

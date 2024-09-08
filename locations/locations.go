@@ -80,7 +80,6 @@ func CreateLocation(user user.User, locName string, locTypeId int) (int, error) 
 		return newLocationRowId, fmt.Errorf("error inserting users_locations when creating new location: %v\n", err)
 	}
 	return newUsersLocsId, nil
-
 }
 
 // GetAllNodesUserCouldSee used to get locations from the database, placed into a location type.
