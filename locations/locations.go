@@ -13,6 +13,7 @@ import (
 
 type Location struct {
 	Id                int
+	UserLocationId    int
 	DefaultAccessible bool
 	LocationType      string
 	LocationTypeId    int
@@ -229,17 +230,20 @@ func GetLocationsForUser(userId int) ([]Location, error) {
 	fmt.Println(userId)
 	query := `SELECT 
 		l.id, 
+		ul.id
 		ul.worker_count, 
 		l.location_type_id, 
 		l.latitude, 
 		l.longitude, 
-		l.name, 
 		l.description, 
 		l.art, 
-		ul.name
+		ul.name,
+		lt.name
 	FROM locations l
 	JOIN users_locations ul ON l.id = ul.location_id 
-	WHERE ul.user_id = $1;`
+	JOIN location_types lt ON l.location_type_id = lt.id
+	WHERE ul.user_id = $1;
+`
 
 	rows, err := db.Query(query, userId)
 	if err != nil {
@@ -247,7 +251,7 @@ func GetLocationsForUser(userId int) ([]Location, error) {
 	}
 	for rows.Next() {
 		var location Location
-		err := rows.Scan(&location.Id, &location.WorkerCount, &location.LocationTypeId, &location.Latitude, &location.Longitude, &location.Name, &location.Description, &location.ArtFileName, &location.Name)
+		err := rows.Scan(&location.Id, &location.UserLocationId, &location.WorkerCount, &location.LocationTypeId, &location.Latitude, &location.Longitude, &location.Description, &location.ArtFileName, &location.Name, &location.LocationType)
 		if err != nil {
 			return locations, fmt.Errorf("error scanning sql row: %w", err)
 		}

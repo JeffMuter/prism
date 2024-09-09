@@ -18,7 +18,7 @@ func setHomeLocation(userId int) error {
 		return fmt.Errorf("error finding user selected location: %w,", err)
 	}
 
-	err = locations.SetHomeLocation(userLocations[locationChosenIndex].Id)
+	err = locations.SetHomeLocation(userLocations[locationChosenIndex].UserLocationId)
 
 	fmt.Println("home menu func hasn't been implemented yet... ", userId)
 	return nil
