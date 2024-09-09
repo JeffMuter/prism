@@ -230,7 +230,7 @@ func GetLocationsForUser(userId int) ([]Location, error) {
 	fmt.Println(userId)
 	query := `SELECT 
 		l.id, 
-		ul.id
+		ul.id,
 		ul.worker_count, 
 		l.location_type_id, 
 		l.latitude, 
