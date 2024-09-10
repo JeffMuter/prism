@@ -62,7 +62,7 @@ func GetWorkersRelatedToLocation(locationId int) ([]Worker, error) {
                 w.intelligence,
                 w.strength,
                 w.faith,
-                ul.named,
+                ul.name,
                 ul.id,
                 ul.user_id,
                 ul.location_id,

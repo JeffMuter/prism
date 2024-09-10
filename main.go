@@ -8,14 +8,19 @@ import (
 	"prism/menus"
 	"prism/render"
 	"prism/user"
+	"time"
 )
 
 func main() {
+
+	fmt.Println(time.Now())
 
 	err := database.OpenDatabase()
 	if err != nil {
 		log.Fatalf("db connections failed...: %v", err)
 	}
+
+	fmt.Println(time.Now())
 
 	var thisUser = user.User{
 		Id:       1,

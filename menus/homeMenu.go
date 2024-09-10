@@ -27,7 +27,7 @@ func setHomeLocation(userId int) error {
 
 	err = locations.SetHomeLocation(&userLocations[locationChosenIndex], homeName)
 	if err != nil {
-		fmt.Errorf("error setting home location: %w,", err)
+		return fmt.Errorf("error setting home location: %w,", err)
 	}
 
 	return nil
