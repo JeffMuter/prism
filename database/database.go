@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	host     = "/var/run/postgresql" // Unix socket directory
+	host     = "/var/run/postgresql"
 	port     = 5432
 	user     = "emerald"
 	password = "postgres1"
