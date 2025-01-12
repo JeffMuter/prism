@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	host     = "localhost"
+	host     = "/var/run/postgresql" // Unix socket directory
 	port     = 5432
-	user     = "postgres"
+	user     = "emerald"
 	password = "postgres1"
 	dbname   = "prism"
 )
