@@ -12,7 +12,7 @@ var db *sql.DB
 func OpenDatabase() error {
 	var err error
 	// Use relative path to database file
-	dbPath := filepath.Join("database", "db", "prism.db")
+	dbPath := filepath.Join("database", "prism.db")
 
 	db, err = sql.Open("sqlite3", dbPath)
 	if err != nil {
