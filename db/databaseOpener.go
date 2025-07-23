@@ -11,11 +11,10 @@ import (
 var db *sql.DB
 
 func OpenDatabase() error {
-	var err error
 	// Use relative path to database file
-	dbPath := filepath.Join("database", "prism.db")
+	dbPath := filepath.Join("db", "prism.db")
 
-	db, err = sql.Open("sqlite3", dbPath)
+	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		return fmt.Errorf("error unable to connect to db: %w", err)
 	}
