@@ -1,4 +1,5 @@
--- Prism Game Database Schema for SQLite3
+-- Prism Game Database Schema for sqlite
+
 -- Enable foreign key support
 PRAGMA foreign_keys = ON;
 

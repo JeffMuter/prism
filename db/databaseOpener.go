@@ -1,10 +1,11 @@
-package database
+package db
 
 import (
 	"database/sql"
 	"fmt"
-	_ "github.com/mattn/go-sqlite3"
 	"path/filepath"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var db *sql.DB

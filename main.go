@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
-	"prism/database"
+	"prism/db"
 	"prism/logic"
 	"prism/menus"
 	"prism/render"
@@ -15,7 +15,7 @@ func main() {
 
 	fmt.Println(time.Now())
 
-	err := database.OpenDatabase()
+	err := db.OpenDatabase()
 
 	if err != nil {
 		log.Fatalf("db connections failed...: %v", err)
