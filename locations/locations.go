@@ -84,16 +84,11 @@ func GetAllLocations(user user.User) ([]Location, error) {
 
 	db := database.GetDB()
 
-	query := `SELECT 
-		ul.name, 
-		l.latitude, 
-		l.longitude, 
-		l.art
+	// query grabs all locations where they're intentionally visible from default, or if the user has visited them. visiting a location, or making one, adds it to users_locations, after all.
+	query := `SELECT *
 	FROM locations l 
 	LEFT JOIN users_locations ul ON l.id = ul.location_id 
-	WHERE ul.name IS NOT NULL 
-	AND (
-	ul.user_id = $1 
+	WHERE ul.user_id = ?
 	OR l.default_accessible = TRUE
 	)`
 
