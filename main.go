@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
-	"prism/database"
+	"prism/db"
 	"prism/logic"
 	"prism/menus"
 	"prism/render"
@@ -15,7 +15,8 @@ func main() {
 
 	fmt.Println(time.Now())
 
-	err := database.OpenDatabase()
+	err := db.OpenDatabase()
+
 	if err != nil {
 		log.Fatalf("db connections failed...: %v", err)
 	}
@@ -30,6 +31,8 @@ func main() {
 	}
 
 	thisUser.Latitude, thisUser.Longitude, err = user.Ping()
+	fmt.Printf("Lat: %v\nLong: %v\n", thisUser.Latitude, thisUser.Longitude)
+
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -41,15 +44,18 @@ func main() {
 	}
 
 	_, err = render.PaintScreen(thisUser)
+
 	if err != nil {
 		err = fmt.Errorf("error from painting screen: %w\n", err)
 		fmt.Println(err)
 	}
 
 	err = menus.MainMenuListen(thisUser)
+
 	if err != nil {
 		fmt.Println(fmt.Errorf("problem in main menu: %v", err))
 	} else {
+
 		fmt.Println("Main menu closed...")
 	}
 }

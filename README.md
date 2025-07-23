@@ -24,11 +24,11 @@ How to Play:
 
 1 download the public repo: https://github.com/JeffMuter/prism 
 
-2 install any terminal application you use.
+2 install any terminal application you use.(IOS not supported)
 
 3 install Golang: https://go.dev/doc/install
 
 4 navigate in your terminal to the prism directory(folder)
 
 5 run the command: go run main.go
-
+    5a if using make, you can run 'make run'
