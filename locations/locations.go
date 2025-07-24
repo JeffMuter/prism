@@ -14,6 +14,7 @@ import (
 func CreateLocation(user user.User, locName string, locTypeId int) (int, error) {
 	var newLocationRowId int
 	var newUsersLocsId int
+
 	//this num signifies 10 miles in lat/long degrees. We're using this to
 	// determine the max / min lat&long to determine if the node we want to place is too close to another node.
 	var latLongRange float64 = 0.145
@@ -45,8 +46,8 @@ func CreateLocation(user user.User, locName string, locTypeId int) (int, error) 
 		location_type_id, 
 		is_user_created
 		) 
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
-	RETURNING id`
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+		RETURNING id`
 	// TODO: cannot be using all these lame hard coded values here...
 	// made the location art custom to the type of location...
 	db.QueryRow(query, "false", user.Latitude, user.Longitude, locName, "new node description", "node", locTypeId, true).Scan(&newLocationRowId)
@@ -62,35 +63,19 @@ func CreateLocation(user user.User, locName string, locTypeId int) (int, error) 
 }
 
 // GetAllLocations used to get locations from the database, placed into a location type.
-func GetAllLocations(user user.User) ([]Location, error) {
-	var locations []Location
+func GetAllLocations(user user.User) ([]sqlc.GetVisibleLocationsByUserRow, error) {
 
 	queries := db.GetQueries()
 	ctx := context.Background()
 
 	// query grabs all locations where they're intentionally visible from default, or if the user has visited them. visiting a location, or making one, adds it to users_locations, after all.
-	query := `SELECT *
-	FROM locations l 
-	LEFT JOIN users_locations ul ON l.id = ul.location_id 
-	WHERE ul.user_id = ?
-	OR l.default_accessible = TRUE
-	)`
 
-	rows, err := db.Query(query, user.Id)
+	rows, err := queries.GetVisibleLocationsByUser(ctx, int64(user.Id))
 	if err != nil {
-		return locations, fmt.Errorf("err querying db for all loc related to user's id (id: %d): %w,", user.Id, err)
+		return rows, fmt.Errorf("err querying db for all loc related to user's id (id: %d): %w,", user.Id, err)
 	}
 
-	for rows.Next() {
-		var location Location
-		err := rows.Scan(&location.Name, &location.Latitude, &location.Longitude, &location.ArtFileName)
-		if err != nil {
-			return locations, fmt.Errorf("error looping through rows to assign values to locations as we got rows on all locations related to the user: %w,", err)
-		}
-
-		locations = append(locations, location)
-	}
-	return locations, nil
+	return rows, nil
 }
 
 // ConnectToLocation allows a user to see if they can make a new node in this location. Checks a lat/long
