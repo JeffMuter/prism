@@ -4,11 +4,13 @@ import (
 	"database/sql"
 	"fmt"
 	"path/filepath"
+	"prism/db/sqlc"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 var db *sql.DB
+var queries *sqlc.Queries
 
 func OpenDatabase() error {
 	// Use relative path to database file
@@ -35,4 +37,8 @@ func OpenDatabase() error {
 
 func GetDB() *sql.DB {
 	return db
+}
+
+func GetQueries() *sqlc.Queries {
+	return queries
 }
