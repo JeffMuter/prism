@@ -1,37 +1,20 @@
 package locations
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"prism/database"
+	"prism/db"
+	"prism/db/sqlc"
 	"prism/user"
 	"prism/util"
 )
-
-type Location struct {
-	Id                int
-	UserLocationId    int
-	DefaultAccessible bool
-	LocationType      string
-	LocationTypeId    int
-	Latitude          float64
-	Longitude         float64
-	Name              string
-	Description       string
-	ArtFileName       string
-	Art               Art
-	YCoordinate       int
-	XCoordinate       int
-	WorkerCount       int
-	name              string
-	Resources         []Resource
-	IsUserCreated     bool
-}
 
 // create location adds location to the location, user_location, and adds an egg to user's inventory.
 func CreateLocation(user user.User, locName string, locTypeId int) (int, error) {
 	var newLocationRowId int
 	var newUsersLocsId int
+
 	//this num signifies 10 miles in lat/long degrees. We're using this to
 	// determine the max / min lat&long to determine if the node we want to place is too close to another node.
 	var latLongRange float64 = 0.145
@@ -48,7 +31,8 @@ func CreateLocation(user user.User, locName string, locTypeId int) (int, error) 
 		}
 	}
 
-	db := database.GetDB()
+	queries := db.GetQueries()
+	ctx := context.Background()
 
 	// add node to locations
 	query := `INSERT INTO locations 
@@ -62,8 +46,8 @@ func CreateLocation(user user.User, locName string, locTypeId int) (int, error) 
 		location_type_id, 
 		is_user_created
 		) 
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
-	RETURNING id`
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+		RETURNING id`
 	// TODO: cannot be using all these lame hard coded values here...
 	// made the location art custom to the type of location...
 	db.QueryRow(query, "false", user.Latitude, user.Longitude, locName, "new node description", "node", locTypeId, true).Scan(&newLocationRowId)
@@ -79,41 +63,29 @@ func CreateLocation(user user.User, locName string, locTypeId int) (int, error) 
 }
 
 // GetAllLocations used to get locations from the database, placed into a location type.
-func GetAllLocations(user user.User) ([]Location, error) {
-	var locations []Location
+func GetAllLocations(user user.User) ([]sqlc.GetVisibleLocationsByUserRow, error) {
 
-	db := database.GetDB()
+	queries := db.GetQueries()
+	ctx := context.Background()
 
 	// query grabs all locations where they're intentionally visible from default, or if the user has visited them. visiting a location, or making one, adds it to users_locations, after all.
-	query := `SELECT *
-	FROM locations l 
-	LEFT JOIN users_locations ul ON l.id = ul.location_id 
-	WHERE ul.user_id = ?
-	OR l.default_accessible = TRUE
-	)`
 
-	rows, err := db.Query(query, user.Id)
+	rows, err := queries.GetVisibleLocationsByUser(ctx, int64(user.Id))
 	if err != nil {
-		return locations, fmt.Errorf("err querying db for all loc related to user's id (id: %d): %w,", user.Id, err)
+		return rows, fmt.Errorf("err querying db for all loc related to user's id (id: %d): %w,", user.Id, err)
 	}
 
-	for rows.Next() {
-		var location Location
-		err := rows.Scan(&location.Name, &location.Latitude, &location.Longitude, &location.ArtFileName)
-		if err != nil {
-			return locations, fmt.Errorf("error looping through rows to assign values to locations as we got rows on all locations related to the user: %w,", err)
-		}
-
-		locations = append(locations, location)
-	}
-	return locations, nil
+	return rows, nil
 }
 
 // ConnectToLocation allows a user to see if they can make a new node in this location. Checks a lat/long
 // range, and if no other locations are inside it, creates the new node. Returns the id of the newly connected location.
 func ConnectToLocation(user user.User) (int, error) {
+
 	var newUsersLocsId int
-	db := database.GetDB()
+
+	queries := db.GetQueries()
+	ctx := context.Background()
 
 	// get all locations currently not associated to this user
 	query := `SELECT 
@@ -158,49 +130,26 @@ func ConnectToLocation(user user.User) (int, error) {
 
 // GetLocationsForUser takes a userId, and returns a slice of locations, made from the db, that
 // are related to that user.
-func GetLocationsForUser(userId int) ([]Location, error) {
-	var locations []Location
+func GetLocationsForUser(userId int) ([]sqlc.GetUserLocationsRow, error) {
 
-	db := database.GetDB()
+	queries := db.GetQueries()
+	ctx := context.Background()
 
 	fmt.Println(userId)
-	query := `SELECT 
-		l.id, 
-		ul.id,
-		ul.worker_count, 
-		l.location_type_id, 
-		l.latitude, 
-		l.longitude, 
-		l.description, 
-		l.art, 
-		ul.name,
-		lt.name,
-		l.is_user_created
-	FROM locations l
-	JOIN users_locations ul ON l.id = ul.location_id 
-	JOIN location_types lt ON l.location_type_id = lt.id
-	WHERE ul.user_id = $1;
-`
 
-	rows, err := db.Query(query, userId)
+	locationRows, err := queries.GetUserLocations(ctx, int64(userId))
 	if err != nil {
-		return locations, fmt.Errorf("error querying db for locations: %w", err)
+		return locationRows, fmt.Errorf("error querying database for locations: %w", err)
 	}
-	for rows.Next() {
-		var location Location
-		err := rows.Scan(&location.Id, &location.UserLocationId, &location.WorkerCount, &location.LocationTypeId, &location.Latitude, &location.Longitude, &location.Description, &location.ArtFileName, &location.Name, &location.LocationType, &location.IsUserCreated)
-		if err != nil {
-			return locations, fmt.Errorf("error scanning sql row: %w", err)
-		}
-		locations = append(locations, location)
-	}
-	return locations, nil
+
+	return locationRows, nil
 }
 
 // RemoveWorkerFromNode reduces worker_count value in the db by 1
 func RemoveWorkerFromNode(locationId int) error {
 
-	db := database.GetDB()
+	queries := db.GetQueries()
+	ctx := context.Background()
 
 	query := `UPDATE users_locations 
 	SET worker_count = worker_count - 1 
@@ -217,7 +166,9 @@ func RemoveWorkerFromNode(locationId int) error {
 
 // AddWorkerToNode updates the new node in the db to increase by 1.
 func AddWorkerToNode(locationId int) error {
-	db := database.GetDB()
+
+	queries := db.GetQueries()
+	ctx := context.Background()
 
 	query := `UPDATE users_locations 
 	SET worker_count = worker_count + 1 
@@ -234,8 +185,11 @@ func AddWorkerToNode(locationId int) error {
 
 // GetTasksForLocation gets all task names for a location, using the location
 func GetTaskNamesForLocationType(locationTypeId int) ([]string, error) {
+
 	fmt.Printf("getting task name from id: %d\n", locationTypeId)
-	db := database.GetDB()
+
+	queries := db.GetQueries()
+	ctx := context.Background()
 
 	var taskTypes []string
 	query := `SELECT tt.name 
@@ -262,8 +216,10 @@ func GetTaskNamesForLocationType(locationTypeId int) ([]string, error) {
 }
 
 func GetLocationFromLocationId(id int) (Location, error) {
-	var location Location
-	db := database.GetDB()
+
+	queries := db.GetQueries()
+	ctx := context.Background()
+
 	query := `SELECT 
 		l.id, 
 		ul.id, 

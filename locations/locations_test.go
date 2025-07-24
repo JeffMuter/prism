@@ -1,7 +1,7 @@
 package locations
 
 import (
-	"prism/database"
+	"prism/db"
 	"testing"
 	"time"
 )
@@ -21,7 +21,7 @@ func TestGetResourceIdByName(t *testing.T) {
 }
 
 func TestCreateNewResources(t *testing.T) {
-	db := database.GetDB()
+	db := db.GetDB()
 	_, err := db.Exec("DELETE FROM locations_resources WHERE location_id = $1", 1)
 	if err != nil {
 		t.Fatalf("failed to clear locations_resources table of location_id: %d: %v", 1, err)
