@@ -26,14 +26,14 @@ CREATE TABLE location_types (
 -- Locations table
 CREATE TABLE locations (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  default_accessible BOOLEAN DEFAULT 0,
+  default_accessible BOOLEAN NOT NULL DEFAULT 0,
   location_type_id INTEGER NOT NULL,
   longitude REAL NOT NULL,
   latitude REAL NOT NULL,
-  name TEXT,
-  description TEXT,
-  art TEXT, -- filename for ASCII art
-  is_user_created BOOLEAN DEFAULT 0,
+  name TEXT NOT NULL,
+  description TEXT NOT NULL,
+  art TEXT NOT NULL, -- filename for ASCII art
+  is_user_created BOOLEAN NOT NULL DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (location_type_id) REFERENCES location_types (id)
 );

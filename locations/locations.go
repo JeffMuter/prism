@@ -48,8 +48,23 @@ func CreateLocation(user user.User, locName string, locTypeId int) (int, error) 
 		) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
 		RETURNING id`
+
+	params := sqlc.CreateLocationParams{
+		DefaultAccessible: false,
+		Latitude:          user.Latitude,
+		Longitude:         user.Longitude,
+		Name:              locName,
+		Description:       "new node desc",
+		Art:               "node",
+		LocationTypeID:    int64(locTypeId),
+		IsUserCreated:     true,
+	}
+
+	_, err = queries.CreateLocation(ctx, params)
+
 	// TODO: cannot be using all these lame hard coded values here...
 	// made the location art custom to the type of location...
+
 	db.QueryRow(query, "false", user.Latitude, user.Longitude, locName, "new node description", "node", locTypeId, true).Scan(&newLocationRowId)
 
 	query = `INSERT INTO users_locations 

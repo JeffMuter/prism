@@ -82,14 +82,14 @@ VALUES
 `
 
 type CreateLocationParams struct {
-	DefaultAccessible sql.NullBool
+	DefaultAccessible bool
 	Latitude          float64
 	Longitude         float64
-	Name              sql.NullString
-	Description       sql.NullString
-	Art               sql.NullString
+	Name              string
+	Description       string
+	Art               string
 	LocationTypeID    int64
-	IsUserCreated     sql.NullBool
+	IsUserCreated     bool
 }
 
 // Location queries
@@ -385,8 +385,8 @@ type GetLocationByIdRow struct {
 	Latitude       float64
 	Longitude      float64
 	Name           sql.NullString
-	Description    sql.NullString
-	Art            sql.NullString
+	Description    string
+	Art            string
 }
 
 func (q *Queries) GetLocationById(ctx context.Context, id int64) (GetLocationByIdRow, error) {
@@ -786,11 +786,11 @@ type GetUserLocationsRow struct {
 	LocationTypeID int64
 	Latitude       float64
 	Longitude      float64
-	Description    sql.NullString
-	Art            sql.NullString
+	Description    string
+	Art            string
 	Name           sql.NullString
 	Name_2         string
-	IsUserCreated  sql.NullBool
+	IsUserCreated  bool
 }
 
 func (q *Queries) GetUserLocations(ctx context.Context, userID int64) ([]GetUserLocationsRow, error) {
@@ -841,14 +841,14 @@ WHERE
 
 type GetVisibleLocationsByUserRow struct {
 	ID                int64
-	DefaultAccessible sql.NullBool
+	DefaultAccessible bool
 	LocationTypeID    int64
 	Longitude         float64
 	Latitude          float64
-	Name              sql.NullString
-	Description       sql.NullString
-	Art               sql.NullString
-	IsUserCreated     sql.NullBool
+	Name              string
+	Description       string
+	Art               string
+	IsUserCreated     bool
 	CreatedAt         sql.NullTime
 	ID_2              sql.NullInt64
 	UserID            sql.NullInt64

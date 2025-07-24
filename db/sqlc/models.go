@@ -26,14 +26,14 @@ type Home struct {
 
 type Location struct {
 	ID                int64
-	DefaultAccessible sql.NullBool
+	DefaultAccessible bool
 	LocationTypeID    int64
 	Longitude         float64
 	Latitude          float64
-	Name              sql.NullString
-	Description       sql.NullString
-	Art               sql.NullString
-	IsUserCreated     sql.NullBool
+	Name              string
+	Description       string
+	Art               string
+	IsUserCreated     bool
 	CreatedAt         sql.NullTime
 }
 
