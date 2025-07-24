@@ -2,7 +2,7 @@ package locations
 
 import (
 	"fmt"
-	"prism/database"
+	"prism/db"
 )
 
 // SetHomeLocation(userLocationId int) handles the whole system of setting a location to be the home location... Setting location type to 'home', and adds new home to homes table
@@ -12,7 +12,7 @@ func SetHomeLocation(userLoc *Location, homeName string) error {
 		return fmt.Errorf("error this location is a global location, and its location type cannot be changed")
 	}
 
-	db := database.GetDB()
+	db := db.GetDB()
 
 	// this can't occur like this.
 	query := `UPDATE locations l SET location_type_id = 10 WHERE l.id = $1`
@@ -35,7 +35,7 @@ func SetHomeLocation(userLoc *Location, homeName string) error {
 }
 
 func addHome(userLocationId int, homeName string) error {
-	db := database.GetDB()
+	db := db.GetDB()
 
 	query := `INSERT INTO homes (user_location_id, name) VALUES ($1, $2)`
 

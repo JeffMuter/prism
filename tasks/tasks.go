@@ -2,7 +2,7 @@ package tasks
 
 import (
 	"fmt"
-	"prism/database"
+	"prism/db"
 	"prism/locations"
 	"prism/workers"
 	"time"
@@ -52,7 +52,7 @@ func SetWorkerTaskToNewTask(worker workers.Worker, taskType string) error {
 	if err != nil {
 		return fmt.Errorf("error ending worker's (id: %d) task: %w,", worker.Id, err)
 	}
-	db := database.GetDB()
+	db := db.GetDB()
 
 	// need the worker's location for details
 	workerLocation, err := locations.GetLocationFromLocationId(worker.LocationId)
@@ -74,7 +74,7 @@ func SetWorkerTaskToNewTask(worker workers.Worker, taskType string) error {
 func GetListOfTaskTypes() ([]string, error) {
 	query := "SELECT name FROM task_types"
 
-	db := database.GetDB()
+	db := db.GetDB()
 
 	var taskTypes []string
 
@@ -99,7 +99,7 @@ func endCurrentWorkerTask(workerId int) error {
 
 	// TODO: I think we should add that the task type gets created & set to resting.
 
-	db := database.GetDB()
+	db := db.GetDB()
 	query := "UPDATE workers_tasks SET is_ongoing = false, end_time = $1 WHERE worker_id = $2"
 	_, err := db.Exec(query, time.Now().UTC(), workerId)
 	if err != nil {
@@ -112,7 +112,7 @@ func endCurrentWorkerTask(workerId int) error {
 func GetOngoingTasksFromLocid(locId int) ([]Task, error) {
 	var ongoingTasks []Task
 
-	db := database.GetDB()
+	db := db.GetDB()
 	query := `SELECT 
 		wt.id, 
 		w.name, 
@@ -144,7 +144,7 @@ func GetOngoingTasksFromLocid(locId int) ([]Task, error) {
 // GetMapTaskTypeIdTaskNameFromLocationId gets a list of all tasks that a location has access to, by a locationId
 func GetMapTaskTypeIdTaskNameFromLocationId(id int) (map[int]string, error) {
 	var tasks = make(map[int]string)
-	db := database.GetDB()
+	db := db.GetDB()
 	query := "SELECT tt.id, tt.name FROM locations l JOIN location_types_tasks ltt ON l.location_type_id = ltt.location_type_id JOIN task_types tt ON ltt.task_type_id = tt.id WHERE l.id = $1"
 
 	rows, err := db.Query(query, id)
@@ -173,7 +173,7 @@ func GetMapTaskTypeIdTaskNameFromLocationId(id int) (map[int]string, error) {
 func GetOngoingTaskNamesRateMapFromLocationId(locationId int) (map[string]float64, error) {
 	var mapNameRate = make(map[string]float64)
 
-	db := database.GetDB()
+	db := db.GetDB()
 	query := "SELECT r.name, ttr.base_rate FROM workers_tasks wt JOIN task_types tt ON wt.task_type_id = tt.id JOIN task_types_resources ttr ON tt.id = ttr.task_type_id JOIN resources r ON ttr.resource_id = r.id WHERE wt.location_id = $1 AND wt.is_ongoing = TRUE;"
 
 	rows, err := db.Query(query, locationId)

@@ -10,7 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"prism/database"
+	"prism/db"
 	"prism/operating_system"
 )
 
@@ -80,7 +80,7 @@ func Ping() (float64, float64, error) {
 
 func GetUser(email string) (User, error) {
 	user := User{}
-	db := database.GetDB()
+	db := db.GetDB()
 
 	query := "SELECT id, username, email, password FROM users WHERE email=$1"
 	row := db.QueryRow(query, email)

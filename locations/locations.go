@@ -3,7 +3,7 @@ package locations
 import (
 	"errors"
 	"fmt"
-	"prism/database"
+	"prism/db"
 	"prism/user"
 	"prism/util"
 )
@@ -48,7 +48,7 @@ func CreateLocation(user user.User, locName string, locTypeId int) (int, error) 
 		}
 	}
 
-	db := database.GetDB()
+	db := db.GetDB()
 
 	// add node to locations
 	query := `INSERT INTO locations 
@@ -82,7 +82,7 @@ func CreateLocation(user user.User, locName string, locTypeId int) (int, error) 
 func GetAllLocations(user user.User) ([]Location, error) {
 	var locations []Location
 
-	db := database.GetDB()
+	db := db.GetDB()
 
 	// query grabs all locations where they're intentionally visible from default, or if the user has visited them. visiting a location, or making one, adds it to users_locations, after all.
 	query := `SELECT *
@@ -113,7 +113,7 @@ func GetAllLocations(user user.User) ([]Location, error) {
 // range, and if no other locations are inside it, creates the new node. Returns the id of the newly connected location.
 func ConnectToLocation(user user.User) (int, error) {
 	var newUsersLocsId int
-	db := database.GetDB()
+	db := db.GetDB()
 
 	// get all locations currently not associated to this user
 	query := `SELECT 
@@ -161,7 +161,7 @@ func ConnectToLocation(user user.User) (int, error) {
 func GetLocationsForUser(userId int) ([]Location, error) {
 	var locations []Location
 
-	db := database.GetDB()
+	db := db.GetDB()
 
 	fmt.Println(userId)
 	query := `SELECT 
@@ -200,7 +200,7 @@ func GetLocationsForUser(userId int) ([]Location, error) {
 // RemoveWorkerFromNode reduces worker_count value in the db by 1
 func RemoveWorkerFromNode(locationId int) error {
 
-	db := database.GetDB()
+	db := db.GetDB()
 
 	query := `UPDATE users_locations 
 	SET worker_count = worker_count - 1 
@@ -217,7 +217,7 @@ func RemoveWorkerFromNode(locationId int) error {
 
 // AddWorkerToNode updates the new node in the db to increase by 1.
 func AddWorkerToNode(locationId int) error {
-	db := database.GetDB()
+	db := db.GetDB()
 
 	query := `UPDATE users_locations 
 	SET worker_count = worker_count + 1 
@@ -235,7 +235,7 @@ func AddWorkerToNode(locationId int) error {
 // GetTasksForLocation gets all task names for a location, using the location
 func GetTaskNamesForLocationType(locationTypeId int) ([]string, error) {
 	fmt.Printf("getting task name from id: %d\n", locationTypeId)
-	db := database.GetDB()
+	db := db.GetDB()
 
 	var taskTypes []string
 	query := `SELECT tt.name 
@@ -263,7 +263,7 @@ func GetTaskNamesForLocationType(locationTypeId int) ([]string, error) {
 
 func GetLocationFromLocationId(id int) (Location, error) {
 	var location Location
-	db := database.GetDB()
+	db := db.GetDB()
 	query := `SELECT 
 		l.id, 
 		ul.id, 

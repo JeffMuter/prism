@@ -5,7 +5,7 @@ export CGO_ENABLED=1
 test:
 	go test ./...
 
-run: migrate-up
+run: 
 	go run main.go
 
 goose-up:

@@ -3,7 +3,7 @@ package locations
 import (
 	"errors"
 	"fmt"
-	"prism/database"
+	"prism/db"
 	"prism/util"
 	"time"
 )
@@ -20,7 +20,7 @@ func GetNamesForResourcesOfTasksFromLocation(id int) ([]Resource, error) {
 
 	var resources []Resource
 
-	db := database.GetDB()
+	db := db.GetDB()
 	query := `SELECT r.name, ttr.base_rate 
 	FROM workers_tasks wt 
 	JOIN task_types tt ON wt.task_type_id = tt.id 
@@ -50,7 +50,7 @@ func GetNamesForResourcesOfTasksFromLocation(id int) ([]Resource, error) {
 func GetResourceDataByLocationId(locId int) ([]Resource, error) {
 	var resources []Resource
 
-	db := database.GetDB()
+	db := db.GetDB()
 	query := `SELECT r.id, r.name, lr.quantity, lr.last_updated 
 	FROM locations_resources lr 
 	JOIN resources r ON r.id = lr.resource_id 
@@ -84,7 +84,7 @@ func UpdateLocationResources(locationId int, resources []Resource) error {
 		}
 	}
 
-	db := database.GetDB()
+	db := db.GetDB()
 	query := `UPDATE locations_resources lr 
 	SET last_updated = $1, quantity = $2 
 	WHERE location_id = $3 
@@ -101,7 +101,7 @@ func UpdateLocationResources(locationId int, resources []Resource) error {
 
 // CreateNewResources takes a loc id, and a slice of resources, and iinserts them into the db on locations_resources table, using fields of the resource to populate the db info. Specifically to only be used on new resources that currently don't exist for this locations
 func CreateNewResources(locationId int, resources []Resource) error {
-	db := database.GetDB()
+	db := db.GetDB()
 	query := `INSERT INTO locations_resources 
 	(location_id, resource_id, last_updated, quantity) 
 	VALUES ($1, $2, $3, $4)`
@@ -118,7 +118,7 @@ func CreateNewResources(locationId int, resources []Resource) error {
 func GetResourceIdByName(name string) (int, error) {
 	var id = 0
 
-	db := database.GetDB()
+	db := db.GetDB()
 	query := `SELECT id 
 	FROM resources 
 	WHERE name = $1`
