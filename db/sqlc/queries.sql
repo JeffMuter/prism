@@ -137,9 +137,9 @@ VALUES
 -- Egg queries
 -- name: CreateEgg :exec
 INSERT INTO
-  eggs (users_locations_id, discovery_time)
+  eggs (users_locations_id)
 VALUES
-  (?, ?);
+  (?);
 
 -- name: GetEggUserLocationId :one
 SELECT

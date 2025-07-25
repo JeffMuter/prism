@@ -32,19 +32,14 @@ func (q *Queries) ConnectUserToLocation(ctx context.Context, arg ConnectUserToLo
 
 const createEgg = `-- name: CreateEgg :exec
 INSERT INTO
-  eggs (users_locations_id, discovery_time)
+  eggs (users_locations_id)
 VALUES
-  (?, ?)
+  (?)
 `
 
-type CreateEggParams struct {
-	UsersLocationsID int64
-	DiscoveryTime    sql.NullTime
-}
-
 // Egg queries
-func (q *Queries) CreateEgg(ctx context.Context, arg CreateEggParams) error {
-	_, err := q.db.ExecContext(ctx, createEgg, arg.UsersLocationsID, arg.DiscoveryTime)
+func (q *Queries) CreateEgg(ctx context.Context, usersLocationsID int64) error {
+	_, err := q.db.ExecContext(ctx, createEgg, usersLocationsID)
 	return err
 }
 
