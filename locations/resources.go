@@ -17,6 +17,8 @@ type Resource struct {
 }
 
 func GetNamesForResourcesOfTasksFromLocation(id int) ([]Resource, error) {
+	queries := db.GetQueries()
+	ctx := context.Background()
 
 	var resources []Resource
 

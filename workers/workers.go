@@ -2,7 +2,7 @@ package workers
 
 import (
 	"fmt"
-	"prism/db"
+	"prism/database"
 	"prism/locations"
 	"prism/user"
 	"time"
@@ -30,7 +30,7 @@ type Worker struct {
 func GetWorkersRelevantToUser(user user.User) ([]Worker, error) {
 	var workers []Worker
 
-	db := db.GetDB()
+	db := database.GetDB()
 
 	query := "SELECT  workers.id, name, religion, work_status, injured, intelligence, strength, faith, named, users_locations.id, users_locations.location_id  FROM workers LEFT JOIN users_locations ON workers.user_locations_id = users_locations.id WHERE user_id = $1"
 
@@ -73,7 +73,7 @@ func GetWorkersRelatedToLocation(locationId int) ([]Worker, error) {
                 LEFT JOIN task_types tt ON wt.task_type_id = tt.id
                 WHERE ul.location_id = $1;`
 
-	db := db.GetDB()
+	db := database.GetDB()
 
 	rows, err := db.Query(query, locationId)
 	if err != nil {
@@ -119,7 +119,7 @@ func MoveWorkerToLocation(worker Worker, newLocation locations.Location) error {
 	// if they have a valid user_locations id, then we remove a worker_count from that location.
 	// add a worker_count to the new location,
 	// then add the user_locations.id to the worker in the db and object
-	db := db.GetDB()
+	db := database.GetDB()
 	var newUserLocationId int
 
 	query := "SELECT users_locations.id FROM users_locations WHERE location_id = $1"
@@ -142,7 +142,7 @@ func MoveWorkerToLocation(worker Worker, newLocation locations.Location) error {
 // ToggleWorkingForWorker is meant to swap the current value of worker_status,
 // which indicates if they're mining materials or not.
 func ToggleWorkingForWorker(worker Worker) error {
-	db := db.GetDB()
+	db := database.GetDB()
 	query := "UPDATE workers SET work_status = NOT work_status WHERE workers.id = $1"
 	_, err := db.Exec(query, worker.Id)
 	if err != nil {
