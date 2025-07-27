@@ -1,4 +1,5 @@
 -- Prism Game Database Schema for sqlite
+-- Was used for SQLC, likely depricated.
 -- Enable foreign key support
 PRAGMA foreign_keys = ON;
 
