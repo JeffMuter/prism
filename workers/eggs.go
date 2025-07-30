@@ -22,7 +22,7 @@ type Egg struct {
 // location. Returns error if process fails
 func AddEgg(usersLocationsId int) error {
 	db := database.GetDB()
-	query := "INSERT INTO eggs (users_locations_id, discovery_time) VALUES ($1, $2);"
+	query := "INSERT INTO eggs (users_locations_id, discovery_time) VALUES (?, ?);"
 
 	_, err := db.Exec(query, usersLocationsId, time.Now())
 	if err != nil {
@@ -49,7 +49,7 @@ func HatchEgg(eggId int) error {
 	db := database.GetDB()
 
 	// get the locationId of the egg for the new worker db.
-	query := "SELECT users_locations_id FROM eggs WHERE id = $1"
+	query := "SELECT users_locations_id FROM eggs WHERE id = ?"
 	var eggUserLocationId int
 	err = db.QueryRow(query, eggId).Scan(&eggUserLocationId)
 	if err != nil {
@@ -57,7 +57,7 @@ func HatchEgg(eggId int) error {
 	}
 
 	// create new worker with all the collected values
-	query = "INSERT INTO workers (name, user_locations_id, religion, strength, intelligence, speed, faith, luck, loyalty, charisma) VALUES ($1, $2 ,$3, $4, $5, $6, $7, $8, $9, $10) RETURNING id;"
+	query = "INSERT INTO workers (name, user_locations_id, religion, strength, intelligence, speed, faith, luck, loyalty, charisma) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id;"
 
 	var workerId int
 	err = db.QueryRow(query, workerName, eggUserLocationId, workerReligion, strength, intelligence, speed, faith, luck, loyalty, charisma).Scan(&workerId)
@@ -66,7 +66,7 @@ func HatchEgg(eggId int) error {
 	}
 
 	// update the egg's hatched and worker_id value, so that we know the egg has hatched.
-	query = "UPDATE eggs SET hatch_time = $1, worker_id = $2 WHERE id = $3"
+	query = "UPDATE eggs SET hatch_time = ?, worker_id = ? WHERE id = ?"
 	_, err = db.Query(query, time.Now(), workerId, eggId)
 	if err != nil {
 		return fmt.Errorf("error updating eggs after making worker: %v\n", err)
@@ -75,7 +75,7 @@ func HatchEgg(eggId int) error {
 	//create a task for the new worker, give them a status of resting
 	query = `INSERT INTO workers_tasks 
 		(task_type_id, location_id, worker_id, start_time) 
-	VALUES ($1, $2, $3, $4);`
+	VALUES (?, ?, ?, ?);`
 
 	// 6 is a hard coded id for the resting id...
 	_ = db.QueryRow(query, 6, eggUserLocationId, workerId, time.Now())
@@ -86,7 +86,7 @@ func HatchEgg(eggId int) error {
 func GetEggsAvailableForUser(userId int) ([]Egg, error) {
 	var eggs []Egg
 	db := database.GetDB()
-	query := "SELECT e.id, ul.named FROM eggs e JOIN users_locations ul ON ul.id = e.users_locations_id JOIN users u ON u.id = ul.user_id JOIN locations l ON ul.location_id = l.id WHERE u.id = $1 AND e.worker_id IS NULL"
+	query := "SELECT e.id, ul.named FROM eggs e JOIN users_locations ul ON ul.id = e.users_locations_id JOIN users u ON u.id = ul.user_id JOIN locations l ON ul.location_id = l.id WHERE u.id = ? AND e.worker_id IS NULL"
 	rows, err := db.Query(query, userId)
 	if err != nil {
 		return eggs, fmt.Errorf("error selecting eggs from db: %v\n", err)

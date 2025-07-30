@@ -17,8 +17,6 @@ type Resource struct {
 }
 
 func GetNamesForResourcesOfTasksFromLocation(id int) ([]Resource, error) {
-	queries := db.GetQueries()
-	ctx := context.Background()
 
 	var resources []Resource
 
@@ -28,7 +26,7 @@ func GetNamesForResourcesOfTasksFromLocation(id int) ([]Resource, error) {
 	JOIN task_types tt ON wt.task_type_id = tt.id 
 	JOIN task_types_resources ttr ON tt.id = ttr.task_type_id 
 	JOIN resources r ON ttr.resource_id = r.id 
-	WHERE wt.location_id = $1 
+	WHERE wt.location_id = ? 
 	AND wt.is_ongoing = TRUE;`
 
 	rows, err := db.Query(query, id)
