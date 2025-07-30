@@ -3,12 +3,13 @@ package data_scripting
 import (
 	"bufio"
 	"fmt"
-	_ "github.com/lib/pq"
 	"log"
 	"os"
 	"prism/database"
 	"strconv"
 	"strings"
+
+	_ "github.com/lib/pq"
 )
 
 // intend to take a txt file, parse each line's name, long, and lat, then convert to inserting each
@@ -42,7 +43,7 @@ func AddLocationsToDb() {
 			fmt.Println("error converting lat to float:", err)
 		}
 
-		query := `INSERT INTO locations (default_accessible, location_type, longitude, latitude, name, description, art) VALUES ($1, $2, $3, $4, $5, $6, $7 )`
+		query := `INSERT INTO locations (default_accessible, location_type, longitude, latitude, name, description, art) VALUES (?, ?, ?, ?, ?, ?, ?)`
 		_, err := db.Exec(query, true, loctype, long, lat, name, description, art)
 		if err != nil {
 			log.Panic("executing to db...", err)

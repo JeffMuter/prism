@@ -62,7 +62,7 @@ func CreateLocation(user user.User, locName string, locTypeId int) (int, error) 
 		location_type_id, 
 		is_user_created
 		) 
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) 
 	RETURNING id`
 	// TODO: cannot be using all these lame hard coded values here...
 	// made the location art custom to the type of location...
@@ -70,7 +70,7 @@ func CreateLocation(user user.User, locName string, locTypeId int) (int, error) 
 
 	query = `INSERT INTO users_locations 
 	(user_id, location_id, name) 
-	VALUES ($1, $2, $3) RETURNING id`
+	VALUES (?, ?, ?) RETURNING id`
 	err = db.QueryRow(query, user.Id, newLocationRowId, locName).Scan(&newUsersLocsId)
 	if err != nil {
 		return newLocationRowId, fmt.Errorf("error inserting users_locations when creating new location: %v\n", err)
@@ -93,7 +93,7 @@ func GetAllLocations(user user.User) ([]Location, error) {
 	LEFT JOIN users_locations ul ON l.id = ul.location_id 
 	WHERE ul.name IS NOT NULL 
 	AND (
-	ul.user_id = $1 
+	ul.user_id = ? 
 	OR l.default_accessible = TRUE
 	)`
 
@@ -128,7 +128,7 @@ func ConnectToLocation(user user.User) (int, error) {
 		l.longitude 
 	FROM locations l 
 	LEFT JOIN users_locations ul ON l.id = ul.location_id 
-	AND ul.user_id = $1 
+	AND ul.user_id = ? 
 	WHERE ul.user_id IS NULL`
 	rows, err := db.Query(query, user.Id)
 	if err != nil {
@@ -147,7 +147,7 @@ func ConnectToLocation(user user.User) (int, error) {
 		if location.Latitude < maxLat && location.Latitude > minLat && location.Longitude < maxLong && location.Longitude > minLong {
 
 			query = `INSERT INTO users_locations (user_id, location_id) 
-			VALUES ($1, $2) 
+			VALUES (?, ?) 
 			RETURNING id;`
 			err = db.QueryRow(query, user.Id, location.Id).Scan(&newUsersLocsId)
 			if err != nil {
@@ -184,7 +184,7 @@ func GetLocationsForUser(userId int) ([]Location, error) {
 	FROM locations l
 	JOIN users_locations ul ON l.id = ul.location_id 
 	JOIN location_types lt ON l.location_type_id = lt.id
-	WHERE ul.user_id = $1;
+	WHERE ul.user_id = ?;
 `
 
 	rows, err := db.Query(query, userId)
@@ -209,7 +209,7 @@ func RemoveWorkerFromNode(locationId int) error {
 
 	query := `UPDATE users_locations 
 	SET worker_count = worker_count - 1 
-	WHERE users_locations.id = $1`
+	WHERE users_locations.id = ?`
 
 	_, err := db.Exec(query, locationId)
 	if err != nil {
@@ -226,7 +226,7 @@ func AddWorkerToNode(locationId int) error {
 
 	query := `UPDATE users_locations 
 	SET worker_count = worker_count + 1 
-	WHERE users_locations.id = $1`
+	WHERE users_locations.id = ?`
 
 	_, err := db.Exec(query, locationId)
 	if err != nil {
@@ -247,7 +247,7 @@ func GetTaskNamesForLocationType(locationTypeId int) ([]string, error) {
 	FROM task_types tt 
 	JOIN location_types_tasks ltt ON tt.id = ltt.task_type_id 
 	JOIN location_types lt ON ltt.location_type_id = lt.id 
-	WHERE lt.id = $1`
+	WHERE lt.id = ?`
 
 	rows, err := db.Query(query, locationTypeId)
 	if err != nil {
@@ -280,7 +280,7 @@ func GetLocationFromLocationId(id int) (Location, error) {
 		art 
 	FROM locations l
 	JOIN users_locations ul ON ul.location_id = l.id
-	WHERE id = $1`
+	WHERE id = ?`
 
 	row := db.QueryRow(query, id)
 

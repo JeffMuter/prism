@@ -6,12 +6,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/joho/godotenv"
 	"log"
 	"net/http"
 	"os"
 	"prism/db"
 	"prism/operating_system"
+
+	"github.com/joho/godotenv"
 )
 
 type User struct {
@@ -66,14 +67,14 @@ func Ping() (float64, float64, error) {
 		return 0, 0, fmt.Errorf("received non-200 response code: %d", resp.StatusCode)
 	}
 
-	var result map[string]interface{}
+	var result map[string]any
 	err = json.NewDecoder(resp.Body).Decode(&result)
 	if err != nil {
 		fmt.Println("json decoding went awry... ", err)
 		return 0, 0, fmt.Errorf("ping error on decoding resp: %v", err)
 	}
-	lat := result["location"].(map[string]interface{})["lat"].(float64)
-	long := result["location"].(map[string]interface{})["lng"].(float64)
+	lat := result["location"].(map[string]any)["lat"].(float64)
+	long := result["location"].(map[string]any)["lng"].(float64)
 	fmt.Printf("Ping Location: %v, %v\n", lat, long)
 	return lat, long, nil
 }
@@ -82,7 +83,7 @@ func GetUser(email string) (User, error) {
 	user := User{}
 	db := db.GetDB()
 
-	query := "SELECT id, username, email, password FROM users WHERE email=$1"
+	query := "SELECT id, username, email, password FROM users WHERE email= ?"
 	row := db.QueryRow(query, email)
 	err := row.Scan(&user.Id, &user.Username, &user.Email, &user.Password)
 	if err != nil {

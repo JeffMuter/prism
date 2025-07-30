@@ -15,14 +15,14 @@ func SetHomeLocation(userLoc *Location, homeName string) error {
 	db := db.GetDB()
 
 	// this can't occur like this.
-	query := `UPDATE locations l SET location_type_id = 10 WHERE l.id = $1`
+	query := `UPDATE locations l SET location_type_id = 10 WHERE l.id = ?`
 
 	_, err := db.Exec(query, userLoc.Id)
 	if err != nil {
 		return fmt.Errorf("error executing query to make loc a home type: %w,", err)
 	}
 
-	query = `UPDATE users_locations ul SET name= $1 WHERE ul.location_id= $2`
+	query = `UPDATE users_locations ul SET name= ? WHERE ul.location_id= ?`
 
 	_, err = db.Exec(query, homeName, userLoc.Id)
 
@@ -37,7 +37,7 @@ func SetHomeLocation(userLoc *Location, homeName string) error {
 func addHome(userLocationId int, homeName string) error {
 	db := db.GetDB()
 
-	query := `INSERT INTO homes (user_location_id, name) VALUES ($1, $2)`
+	query := `INSERT INTO homes (user_location_id, name) VALUES (?, ?)`
 
 	_, err := db.Exec(query, userLocationId, homeName)
 	if err != nil {

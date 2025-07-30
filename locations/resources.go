@@ -54,7 +54,7 @@ func GetResourceDataByLocationId(locId int) ([]Resource, error) {
 	query := `SELECT r.id, r.name, lr.quantity, lr.last_updated 
 	FROM locations_resources lr 
 	JOIN resources r ON r.id = lr.resource_id 
-	WHERE lr.location_id = $1;`
+	WHERE lr.location_id = ?;`
 
 	rows, err := db.Query(query, locId)
 	if err != nil {
@@ -86,9 +86,9 @@ func UpdateLocationResources(locationId int, resources []Resource) error {
 
 	db := db.GetDB()
 	query := `UPDATE locations_resources lr 
-	SET last_updated = $1, quantity = $2 
-	WHERE location_id = $3 
-	AND resource_id = $4;`
+	SET last_updated = ?, quantity = ? 
+	WHERE location_id = ? 
+	AND resource_id = ?;`
 
 	for _, resource := range resources {
 		_, err := db.Exec(query, resource.lastUpdated, resource.quantity, locationId, resource.locationResourceId)
@@ -104,7 +104,7 @@ func CreateNewResources(locationId int, resources []Resource) error {
 	db := db.GetDB()
 	query := `INSERT INTO locations_resources 
 	(location_id, resource_id, last_updated, quantity) 
-	VALUES ($1, $2, $3, $4)`
+	VALUES (?, ?, ?, ?)`
 	for i := range resources {
 		_, err := db.Exec(query, locationId, resources[i].locationResourceId, resources[i].lastUpdated, resources[i].quantity)
 		if err != nil {
@@ -121,7 +121,7 @@ func GetResourceIdByName(name string) (int, error) {
 	db := db.GetDB()
 	query := `SELECT id 
 	FROM resources 
-	WHERE name = $1`
+	WHERE name = ?`
 	row := db.QueryRow(query, name)
 	err := row.Scan(&id)
 	if err != nil {

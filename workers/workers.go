@@ -150,7 +150,7 @@ func ToggleWorkingForWorker(worker Worker) error {
 
 	query := `UPDATE workers 
 				SET work_status = NOT work_status 
-				WHERE workers.id = $1`
+				WHERE workers.id = ?`
 
 	_, err := database.Exec(query, worker.Id)
 	if err != nil {

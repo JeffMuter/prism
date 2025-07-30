@@ -61,7 +61,7 @@ func SetWorkerTaskToNewTask(worker workers.Worker, taskType string) error {
 	}
 
 	// add new task to db
-	query := "INSERT INTO workers_tasks (task_type_id, location_id, worker_id, start_time, start_longitude, start_latitude, end_longitude, end_latitude, is_ongoing) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"
+	query := "INSERT INTO workers_tasks (task_type_id, location_id, worker_id, start_time, start_longitude, start_latitude, end_longitude, end_latitude, is_ongoing) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
 	_, err = db.Exec(query, verifiedTaskTypeId, workerLocation.Id, worker.Id, time.Now().UTC(), workerLocation.Latitude, workerLocation.Longitude, workerLocation.Latitude, workerLocation.Longitude, true)
 	if err != nil {
 		return fmt.Errorf("error executing query to insert a new task into tasks table: %w,", err)
@@ -100,7 +100,7 @@ func endCurrentWorkerTask(workerId int) error {
 	// TODO: I think we should add that the task type gets created & set to resting.
 
 	db := db.GetDB()
-	query := "UPDATE workers_tasks SET is_ongoing = false, end_time = $1 WHERE worker_id = $2"
+	query := "UPDATE workers_tasks SET is_ongoing = false, end_time = ? WHERE worker_id = ?"
 	_, err := db.Exec(query, time.Now().UTC(), workerId)
 	if err != nil {
 		return fmt.Errorf("error executing query to update / end the worker's current task: %w,", err)
@@ -121,7 +121,7 @@ func GetOngoingTasksFromLocid(locId int) ([]Task, error) {
 	FROM workers_tasks wt 
 	RIGHT JOIN task_types tt ON wt.task_type_id = tt.id
 	RIGHT JOIN workers w ON wt.worker_id = w.id
-	WHERE wt.location_id = $1
+	WHERE wt.location_id = ? 
 	AND wt.end_time IS NULL;`
 
 	rows, err := db.Query(query, locId)
@@ -145,7 +145,7 @@ func GetOngoingTasksFromLocid(locId int) ([]Task, error) {
 func GetMapTaskTypeIdTaskNameFromLocationId(id int) (map[int]string, error) {
 	var tasks = make(map[int]string)
 	db := db.GetDB()
-	query := "SELECT tt.id, tt.name FROM locations l JOIN location_types_tasks ltt ON l.location_type_id = ltt.location_type_id JOIN task_types tt ON ltt.task_type_id = tt.id WHERE l.id = $1"
+	query := "SELECT tt.id, tt.name FROM locations l JOIN location_types_tasks ltt ON l.location_type_id = ltt.location_type_id JOIN task_types tt ON ltt.task_type_id = tt.id WHERE l.id = ?"
 
 	rows, err := db.Query(query, id)
 	if err != nil {
@@ -174,7 +174,7 @@ func GetOngoingTaskNamesRateMapFromLocationId(locationId int) (map[string]float6
 	var mapNameRate = make(map[string]float64)
 
 	db := db.GetDB()
-	query := "SELECT r.name, ttr.base_rate FROM workers_tasks wt JOIN task_types tt ON wt.task_type_id = tt.id JOIN task_types_resources ttr ON tt.id = ttr.task_type_id JOIN resources r ON ttr.resource_id = r.id WHERE wt.location_id = $1 AND wt.is_ongoing = TRUE;"
+	query := "SELECT r.name, ttr.base_rate FROM workers_tasks wt JOIN task_types tt ON wt.task_type_id = tt.id JOIN task_types_resources ttr ON tt.id = ttr.task_type_id JOIN resources r ON ttr.resource_id = r.id WHERE wt.location_id = ? AND wt.is_ongoing = TRUE;"
 
 	rows, err := db.Query(query, locationId)
 	if err != nil {
