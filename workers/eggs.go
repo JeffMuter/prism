@@ -86,7 +86,7 @@ func HatchEgg(eggId int) error {
 func GetEggsAvailableForUser(userId int) ([]Egg, error) {
 	var eggs []Egg
 	db := db.GetDB()
-	query := "SELECT e.id, ul.named FROM eggs e JOIN users_locations ul ON ul.id = e.users_locations_id JOIN users u ON u.id = ul.user_id JOIN locations l ON ul.location_id = l.id WHERE u.id = ? AND e.worker_id IS NULL"
+	query := "SELECT e.id, ul.name FROM eggs e JOIN users_locations ul ON ul.id = e.users_locations_id JOIN users u ON u.id = ul.user_id JOIN locations l ON ul.location_id = l.id WHERE u.id = ? AND e.worker_id IS NULL"
 	rows, err := db.Query(query, userId)
 	if err != nil {
 		return eggs, fmt.Errorf("error selecting eggs from db: %v\n", err)

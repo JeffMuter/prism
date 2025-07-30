@@ -62,7 +62,7 @@ func CreateLocation(user user.User, locName string, locTypeId int) (int, error) 
 		location_type_id, 
 		is_user_created
 		) 
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) 
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?) 
 	RETURNING id`
 	// TODO: cannot be using all these lame hard coded values here...
 	// made the location art custom to the type of location...

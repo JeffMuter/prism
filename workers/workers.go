@@ -32,7 +32,7 @@ func GetWorkersRelevantToUser(user user.User) ([]Worker, error) {
 
 	db := db.GetDB()
 
-	query := "SELECT  workers.id, name, religion, work_status, injured, intelligence, strength, faith, named, users_locations.id, users_locations.location_id  FROM workers LEFT JOIN users_locations ON workers.user_locations_id = users_locations.id WHERE user_id = ?"
+	query := "SELECT  workers.id, name, religion, work_status, injured, intelligence, strength, faith, name, users_locations.id, users_locations.location_id  FROM workers LEFT JOIN users_locations ON workers.user_locations_id = users_locations.id WHERE user_id = ?"
 
 	rows, err := db.Query(query, user.Id)
 	if err != nil {
