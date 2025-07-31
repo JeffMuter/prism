@@ -31,9 +31,11 @@ func MainMenuListen(thisUser user.User) error {
 		if err != nil {
 			return fmt.Errorf("error getting input from the user: %w,", err)
 		}
+
 		// TODO: add geolocation based location type determination & options.
 
 		// TODO: select a loc type... just completely fake it for now.
+
 		locTypeMap := map[string]int{
 			"mine":   2,
 			"farm":   3,

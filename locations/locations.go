@@ -64,6 +64,7 @@ func CreateLocation(user user.User, locName string, locTypeId int) (int, error) 
 		) 
 	VALUES (?, ?, ?, ?, ?, ?, ?, ?) 
 	RETURNING id`
+
 	// TODO: cannot be using all these lame hard coded values here...
 	// made the location art custom to the type of location...
 	db.QueryRow(query, "false", user.Latitude, user.Longitude, locName, "new node description", "node", locTypeId, true).Scan(&newLocationRowId)
@@ -84,18 +85,21 @@ func GetAllLocations(user user.User) ([]Location, error) {
 
 	db := db.GetDB()
 
-	query := `SELECT 
-		ul.name, 
-		l.latitude, 
-		l.longitude, 
-		l.art
-	FROM locations l 
-	LEFT JOIN users_locations ul ON l.id = ul.location_id 
-	WHERE ul.name IS NOT NULL 
-	AND (
-	ul.user_id = ? 
-	OR l.default_accessible = TRUE
-	)`
+	query := `
+		SELECT
+			COALESCE(ul.name, l.name) as name,
+			l.latitude,
+			l.longitude,
+			l.art
+		FROM
+			locations l
+			LEFT JOIN users_locations ul ON l.id = ul.location_id
+			AND ul.user_id = ?
+		WHERE
+			ul.user_id IS NOT NULL
+		OR 
+			l.default_accessible = 1
+	`
 
 	rows, err := db.Query(query, user.Id)
 	if err != nil {
@@ -122,18 +126,24 @@ func ConnectToLocation(user user.User) (int, error) {
 
 	// get all locations currently not associated to this user
 	query := `SELECT 
-		l.id, 
-		ul.name, 
-		l.latitude, 
-		l.longitude 
-	FROM locations l 
-	LEFT JOIN users_locations ul ON l.id = ul.location_id 
-	AND ul.user_id = ? 
-	WHERE ul.user_id IS NULL`
+			l.id, 
+			l.name, 
+			l.latitude, 
+			l.longitude 
+		FROM 
+			locations l 
+		LEFT JOIN 
+			users_locations ul ON l.id = ul.location_id 
+		AND 
+			ul.user_id = ? 
+		WHERE 
+			ul.user_id IS NULL`
 	rows, err := db.Query(query, user.Id)
 	if err != nil {
 		return newUsersLocsId, fmt.Errorf("err querying db for connect to node: %v", err)
 	}
+	defer rows.Close()
+
 	// a range of roughly .1 miles in lat/long.
 	minLat, maxLat, minLong, maxLong := util.GetMaxLocationRanges(.5, user.Latitude, user.Longitude)
 	var locations []Location
@@ -144,18 +154,28 @@ func ConnectToLocation(user user.User) (int, error) {
 		if err != nil {
 			return newUsersLocsId, fmt.Errorf("error scanning values from row in rows.next, err: %v\n", err)
 		}
-		if location.Latitude < maxLat && location.Latitude > minLat && location.Longitude < maxLong && location.Longitude > minLong {
+		locations = append(locations, location)
+	}
+	rows.Close()
 
-			query = `INSERT INTO users_locations (user_id, location_id) 
-			VALUES (?, ?) 
-			RETURNING id;`
+	for _, location := range locations {
+
+		if location.Latitude < maxLat && location.Latitude > minLat && location.Longitude < maxLong && location.Longitude > minLong {
+			query = `INSERT INTO 
+						users_locations (user_id, location_id) 
+					VALUES 
+						(?, ?) 
+					RETURNING 
+						id;`
+
 			err = db.QueryRow(query, user.Id, location.Id).Scan(&newUsersLocsId)
 			if err != nil {
+				fmt.Printf("tried to connect to:%s, but an error occured", location.Name)
 				return newUsersLocsId, fmt.Errorf("error inserting new users_locations while connecting to new location: %v\n", err)
 			}
+			fmt.Printf("connection to %s established\n", location.Name)
 			return newUsersLocsId, nil
 		}
-		locations = append(locations, location)
 	}
 
 	return newUsersLocsId, errors.New("could not find a node close enough to connect to")

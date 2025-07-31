@@ -20,10 +20,19 @@ func OpenDatabase() error {
 		return fmt.Errorf("error unable to connect to db: %w", err)
 	}
 
-	// Enable foreign keys for this connection
-	_, err = db.Exec("PRAGMA foreign_keys = ON")
-	if err != nil {
-		return fmt.Errorf("error enabling foreign keys: %w", err)
+	pragmas := []string{
+		"PRAGMA foreign_keys = ON",
+		"PRAGMA journal_mode = WAL",   // Write-Ahead Logging for better concurrency
+		"PRAGMA synchronous = NORMAL", // Balance between safety and performance
+		"PRAGMA cache_size = 1000",    // Increase cache size
+		"PRAGMA temp_store = memory",  // Store temp tables in memory
+		"PRAGMA busy_timeout = 5000",  // Wait up to 5 seconds for locks
+	}
+
+	for _, pragma := range pragmas {
+		if _, err := db.Exec(pragma); err != nil {
+			return fmt.Errorf("error executing pragma %s: %w", pragma, err)
+		}
 	}
 
 	err = db.Ping()

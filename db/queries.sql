@@ -6,7 +6,7 @@ FROM
   LEFT JOIN users_locations ul ON l.id = ul.location_id
 WHERE
   ul.user_id = ?
-  OR l.default_accessible = TRUE;
+  OR l.default_accessible = 1;
 
 -- Tasks queries
 -- name: CreateWorkerTask :exec
