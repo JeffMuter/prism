@@ -20,22 +20,38 @@ func OpenDatabase() error {
 		return fmt.Errorf("error unable to connect to db: %w", err)
 	}
 
+	err = db.Ping()
+	if err != nil {
+		return fmt.Errorf("error pinging db: %w", err)
+	}
+
+	return configurePragmas(db)
+}
+
+// New function to set a database instance (for testing)
+func SetDatabase(database *sql.DB) error {
+	db = database
+	return configurePragmas(db)
+}
+
+// Extract pragma configuration to reusable function
+func configurePragmas(database *sql.DB) error {
 	pragmas := []string{
 		"PRAGMA foreign_keys = ON",
-		"PRAGMA journal_mode = WAL",   // Write-Ahead Logging for better concurrency
-		"PRAGMA synchronous = NORMAL", // Balance between safety and performance
-		"PRAGMA cache_size = 1000",    // Increase cache size
-		"PRAGMA temp_store = memory",  // Store temp tables in memory
-		"PRAGMA busy_timeout = 5000",  // Wait up to 5 seconds for locks
+		"PRAGMA journal_mode = WAL",
+		"PRAGMA synchronous = NORMAL",
+		"PRAGMA cache_size = 1000",
+		"PRAGMA temp_store = memory",
+		"PRAGMA busy_timeout = 5000",
 	}
 
 	for _, pragma := range pragmas {
-		if _, err := db.Exec(pragma); err != nil {
+		if _, err := database.Exec(pragma); err != nil {
 			return fmt.Errorf("error executing pragma %s: %w", pragma, err)
 		}
 	}
 
-	err = db.Ping()
+	err := database.Ping()
 	if err != nil {
 		return fmt.Errorf("error pinging db: %w", err)
 	}
