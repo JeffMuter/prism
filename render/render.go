@@ -92,15 +92,25 @@ func addLocationsToCanvas(canvas [][]rune, locations []locations.Location) {
 
 	// triple nested loop.
 	for _, location := range locations {
+		// explain this
 		for y := location.Art.Height - 1; y >= 0; y-- {
+			// yCordinate is how many lines down the page, minus artHeight - 1 - y so that we start at
+			// the line where the art should begin printing this begins at the row that's lowest on
+			// the screen from the users perspective. then using - sign, it'll slowly go up.
+			// which is y goes -- as well.
 			artY := location.YCoordinate - (location.Art.Height - 1 - y)
+
+			// Skip this line of the art if it's out of canvas bounds
 			if artY < 0 || artY >= canvasHeight {
-				// Skip this line of the art if it's out of canvas bounds
 				continue
 			}
 
+			// we're on a line that's confirmed to need art, so we run through the horizantal cells
 			for x := 0; x < location.Art.Width; x++ {
+
+				// target only the cell we want, starting left to right with a plus sign
 				artX := location.XCoordinate + x
+
 				if artX < 0 || artX >= canvasWidth {
 					// Skip this column of the art if it's out of canvas bounds
 					continue
@@ -111,7 +121,7 @@ func addLocationsToCanvas(canvas [][]rune, locations []locations.Location) {
 					continue
 				}
 
-				// Draw the art on the canvas
+				// Draw the art on the horizantal cell of the canvas
 				canvas[artY][artX] = rune(location.Art.Art[y][x])
 			}
 		}
