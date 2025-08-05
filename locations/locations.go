@@ -39,7 +39,7 @@ func CreateLocation(user user.User, locName string, locTypeId int) (int, error) 
 	// call func to get the vars for the lat/long range
 	minLat, maxLat, minLong, maxLong := util.GetMaxLocationRanges(latLongRange, user.Latitude, user.Longitude)
 
-	locations, err := GetAllLocations(user)
+	locations, err := GetAllLocations(&user)
 
 	// check each location, if any node is too close, cancel the process
 	for _, loc := range locations {
@@ -80,7 +80,7 @@ func CreateLocation(user user.User, locName string, locTypeId int) (int, error) 
 }
 
 // GetAllLocations used to get locations from the database, placed into a location type.
-func GetAllLocations(user user.User) ([]Location, error) {
+func GetAllLocations(user *user.User) ([]Location, error) {
 	var locations []Location
 
 	db := db.GetDB()

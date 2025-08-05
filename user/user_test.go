@@ -1,8 +1,17 @@
 package user
 
-import "testing"
+import (
+	"os"
+	"prism/db"
+	"testing"
+)
 
 func TestPing(t *testing.T) {
+	// Change to root directory and initialize database
+	if err := os.Chdir(".."); err != nil {
+		t.Fatalf("Failed to change to root directory: %v", err)
+	}
+
 	lat, long, err := Ping()
 	if err != nil {
 		t.Errorf("ping test came back err: %v. Lat&Long: %v,%v\n", err, lat, long)
@@ -10,6 +19,16 @@ func TestPing(t *testing.T) {
 }
 
 func TestGetUser(t *testing.T) {
+
+	// Change to root directory and initialize database
+	if err := os.Chdir(".."); err != nil {
+		t.Fatalf("Failed to change to root directory: %v", err)
+	}
+
+	if err := db.OpenDatabase(); err != nil {
+		t.Fatalf("Failed to initialize database: %v", err)
+	}
+
 	email := "1@gmail.com"
 	user, err := GetUser(email)
 	if err != nil {

@@ -24,7 +24,7 @@ func MainMenuListen(thisUser user.User) error {
 
 	if input == "ping" {
 		fmt.Println("updating your location...")
-		render.PaintScreen(thisUser) // repaints the screen
+		render.PaintScreen(&thisUser) // repaints the screen
 	} else if input == "new location" {
 		fmt.Println("What will the name of this location be?...")
 		locName, err := util.ReadCommandInput()

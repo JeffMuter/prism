@@ -9,16 +9,17 @@ import (
 	"sort"
 )
 
-func PaintScreen(thisUser user.User) ([][]rune, error) {
+func PaintScreen(thisUser *user.User) ([][]rune, error) {
 	var canvas [][]rune
+	var err error
 
 	//get terminal info
-	termWidth, termHeight, err := operating_system.GetTerminalSize()
+	thisUser.ScreenWidth, thisUser.ScreenHeight, err = operating_system.GetTerminalSize()
 	if err != nil {
 		return canvas, fmt.Errorf("error getting screen dimensions for rendering: %w,", err)
 	}
 
-	// get locations near user
+	// get all locations
 	locationsToRender, err := locations.GetAllLocations(thisUser)
 	if err != nil {
 		return canvas, fmt.Errorf("error getting loc's near to user: %w,", err)
@@ -27,7 +28,7 @@ func PaintScreen(thisUser user.User) ([][]rune, error) {
 
 	// set each locations coordinates
 	locationsToRender, err =
-		findLocationsCoordinates(thisUser, locationsToRender, termWidth, termHeight)
+		findLocationsCoordinates(thisUser, &locationsToRender)
 	if err != nil {
 		return canvas, fmt.Errorf("error getting coordinates for loc's: %w,", err)
 	}
@@ -35,20 +36,21 @@ func PaintScreen(thisUser user.User) ([][]rune, error) {
 	locationsToRender = locations.SetLocationsArt(locationsToRender)
 
 	// create canvas
-	canvas = make([][]rune, termHeight)
+	canvas = make([][]rune, thisUser.ScreenHeight)
 	for i := range canvas {
-		canvas[i] = make([]rune, termWidth)
+		canvas[i] = make([]rune, thisUser.ScreenWidth)
 		for j := range canvas[i] {
 			canvas[i][j] = ' '
 		}
 	}
+
 	// order locations
-	locationsToRender = orderLocationsSlice(locationsToRender)
+	orderLocationsSlice(locationsToRender)
 
 	// place objects on the canvas
 	addLocationsToCanvas(canvas, locationsToRender)
 	//addWorkersToCanvas(canvas, workersToRender)
-	addUserToCanvas(canvas, thisUser)
+	addUserToCanvas(canvas)
 
 	for i := range canvas {
 		fmt.Println(string(canvas[len(canvas)-1-i]))
@@ -57,20 +59,24 @@ func PaintScreen(thisUser user.User) ([][]rune, error) {
 	return canvas, nil
 }
 
-func findLocationsCoordinates(user user.User, unfilteredLocations []locations.Location, scrWidth, scrHeight int) ([]locations.Location, error) {
+// findLocationsCoordinates takes any given locations, returning just the locations close
+// enough to the user to show on screen, then adjust the approved locations, adding detail
+// on where they ought to appear on the screen, based on the screen width & height.
+func findLocationsCoordinates(user *user.User, unfilteredLocations *[]locations.Location) ([]locations.Location, error) {
 	var filteredLocations []locations.Location
-	var degreeRange float64 = 2
+	var degreeRange float64 = 2 // in lat/long units how far should locations be to render? thats what this represents
 	minLat, maxLat, minLong, maxLong := util.GetMaxLocationRanges(degreeRange, user.Latitude, user.Longitude)
 
-	for _, location := range unfilteredLocations {
-		// if out of bounds, don't add the object to the filtered slice
+	for _, location := range *unfilteredLocations {
+		// if out of bounds, don't add the object to the filtered slice by skipping this loop iteration
 		if location.Latitude > maxLat || location.Latitude < minLat || location.Longitude > maxLong || location.Longitude < minLong {
 			continue
 		}
+
 		// distance represents the unit of distance each char on the canvas represents in degree distance.
 		// if the canvas degree range is 10, and the screen width is 10, then every char on the screen is 1 lat.
-		var horizontalIndex int = int((location.Longitude - minLong) / (degreeRange * 2) * float64(scrWidth))
-		var verticalIndex int = int((location.Latitude - minLat) / (degreeRange * 2) * float64(scrHeight))
+		var horizontalIndex int = int((location.Longitude - minLong) / (degreeRange * 2) * float64(user.ScreenWidth))
+		var verticalIndex int = int((location.Latitude - minLat) / (degreeRange * 2) * float64(user.ScreenHeight))
 
 		location.XCoordinate = horizontalIndex
 		location.YCoordinate = verticalIndex
@@ -84,6 +90,7 @@ func addLocationsToCanvas(canvas [][]rune, locations []locations.Location) {
 	canvasHeight := len(canvas)
 	canvasWidth := len(canvas[0])
 
+	// triple nested loop.
 	for _, location := range locations {
 		for y := location.Art.Height - 1; y >= 0; y-- {
 			artY := location.YCoordinate - (location.Art.Height - 1 - y)
@@ -114,7 +121,7 @@ func addLocationsToCanvas(canvas [][]rune, locations []locations.Location) {
 // orderObjectSlice takes a slice of object, and returns them, where the Ycoordinate sorts them.
 // intention being to have the object closest to the user printed last, and overtop of all other objects that have
 // coordinates closer to the top of the rendered screen.
-func orderLocationsSlice(locations []locations.Location) []locations.Location {
+func orderLocationsSlice(locations []locations.Location) {
 
 	sort.SliceStable(locations, func(i, j int) bool {
 		if locations[i].YCoordinate == locations[j].YCoordinate {
@@ -122,10 +129,9 @@ func orderLocationsSlice(locations []locations.Location) []locations.Location {
 		}
 		return locations[i].YCoordinate < locations[j].YCoordinate
 	})
-	return locations
 }
 
-func addUserToCanvas(canvas [][]rune, user user.User) {
+func addUserToCanvas(canvas [][]rune) {
 	halfHorizantalLength := len(canvas[0]) / 2
 	halfVerticalHeight := len(canvas) / 2
 	canvas[halfVerticalHeight][halfHorizantalLength] = '@'
