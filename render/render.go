@@ -87,6 +87,7 @@ func findLocationsCoordinates(user *user.User, unfilteredLocations *[]locations.
 }
 
 func addLocationsToCanvas(canvas [][]rune, locations []locations.Location) {
+
 	canvasHeight := len(canvas)
 	canvasWidth := len(canvas[0])
 
