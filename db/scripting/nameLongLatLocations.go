@@ -44,7 +44,7 @@ func AddLocationsToDb() {
 		}
 
 		query := `INSERT INTO locations (default_accessible, location_type, longitude, latitude, name, description, art) VALUES (?, ?, ?, ?, ?, ?, ?)`
-		_, err := db.Exec(query, true, loctype, long, lat, name, description, art)
+		_, err := db.Exec(query, 1, loctype, long, lat, name, description, art)
 		if err != nil {
 			log.Panic("executing to db...", err)
 		}

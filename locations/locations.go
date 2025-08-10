@@ -67,7 +67,7 @@ func CreateLocation(user user.User, locName string, locTypeId int) (int, error) 
 
 	// TODO: cannot be using all these lame hard coded values here...
 	// made the location art custom to the type of location...
-	db.QueryRow(query, "false", user.Latitude, user.Longitude, locName, "new node description", "node", locTypeId, true).Scan(&newLocationRowId)
+	db.QueryRow(query, 0, user.Latitude, user.Longitude, locName, "new node description", "node", locTypeId, 1).Scan(&newLocationRowId)
 
 	query = `INSERT INTO users_locations 
 	(user_id, location_id, name) 
