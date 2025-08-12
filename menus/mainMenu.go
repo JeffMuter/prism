@@ -13,10 +13,11 @@ import (
 // MainMenuListen listens for user input from the main screen
 // user makes choices about the next action to take in the game,
 // either with maps, or accessing other menus
-func MainMenuListen(thisUser user.User) error {
+// reader parameter allows dependency injection for testing with mock input
+func MainMenuListen(thisUser user.User, reader util.InputReader) error {
 	fmt.Println("Welcome to Prism. Choose a command to begin:")
 
-	input, err := util.ReadCommandInput()
+	input, err := reader.ReadCommandInput()
 	if err != nil {
 		return fmt.Errorf("error reading input: %w", err)
 	}
@@ -27,7 +28,7 @@ func MainMenuListen(thisUser user.User) error {
 		render.PaintScreen(&thisUser) // repaints the screen
 	} else if input == "new location" {
 		fmt.Println("What will the name of this location be?...")
-		locName, err := util.ReadCommandInput()
+		locName, err := reader.ReadCommandInput()
 		if err != nil {
 			return fmt.Errorf("error getting input from the user: %w,", err)
 		}
@@ -45,7 +46,7 @@ func MainMenuListen(thisUser user.User) error {
 			fmt.Println(key)
 		}
 		fmt.Println("select a type of location to make...")
-		locTypeName, err := util.ReadCommandInput()
+		locTypeName, err := reader.ReadCommandInput()
 		if err != nil {
 			return fmt.Errorf("error reading user input: %w,", err)
 		}
