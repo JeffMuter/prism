@@ -1,6 +1,7 @@
 package locations
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"prism/db"
@@ -16,7 +17,7 @@ type Location struct {
 	LocationTypeId    int
 	Latitude          float64
 	Longitude         float64
-	Name              string
+	Name              sql.NullString
 	Description       string
 	ArtFileName       string
 	Art               Art
@@ -44,7 +45,7 @@ func CreateLocation(user user.User, locName string, locTypeId int) (int, error) 
 	// check each location, if any node is too close, cancel the process
 	for _, loc := range locations {
 		if loc.Latitude > minLat && loc.Latitude < maxLat && loc.Longitude > minLong && loc.Longitude < maxLong {
-			return newLocationRowId, fmt.Errorf("node location too close to another: %s", loc.Name)
+			return newLocationRowId, fmt.Errorf("node location too close to another: %s", loc.Name.String)
 		}
 	}
 
@@ -170,10 +171,10 @@ func ConnectToLocation(user user.User) (int, error) {
 
 			err = db.QueryRow(query, user.Id, location.Id).Scan(&newUsersLocsId)
 			if err != nil {
-				fmt.Printf("tried to connect to:%s, but an error occured", location.Name)
+				fmt.Printf("tried to connect to:%s, but an error occured", location.Name.String)
 				return newUsersLocsId, fmt.Errorf("error inserting new users_locations while connecting to new location: %v\n", err)
 			}
-			fmt.Printf("connection to %s established\n", location.Name)
+			fmt.Printf("connection to %s established\n", location.Name.String)
 			return newUsersLocsId, nil
 		}
 	}

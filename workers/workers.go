@@ -157,7 +157,7 @@ func ToggleWorkingForWorker(worker Worker) error {
 		return fmt.Errorf("error toggling worker work_status: %v", err)
 	}
 
-	fmt.Printf("%s is now %s", worker.Name, worker.WorkStatus)
+	fmt.Printf("%s is now %t", worker.Name, worker.WorkStatus)
 
 	return nil
 }

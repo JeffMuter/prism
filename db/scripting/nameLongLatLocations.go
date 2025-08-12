@@ -1,11 +1,11 @@
-package data_scripting
+package db
 
 import (
 	"bufio"
 	"fmt"
 	"log"
 	"os"
-	"prism/database"
+	"prism/db"
 	"strconv"
 	"strings"
 
@@ -16,7 +16,7 @@ import (
 // line into the db's locations
 
 func AddLocationsToDb() {
-	db := database.GetDB()
+	database := db.GetDB()
 
 	file, err := os.Open("data_scripting/city.txt")
 	if err != nil {
@@ -44,7 +44,7 @@ func AddLocationsToDb() {
 		}
 
 		query := `INSERT INTO locations (default_accessible, location_type, longitude, latitude, name, description, art) VALUES (?, ?, ?, ?, ?, ?, ?)`
-		_, err := db.Exec(query, 1, loctype, long, lat, name, description, art)
+		_, err := database.Exec(query, 1, loctype, long, lat, name, description, art)
 		if err != nil {
 			log.Panic("executing to db...", err)
 		}

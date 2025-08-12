@@ -1,19 +1,15 @@
 package db
 
 import (
+	"prism/db"
 	"testing"
 )
 
 func TestDatabaseConnection(t *testing.T) {
-	err := OpenDatabase()
-	if err != nil {
-		t.Fatalf("Failed to open database: %v", err)
-	}
-
-	db := GetDB()
+	testDB := db.NewTestDB(t)
 
 	var count int
-	err = db.QueryRow("SELECT COUNT(*) FROM users").Scan(&count)
+	err := testDB.QueryRow("SELECT COUNT(*) FROM users").Scan(&count)
 	if err != nil {
 		t.Fatalf("Failed to query users: %v", err)
 	}

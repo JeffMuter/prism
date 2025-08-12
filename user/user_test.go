@@ -20,14 +20,8 @@ func TestPing(t *testing.T) {
 
 func TestGetUser(t *testing.T) {
 
-	// Change to root directory and initialize database
-	if err := os.Chdir(".."); err != nil {
-		t.Fatalf("Failed to change to root directory: %v", err)
-	}
-
-	if err := db.OpenDatabase(); err != nil {
-		t.Fatalf("Failed to initialize database: %v", err)
-	}
+	testDB := db.NewTestDB(t)
+	db.SetDatabase(testDB)
 
 	email := "1@gmail.com"
 	user, err := GetUser(email)

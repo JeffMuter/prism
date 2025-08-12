@@ -18,7 +18,7 @@ func (factory NamePrintFactory) CreatePrintable(loc Location) util.Printable {
 	return namePrint{Location: loc}
 }
 func (loc namePrint) StringToPrint() string {
-	return fmt.Sprintf("%s", loc.Name)
+	return fmt.Sprintf("%s", loc.Name.String)
 }
 
 type someDetailsPrint struct{ Location }
@@ -31,7 +31,7 @@ func (factory SomeDetailsPrintFactory) CreatePrintable(loc Location) util.Printa
 func (loc someDetailsPrint) StringToPrint() string {
 	// currently no location Resources field are coming through, all set to 0
 	// TODO: this instead needs to spit out this, and all resources for this location...
-	return fmt.Sprintf("  %s  | %s  | Recources: %s |", loc.Name, loc.LocationType, createSomeDetailsThatAddsResources(loc))
+	return fmt.Sprintf("  %s  | %s  | Recources: %s |", loc.Name.String, loc.LocationType, createSomeDetailsThatAddsResources(loc))
 }
 
 func MakeLocsPrintable(locs []Location, factory PrintableLocFactory) []util.Printable {
