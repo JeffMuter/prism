@@ -12,9 +12,6 @@ import (
 //go:embed migrations/*.sql
 var migrations embed.FS
 
-//go:embed scripting/db-setup.sql
-var seedData embed.FS
-
 func NewTestDB(t *testing.T) *sql.DB {
 	t.Helper()
 
@@ -43,24 +40,14 @@ func NewTestDB(t *testing.T) *sql.DB {
 	db.SetConnMaxLifetime(0)
 	db.SetMaxOpenConns(1)
 
-	// Run migrations
+	// Run migrations (which include seed data)
 	goose.SetBaseFS(migrations)
 	if err := goose.SetDialect("sqlite3"); err != nil {
 		t.Fatalf("Failed to set dialect: %v", err)
 	}
 
-	if err := goose.Up(db, "db/migrations"); err != nil {
+	if err := goose.Up(db, "migrations"); err != nil {
 		t.Fatalf("Failed to run migrations: %v", err)
-	}
-
-	// Seed with initial data
-	seedSQL, err := seedData.ReadFile("db/scripting/db-setup.sql")
-	if err != nil {
-		t.Fatalf("Failed to read seed data: %v", err)
-	}
-
-	if _, err := db.Exec(string(seedSQL)); err != nil {
-		t.Fatalf("Failed to seed database: %v", err)
 	}
 
 	// Cleanup when test finishes

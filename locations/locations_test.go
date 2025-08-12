@@ -7,6 +7,9 @@ import (
 )
 
 func TestGetResourceIdByName(t *testing.T) {
+	testDB := db.NewTestDB(t)
+	db.SetDatabase(testDB)
+
 	resourceId, err := GetResourceIdByName("iron")
 	if err != nil {
 		t.Fatalf("expected no err, got: %v", err)
@@ -21,8 +24,10 @@ func TestGetResourceIdByName(t *testing.T) {
 }
 
 func TestCreateNewResources(t *testing.T) {
-	db := db.GetDB()
-	_, err := db.Exec("DELETE FROM locations_resources WHERE location_id = ?", 1)
+	testDB := db.NewTestDB(t)
+	db.SetDatabase(testDB)
+
+	_, err := testDB.Exec("DELETE FROM locations_resources WHERE location_id = ?", 1)
 	if err != nil {
 		t.Fatalf("failed to clear locations_resources table of location_id: %d: %v", 1, err)
 	}
