@@ -32,7 +32,7 @@ func GetWorkersRelevantToUser(user user.User) ([]Worker, error) {
 
 	db := db.GetDB()
 
-	query := "SELECT  workers.id, name, religion, work_status, injured, intelligence, strength, faith, name, users_locations.id, users_locations.location_id  FROM workers LEFT JOIN users_locations ON workers.user_locations_id = users_locations.id WHERE user_id = ?"
+	query := "SELECT workers.id, workers.name, workers.religion, workers.work_status, workers.injured, workers.intelligence, workers.strength, workers.faith, users_locations.name, users_locations.id, users_locations.location_id FROM workers LEFT JOIN users_locations ON workers.user_locations_id = users_locations.id WHERE users_locations.user_id = ?"
 
 	rows, err := db.Query(query, user.Id)
 	if err != nil {
@@ -127,7 +127,7 @@ func MoveWorkerToLocation(worker Worker, newLocation locations.Location) error {
 	row := db.QueryRow(query, newLocation.Id)
 	err := row.Scan(&newUserLocationId)
 	if err != nil {
-		fmt.Println("err getting queryRow response converted to int: ", err)
+		return fmt.Errorf("error getting user_location_id for location %d: %w", newLocation.Id, err)
 	}
 
 	query = `UPDATE workers 
@@ -136,7 +136,7 @@ func MoveWorkerToLocation(worker Worker, newLocation locations.Location) error {
 
 	_, err = db.Exec(query, newUserLocationId, worker.Id)
 	if err != nil {
-		fmt.Println("issue updating worker's user_location_id: ", err)
+		return fmt.Errorf("error updating worker's user_location_id: %w", err)
 	}
 
 	return nil
@@ -157,7 +157,7 @@ func ToggleWorkingForWorker(worker Worker) error {
 		return fmt.Errorf("error toggling worker work_status: %v", err)
 	}
 
-	fmt.Printf("%s is now %t", worker.Name, worker.WorkStatus)
+	fmt.Printf("%s work status toggled", worker.Name)
 
 	return nil
 }
