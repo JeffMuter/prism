@@ -3,19 +3,29 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"prism/db"
 	"prism/logic"
 	"prism/menus"
 	"prism/render"
 	"prism/user"
+	"runtime"
+	"runtime/pprof"
 	"time"
 )
 
 func main() {
+	// CPU profiling
+	cpuFile, err := os.Create("cpu.prof")
+	if err != nil {
+		panic(err)
+	}
+	defer cpuFile.Close()
 
-	fmt.Println(time.Now())
+	pprof.StartCPUProfile(cpuFile)
+	defer pprof.StopCPUProfile()
 
-	err := db.OpenDatabase()
+	err = db.OpenDatabase()
 
 	if err != nil {
 		log.Fatalf("db connections failed...: %v", err)
@@ -59,4 +69,14 @@ func main() {
 
 		fmt.Println("Main menu closed...")
 	}
+
+	// Memory profiling
+	memFile, err := os.Create("mem.prof")
+	if err != nil {
+		panic(err)
+	}
+	defer memFile.Close()
+
+	runtime.GC() // Force GC before memory profile
+	pprof.WriteHeapProfile(memFile)
 }
