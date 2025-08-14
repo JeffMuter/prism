@@ -3376,7 +3376,19 @@ INSERT INTO locations(default_accessible, location_type_id, name, longitude, lat
 INSERT INTO locations(default_accessible, location_type_id, name, longitude, latitude, description, art) VALUES (1, 8, 'At Taji', 44.2342, 33.5092, 'a large city in the distance... probably', 'city_art');
 INSERT INTO locations(default_accessible, location_type_id, name, longitude, latitude, description, art) VALUES (1, 8, 'Spartanburg', -81.9251, 34.9442, 'a large city in the distance... probably', 'city_art');
 
+-- Add some simple test data for workers testing
+-- Connect user to first location (Tokyo)
+INSERT INTO users_locations (user_id, location_id, name, worker_count) VALUES (1, 1, 'Tokyo Base', 3);
+
+-- Add a few workers for testing
+INSERT INTO workers (name, user_locations_id, religion, work_status, injured, strength, intelligence, speed, faith, luck, loyalty, charisma) VALUES 
+    ('Marcus Strong', 1, 'Forge Faith', 1, 0, 8, 6, 5, 7, 4, 9, 6),
+    ('Elena Swift', 1, 'Nature Spirit', 0, 0, 5, 9, 8, 6, 7, 8, 9),
+    ('Thane Boulder', 1, 'Mountain God', 1, 0, 10, 4, 3, 8, 5, 7, 4);
+
 -- +goose Down
+DELETE FROM workers;
+DELETE FROM users_locations;
 DELETE FROM locations WHERE location_type_id = 8 AND default_accessible = 1;
 DELETE FROM task_types_resources;
 DELETE FROM location_types_tasks;

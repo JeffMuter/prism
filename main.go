@@ -8,6 +8,7 @@ import (
 	"prism/menus"
 	"prism/render"
 	"prism/user"
+	"prism/util"
 	"time"
 )
 
@@ -43,7 +44,10 @@ func main() {
 		fmt.Println(err)
 	}
 
-	err = menus.MainMenuListen(thisUser)
+	// Create stdin reader for production use
+	reader := util.NewStdinReader()
+	err = menus.MainMenuListen(thisUser, reader)
+
 	if err != nil {
 		fmt.Println(fmt.Errorf("problem in main menu: %v", err))
 	} else {

@@ -63,7 +63,7 @@ func UpdateAllLocationsResourcesQuantities(userId int) error {
 	for _, location := range userLocations {
 		err = UpdateLocationResourcesQuantity(location.Id)
 		if err != nil {
-			return fmt.Errorf("error updating a locations resource: locationName: %s, error: %v\n", location.Name, err)
+			return fmt.Errorf("error updating a locations resource: locationName: %s, error: %v\n", location.Name.String, err)
 		}
 	}
 	return nil

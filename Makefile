@@ -3,7 +3,7 @@
 export CGO_ENABLED=1
 
 test:
-	go test ./...
+	go test  -cover ./...
 
 run: 
 	go run main.go

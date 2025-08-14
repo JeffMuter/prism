@@ -62,7 +62,7 @@ func SetWorkerTaskToNewTask(worker workers.Worker, taskType string) error {
 
 	// add new task to db
 	query := "INSERT INTO workers_tasks (task_type_id, location_id, worker_id, start_time, start_longitude, start_latitude, end_longitude, end_latitude, is_ongoing) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
-	_, err = db.Exec(query, verifiedTaskTypeId, workerLocation.Id, worker.Id, time.Now().UTC(), workerLocation.Latitude, workerLocation.Longitude, workerLocation.Latitude, workerLocation.Longitude, true)
+	_, err = db.Exec(query, verifiedTaskTypeId, workerLocation.Id, worker.Id, time.Now().UTC(), workerLocation.Latitude, workerLocation.Longitude, workerLocation.Latitude, workerLocation.Longitude, 1)
 	if err != nil {
 		return fmt.Errorf("error executing query to insert a new task into tasks table: %w,", err)
 	}
@@ -100,7 +100,7 @@ func endCurrentWorkerTask(workerId int) error {
 	// TODO: I think we should add that the task type gets created & set to resting.
 
 	db := db.GetDB()
-	query := "UPDATE workers_tasks SET is_ongoing = false, end_time = ? WHERE worker_id = ?"
+	query := "UPDATE workers_tasks SET is_ongoing = 0, end_time = ? WHERE worker_id = ?"
 	_, err := db.Exec(query, time.Now().UTC(), workerId)
 	if err != nil {
 		return fmt.Errorf("error executing query to update / end the worker's current task: %w,", err)
@@ -174,7 +174,7 @@ func GetOngoingTaskNamesRateMapFromLocationId(locationId int) (map[string]float6
 	var mapNameRate = make(map[string]float64)
 
 	db := db.GetDB()
-	query := "SELECT r.name, ttr.base_rate FROM workers_tasks wt JOIN task_types tt ON wt.task_type_id = tt.id JOIN task_types_resources ttr ON tt.id = ttr.task_type_id JOIN resources r ON ttr.resource_id = r.id WHERE wt.location_id = ? AND wt.is_ongoing = TRUE;"
+	query := "SELECT r.name, ttr.base_rate FROM workers_tasks wt JOIN task_types tt ON wt.task_type_id = tt.id JOIN task_types_resources ttr ON tt.id = ttr.task_type_id JOIN resources r ON ttr.resource_id = r.id WHERE wt.location_id = ? AND wt.is_ongoing = 1;"
 
 	rows, err := db.Query(query, locationId)
 	if err != nil {
