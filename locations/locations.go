@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"math"
 	"prism/db"
 	"prism/user"
 	"prism/util"
@@ -35,17 +36,23 @@ func CreateLocation(user user.User, locName string, locTypeId int) (int, error) 
 	var newUsersLocsId int
 	//this num signifies 10 miles in lat/long degrees. We're using this to
 	// determine the max / min lat&long to determine if the node we want to place is too close to another node.
-	var latLongRange float64 = 0.145
+	var maxRange float64 = 0.145
 
-	// call func to get the vars for the lat/long range
-	minLat, maxLat, minLong, maxLong := util.GetMaxLocationRanges(latLongRange, user.Latitude, user.Longitude)
+	userLoc := Location{Latitude: user.Latitude, Longitude: user.Longitude}
 
 	locations, err := GetAllLocations(&user)
 
 	// check each location, if any node is too close, cancel the process
 	for _, loc := range locations {
-		if loc.Latitude > minLat && loc.Latitude < maxLat && loc.Longitude > minLong && loc.Longitude < maxLong {
-			return newLocationRowId, fmt.Errorf("node location too close to another: %s", loc.Name.String)
+
+		isTooClose, err := isLocationTooClose(loc, userLoc, maxRange)
+		if err != nil {
+			return 0, fmt.Errorf("isLocationTooClose error: %w", err)
+		}
+
+		if isTooClose {
+			fmt.Printf("user too close to location to connect:\nUserLat: %f, UserLong: %f\nLocationLat: %f, LocationLong: %f\n", userLoc.Latitude, userLoc.Longitude, loc.Latitude, loc.Longitude)
+			return 0, nil
 		}
 	}
 
@@ -311,4 +318,47 @@ func GetLocationFromLocationId(id int) (Location, error) {
 	}
 
 	return location, nil
+}
+
+// isLocationTooClose takes 2 locations, and checks if their lat/long is too close by the range you pass in, which is lat/long units
+func isLocationTooClose(loc1, loc2 Location, maxDistance float64) (bool, error) {
+
+	// check if lat/long for either location arent correctly set.
+	if (loc1.Latitude == 0 && loc1.Longitude == 0) || (loc2.Latitude == 0 && loc2.Longitude == 0) {
+		return true, fmt.Errorf("loc1 or loc2 appear to not have lat/long set.\nLocation1: lat - %f, long - %f\nLocation2: lat - %f, long - %f", loc1.Latitude, loc1.Longitude, loc2.Latitude, loc2.Longitude)
+	}
+
+	if maxDistance < 0 {
+		return false, fmt.Errorf("distance between two locations cannot be less than 0. maxDistance: %f", maxDistance)
+	}
+
+	if loc1.Latitude-loc2.Latitude < maxDistance {
+		return true, nil
+	}
+
+	if loc1.Longitude-loc2.Longitude < maxDistance {
+		return true, nil
+	}
+
+	distanceBetweenLocations := haversineDistance(loc1, loc2)
+
+	return distanceBetweenLocations < maxDistance, nil
+}
+
+// haversineDistance is entirely copy/paste from a reddit thread online. I assume it works, havent tested because I'm not a math guy
+// functionality is to calculate distance between two locations in lat/long calculation
+func haversineDistance(loc1, loc2 Location) float64 {
+	const earthRadiusKm = 6371.0
+
+	lat1Rad := loc1.Latitude * math.Pi / 180
+	lat2Rad := loc2.Latitude * math.Pi / 180
+	deltaLatRad := (loc2.Latitude - loc1.Latitude) * math.Pi / 180
+	deltaLngRad := (loc2.Longitude - loc1.Longitude) * math.Pi / 180
+
+	a := math.Sin(deltaLatRad/2)*math.Sin(deltaLatRad/2) +
+		math.Cos(lat1Rad)*math.Cos(lat2Rad)*
+			math.Sin(deltaLngRad/2)*math.Sin(deltaLngRad/2)
+	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+
+	return earthRadiusKm * c
 }
