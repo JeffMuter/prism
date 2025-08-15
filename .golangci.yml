@@ -1,0 +1,112 @@
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+linters-settings:
+  govet:
+    enable-all: true
+    disable:
+      - fieldalignment # too strict for this project
+  
+  gocyclo:
+    min-complexity: 15
+  
+  misspell:
+    locale: US
+  
+  lll:
+    line-length: 120
+  
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+    disabled-checks:
+      - dupImport # https://github.com/go-critic/go-critic/issues/845
+      - whyNoLint
+  
+  funlen:
+    lines: 100
+    statements: 50
+
+linters:
+  enable:
+    - bodyclose
+    - dogsled
+    - dupl
+    - errcheck
+    - exhaustive
+    - exportloopref
+    - funlen
+    - gochecknoinits
+    - goconst
+    - gocritic
+    - gocyclo
+    - gofmt
+    - goimports
+    - gomnd
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - lll
+    - misspell
+    - nakedret
+    - noctx
+    - nolintlint
+    - rowserrcheck
+    - staticcheck
+    - stylecheck
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - whitespace
+
+  # don't enable:
+  # - asciicheck
+  # - scopelint
+  # - gochecknoglobals
+  # - gocognit
+  # - godot
+  # - godox
+  # - goerr113
+  # - interfacer
+  # - maligned
+  # - nestif
+  # - prealloc
+  # - testpackage
+  # - revive
+  # - wsl
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gomnd
+        - funlen
+        - goconst
+        - gosec
+        - dupl
+    
+    - path: main\.go
+      linters:
+        - gochecknoinits
+    
+    # Exclude some linters from running on tests files.
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - dupl
+        - gosec
+
+  # Excluding configuration per-path, per-linter, per-text and per-source
+  exclude:
+    # for "arguments" and "path" reasons
+    - 'G204: Subprocess launched with variable'
+    - 'G304: Potential file inclusion via variable'

@@ -3,7 +3,11 @@
 export CGO_ENABLED=1
 
 test:
-	go test  -cover ./...
+	go test -cover ./...
+
+test-coverage:
+	go test -coverprofile=coverage.out -cover ./...
+	go tool cover -html=coverage.out -o coverage.html
 
 run: 
 	go run main.go
