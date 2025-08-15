@@ -15,11 +15,21 @@ jobs:
     - name: Check out code
       uses: actions/checkout@v4
     
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc sqlite3 libsqlite3-dev
+    
     - name: Set up Go
       uses: actions/setup-go@v5
       with:
         go-version: 1.23.x
         cache: true
+    
+    - name: Verify CGO is enabled
+      run: |
+        echo "CGO_ENABLED=${CGO_ENABLED:-1}"
+        go env CGO_ENABLED
     
     - name: Install dependencies
       run: go mod download
@@ -29,3 +39,5 @@ jobs:
     
     - name: Run tests
       run: make test
+      env:
+        CGO_ENABLED: 1
