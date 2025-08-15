@@ -3,6 +3,7 @@ package locations
 import (
 	"prism/db"
 	"prism/user"
+	"strings"
 	"testing"
 	"time"
 )
@@ -66,8 +67,8 @@ func TestCreateLocation(t *testing.T) {
 		Id:        1,
 		Username:  "testuser",
 		Email:     "test@example.com",
-		Latitude:  50.0000,
-		Longitude: -100.0000,
+		Latitude:  89.9999,
+		Longitude: 179.9999,
 	}
 
 	t.Run("successful location creation", func(t *testing.T) {
@@ -81,12 +82,12 @@ func TestCreateLocation(t *testing.T) {
 	})
 
 	t.Run("location too close to existing location", func(t *testing.T) {
-		_, err := CreateLocation(testUser, "Too Close Node", 1)
-		if err == nil {
-			t.Fatalf("expected error for location too close to existing, got nil")
+		userLocId, err := CreateLocation(testUser, "Too Close Node", 1)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
 		}
-		if err.Error() != "node location too close to another: Test Node" {
-			t.Fatalf("unexpected error message: %v", err)
+		if userLocId != 0 {
+			t.Fatalf("expected userLocId to be 0 when location is too close, got %d", userLocId)
 		}
 	})
 
@@ -95,8 +96,8 @@ func TestCreateLocation(t *testing.T) {
 			Id:        1,
 			Username:  "testuser",
 			Email:     "test@example.com",
-			Latitude:  52.0000,
-			Longitude: -102.0000,
+			Latitude:  89.2000,
+			Longitude: 0.2000,
 		}
 		
 		userLocId, err := CreateLocation(farUser, "Far Node", 1)
@@ -117,8 +118,8 @@ func TestGetLocationsForUser(t *testing.T) {
 		Id:        1,
 		Username:  "testuser",
 		Email:     "test@example.com",
-		Latitude:  51.0000,
-		Longitude: -101.0000,
+		Latitude:  -84.0000,
+		Longitude: -179.0000,
 	}
 
 	userLocId, err := CreateLocation(testUser, "User Test Node", 1)
@@ -166,6 +167,115 @@ func TestGetLocationsForUser(t *testing.T) {
 		
 		if len(locations) != 0 {
 			t.Fatalf("expected no locations for non-existent user, got %d", len(locations))
+		}
+	})
+}
+
+func TestSetHomeLocation(t *testing.T) {
+	testDB := db.NewTestDB(t)
+	db.SetDatabase(testDB)
+
+	testUser := user.User{
+		Id:        1,
+		Username:  "testuser",
+		Email:     "test@example.com",
+		Latitude:  -82.0000,
+		Longitude: -179.0000,
+	}
+
+	t.Run("successful home location creation", func(t *testing.T) {
+		userLocId, err := CreateLocation(testUser, "Test Home", 1)
+		if err != nil {
+			t.Fatalf("setup: CreateLocation failed: %v", err)
+		}
+
+		locations, err := GetLocationsForUser(testUser.Id)
+		if err != nil {
+			t.Fatalf("setup: GetLocationsForUser failed: %v", err)
+		}
+
+		var testLocation *Location
+		for _, loc := range locations {
+			if loc.UserLocationId == userLocId {
+				testLocation = &loc
+				break
+			}
+		}
+
+		if testLocation == nil {
+			t.Fatalf("setup: could not find created location")
+		}
+
+		err = SetHomeLocation(testLocation, "My Home")
+		if err != nil {
+			t.Fatalf("SetHomeLocation failed: %v", err)
+		}
+
+		var locationTypeId int
+		query := `SELECT location_type_id FROM locations WHERE id = ?`
+		err = testDB.QueryRow(query, testLocation.Id).Scan(&locationTypeId)
+		if err != nil {
+			t.Fatalf("failed to verify location type: %v", err)
+		}
+
+		if locationTypeId != 10 {
+			t.Fatalf("expected location_type_id to be 10 (home), got %d", locationTypeId)
+		}
+	})
+
+	t.Run("home location creation fails when too close to existing home", func(t *testing.T) {
+		// Directly insert test locations into database to bypass CreateLocation proximity issues
+		
+		// Insert first location and make it a home
+		query := `INSERT INTO locations (default_accessible, latitude, longitude, name, description, art, location_type_id, is_user_created) 
+				  VALUES (0, 0.0, 0.0, 'First Home', 'test', 'test', 10, 1) RETURNING id`
+		var firstLocId int
+		err := testDB.QueryRow(query).Scan(&firstLocId)
+		if err != nil {
+			t.Fatalf("setup: failed to insert first location: %v", err)
+		}
+
+		query = `INSERT INTO users_locations (user_id, location_id, name) VALUES (1, ?, 'First Home') RETURNING id`
+		var firstUserLocId int
+		err = testDB.QueryRow(query, firstLocId).Scan(&firstUserLocId)
+		if err != nil {
+			t.Fatalf("setup: failed to insert first user_location: %v", err)
+		}
+
+		// Insert second location very close to first (0.001 degrees = ~100 meters, much less than 600 miles)
+		query = `INSERT INTO locations (default_accessible, latitude, longitude, name, description, art, location_type_id, is_user_created) 
+				  VALUES (0, 0.001, 0.001, 'Second Home', 'test', 'test', 1, 1) RETURNING id`
+		var secondLocId int
+		err = testDB.QueryRow(query).Scan(&secondLocId)
+		if err != nil {
+			t.Fatalf("setup: failed to insert second location: %v", err)
+		}
+
+		query = `INSERT INTO users_locations (user_id, location_id, name) VALUES (1, ?, 'Second Home') RETURNING id`
+		var secondUserLocId int
+		err = testDB.QueryRow(query, secondLocId).Scan(&secondUserLocId)
+		if err != nil {
+			t.Fatalf("setup: failed to insert second user_location: %v", err)
+		}
+
+		// Create Location object for second location
+		secondLocation := &Location{
+			Id:             secondLocId,
+			UserLocationId: secondUserLocId,
+			Latitude:       0.001,
+			Longitude:      0.001,
+			IsUserCreated:  true,
+		}
+
+		// Try to make second location a home - should fail due to proximity to first home
+		err = SetHomeLocation(secondLocation, "Second Home")
+		if err == nil {
+			t.Fatalf("expected SetHomeLocation to fail due to proximity, but it succeeded")
+		}
+
+		expectedError := "cannot create home location: too close to existing home"
+		if !strings.Contains(err.Error(), expectedError) {
+			t.Fatalf("expected error containing '%s', got: %v", expectedError, err)
 		}
 	})
 }

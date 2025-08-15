@@ -332,11 +332,11 @@ func isLocationTooClose(loc1, loc2 Location, maxDistance float64) (bool, error) 
 		return false, fmt.Errorf("distance between two locations cannot be less than 0. maxDistance: %f", maxDistance)
 	}
 
-	if loc1.Latitude-loc2.Latitude < maxDistance {
+	if math.Abs(loc1.Latitude-loc2.Latitude) < maxDistance {
 		return true, nil
 	}
 
-	if loc1.Longitude-loc2.Longitude < maxDistance {
+	if math.Abs(loc1.Longitude-loc2.Longitude) < maxDistance {
 		return true, nil
 	}
 
