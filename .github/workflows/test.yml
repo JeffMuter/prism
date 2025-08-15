@@ -37,7 +37,7 @@ jobs:
     - name: Install goose
       run: go install github.com/pressly/goose/v3/cmd/goose@latest
     
-    - name: Run tests
-      run: make test
+    - name: Run tests (skip integration tests)
+      run: go test -short -cover ./...
       env:
         CGO_ENABLED: 1

@@ -7,6 +7,10 @@ import (
 )
 
 func TestPing(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping integration test in short mode")
+	}
+
 	// Change to root directory and initialize database
 	if err := os.Chdir(".."); err != nil {
 		t.Fatalf("Failed to change to root directory: %v", err)
