@@ -32,10 +32,19 @@ func displayWorkersAtLocation(loc locations.Location) (workers.Worker, error) {
 // WorkerMenuOptions is meant to handle the input / output for the menu options when a user is making decisions
 // on an isolated worker
 func workerMenuOptions(userId int, worker workers.Worker) error {
-	fmt.Printf("Choose an option for %s\n", worker.Name)
+	fmt.Printf("Choose an option for %s (type '?' for help)\n", worker.Name)
 	userInput, err := util.ReadCommandInput()
 	if err != nil {
 		fmt.Println(err)
+	}
+
+	// Initialize help system
+	helpProvider := WorkerMenuHelp{}
+	help := NewMenuHelp(helpProvider)
+
+	// Check for help command first
+	if help.HandleHelpCommand(userInput) {
+		return nil // Help was shown, return to allow menu to continue
 	}
 	if userInput == "move" {
 		fmt.Println("nPick a location to move to:")

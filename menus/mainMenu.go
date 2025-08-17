@@ -16,8 +16,22 @@ import (
 // reader parameter allows dependency injection for testing with mock input
 func MainMenuListen(thisUser user.User, reader util.InputReader) error {
 	fmt.Println("Welcome to Prism. Choose a command to begin:")
+	fmt.Println("Type '?' for help with available commands.")
 
 	input, err := reader.ReadCommandInput()
+	if err != nil {
+		return fmt.Errorf("error reading input: %w", err)
+	}
+	input = strings.TrimSpace(input)
+
+	// Initialize help system
+	helpProvider := MainMenuHelp{}
+	help := NewMenuHelp(helpProvider)
+
+	// Check for help command first
+	help.HandleHelpCommand(input)
+
+	input, err = reader.ReadCommandInput()
 	if err != nil {
 		return fmt.Errorf("error reading input: %w", err)
 	}
