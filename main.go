@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"log"
 	"prism/db"
-	"prism/logic"
-	"prism/menus"
-	"prism/render"
+	"prism/menuV2"
 	"prism/user"
 	"prism/util"
 	"time"
@@ -28,30 +26,27 @@ func main() {
 		Password: "1",
 	}
 
+	// Set initial location (will be updated in the map loop)
 	thisUser.Latitude, thisUser.Longitude, err = user.Ping()
-
-	fmt.Printf("Lat: %v\nLong: %v\n", thisUser.Latitude, thisUser.Longitude)
-
-	err = logic.UpdateAllLocationsResourcesQuantities(thisUser.Id)
 	if err != nil {
-		err = fmt.Errorf("error updating all user's locations quantities: %v", err)
-		fmt.Println(err)
+		fmt.Printf("Warning: Could not get location via Ping(): %v\n", err)
+		fmt.Println("Using default location (40.7128, -74.0060) - NYC")
+		thisUser.Latitude = 40.7128
+		thisUser.Longitude = -74.0060
 	}
 
-	_, err = render.PaintScreen(&thisUser)
-	if err != nil {
-		err = fmt.Errorf("error from painting screen: %w\n", err)
-		fmt.Println(err)
-	}
+	fmt.Printf("Initial Lat: %v\nLong: %v\n", thisUser.Latitude, thisUser.Longitude)
 
 	// Create stdin reader for production use
 	reader := util.NewStdinReader()
-	err = menus.MainMenuListen(thisUser, reader)
+
+	// Create map controller and start the game loop
+	mapController := menuV2.NewMapController(thisUser, reader)
+	err = mapController.ShowMapAndListen()
 
 	if err != nil {
-		fmt.Println(fmt.Errorf("problem in main menu: %v", err))
+		fmt.Println(fmt.Errorf("error in game: %v", err))
 	} else {
-
-		fmt.Println("Main menu closed...")
+		fmt.Println("Game closed...")
 	}
 }

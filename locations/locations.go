@@ -51,8 +51,7 @@ func CreateLocation(user user.User, locName string, locTypeId int) (int, error) 
 		}
 
 		if isTooClose {
-			fmt.Printf("user too close to location to connect:\nUserLat: %f, UserLong: %f\nLocationLat: %f, LocationLong: %f\n", userLoc.Latitude, userLoc.Longitude, loc.Latitude, loc.Longitude)
-			return 0, nil
+			return 0, fmt.Errorf("cannot create location: too close to existing location (within %.1f miles)", maxRange*69)
 		}
 	}
 
@@ -75,14 +74,17 @@ func CreateLocation(user user.User, locName string, locTypeId int) (int, error) 
 
 	// TODO: cannot be using all these lame hard coded values here...
 	// made the location art custom to the type of location...
-	db.QueryRow(query, 0, user.Latitude, user.Longitude, locName, "new node description", "node", locTypeId, 1).Scan(&newLocationRowId)
+	err = db.QueryRow(query, 0, user.Latitude, user.Longitude, locName, "new node description", "node", locTypeId, 1).Scan(&newLocationRowId)
+	if err != nil {
+		return 0, fmt.Errorf("error inserting location: %w", err)
+	}
 
 	query = `INSERT INTO users_locations 
 	(user_id, location_id, name) 
 	VALUES (?, ?, ?) RETURNING id`
 	err = db.QueryRow(query, user.Id, newLocationRowId, locName).Scan(&newUsersLocsId)
 	if err != nil {
-		return newLocationRowId, fmt.Errorf("error inserting users_locations when creating new location: %v\n", err)
+		return 0, fmt.Errorf("error inserting users_locations when creating new location: %v\n", err)
 	}
 	return newUsersLocsId, nil
 }
@@ -206,7 +208,7 @@ func GetLocationsForUser(userId int) ([]Location, error) {
 		l.longitude, 
 		l.description, 
 		l.art, 
-		ul.name,
+		COALESCE(ul.name, l.name) as name,
 		lt.name,
 		l.is_user_created
 	FROM locations l
