@@ -3,9 +3,7 @@ package menuV2
 import (
 	"fmt"
 	"regexp"
-	"sort"
 	"strings"
-	"prism/locations"
 	"prism/util"
 )
 
@@ -66,6 +64,9 @@ type GridMenu struct {
 	cachedData    []interface{}
 	cachedTotal   int
 	needsRefresh  bool
+	
+	// Callback for row selection
+	OnRowSelect func(selectedItem interface{}, routeStack []string, params ...interface{}) ([]string, error)
 }
 
 // NewGridMenu creates a new grid menu
@@ -77,7 +78,7 @@ func NewGridMenu(title string, columns []Column, dataSource DataSource, pageSize
 		pageSize:      pageSize,
 		currentRow:    0,
 		currentColumn: 0,
-		isInHeader:    true,
+		isInHeader:    false,
 		filters:       make(map[string]interface{}),
 		sortDirection: SortNone,
 		needsRefresh:  true,
@@ -131,8 +132,11 @@ func (gm *GridMenu) Show(routeStack []string, params ...interface{}) ([]string, 
 					return routeStack, fmt.Errorf("error handling column action: %w", err)
 				}
 			} else {
-				// Handle row selection - for now just continue
-				continue
+				// Handle row selection - delegate to callback if provided
+				if gm.currentRow < len(gm.cachedData) && gm.OnRowSelect != nil {
+					selectedItem := gm.cachedData[gm.currentRow]
+					return gm.OnRowSelect(selectedItem, routeStack, params...)
+				}
 			}
 		case "filter":
 			// Apply current filters and refresh
@@ -291,7 +295,6 @@ func (gm *GridMenu) renderTableRow(rowData interface{}, rowIndex int, isSelected
 	fmt.Print(border.Vertical + "\n")
 }
 
-
 // renderStatus renders status and help information
 func (gm *GridMenu) renderStatus() {
 	totalPages := (gm.cachedTotal + gm.pageSize - 1) / gm.pageSize
@@ -325,29 +328,42 @@ func (gm *GridMenu) handleInput(reader util.InputReader) (string, error) {
 		return "", err
 	}
 	
+	fmt.Printf("DEBUG: GridMenu received input type: %v, value: '%s'\n", input.Type, input.Value)
+	
 	switch input.Type {
 	case ArrowUp:
+		fmt.Printf("DEBUG: GridMenu -> navigateUp()\n")
 		gm.navigateUp()
 	case ArrowDown:
+		fmt.Printf("DEBUG: GridMenu -> navigateDown()\n")
 		gm.navigateDown()
 	case ArrowLeft:
+		fmt.Printf("DEBUG: GridMenu -> navigateLeft()\n")
 		gm.navigateLeft()
 	case ArrowRight:
+		fmt.Printf("DEBUG: GridMenu -> navigateRight()\n")
 		gm.navigateRight()
 	case EnterKey:
+		fmt.Printf("DEBUG: GridMenu -> returning 'select'\n")
 		return "select", nil
 	case BackCommand:
+		fmt.Printf("DEBUG: GridMenu -> returning 'back'\n")
 		return "back", nil
 	case MapCommand:
+		fmt.Printf("DEBUG: GridMenu -> returning 'back' (map)\n")
 		return "back", nil
 	case InvalidInput:
+		fmt.Printf("DEBUG: GridMenu -> handling InvalidInput: '%s'\n", input.Value)
 		// Handle additional keys for grid navigation
 		switch strings.ToLower(input.Value) {
 		case "a":
+			fmt.Printf("DEBUG: GridMenu -> navigateLeft() via 'a'\n")
 			gm.navigateLeft()
 		case "d":
+			fmt.Printf("DEBUG: GridMenu -> navigateRight() via 'd'\n")
 			gm.navigateRight()
 		case "q":
+			fmt.Printf("DEBUG: GridMenu -> returning 'back' via 'q'\n")
 			return "back", nil
 		}
 	}
@@ -492,192 +508,4 @@ func (gm *GridMenu) handleTextColumnFilter(columnName string, reader util.InputR
 	
 	gm.needsRefresh = true
 	return nil
-}
-
-// LocationsDataSource implements DataSource for location data
-type LocationsDataSource struct {
-	userId      int
-	allData     []interface{}
-	filteredData []interface{}
-}
-
-// NewLocationsDataSource creates a data source for locations
-func NewLocationsDataSource(userId int) (*LocationsDataSource, error) {
-	return &LocationsDataSource{
-		userId: userId,
-	}, nil
-}
-
-// GetData implements DataSource interface for locations
-func (lds *LocationsDataSource) GetData(filters map[string]interface{}, sortColumn string, sortDir SortDirection) ([]interface{}, error) {
-	// Import locations package functions (assuming they're available)
-	locations, err := locations.GetLocationsForUser(lds.userId)
-	if err != nil {
-		return nil, fmt.Errorf("error getting locations for user: %w", err)
-	}
-	
-	// Convert []Location to []interface{}
-	var data []interface{}
-	for _, loc := range locations {
-		data = append(data, loc)
-	}
-	lds.allData = data
-	
-	// Apply filters
-	filteredData := lds.applyFilters(data, filters)
-	
-	// Apply sorting
-	sortedData := lds.applySorting(filteredData, sortColumn, sortDir)
-	
-	lds.filteredData = sortedData
-	return sortedData, nil
-}
-
-// GetTotal returns total number of locations
-func (lds *LocationsDataSource) GetTotal() int {
-	return len(lds.filteredData)
-}
-
-// applyFilters applies filtering logic to the data
-func (lds *LocationsDataSource) applyFilters(data []interface{}, filters map[string]interface{}) []interface{} {
-	if len(filters) == 0 {
-		return data
-	}
-	
-	var filtered []interface{}
-	for _, item := range data {
-		loc := item.(locations.Location)
-		include := true
-		
-		// Check each filter
-		for column, filterValue := range filters {
-			switch column {
-			case "Name":
-				// Fuzzy search on name
-				searchTerm := strings.ToLower(filterValue.(string))
-				locationName := strings.ToLower(loc.Name.String)
-				if !strings.Contains(locationName, searchTerm) {
-					include = false
-					break
-				}
-			case "Type":
-				// Exact match on location type
-				if loc.LocationType != filterValue.(string) {
-					include = false
-					break
-				}
-			case "Workers":
-				// For numeric filters, we could implement range filtering
-				// For now, just skip
-				continue
-			}
-		}
-		
-		if include {
-			filtered = append(filtered, item)
-		}
-	}
-	
-	return filtered
-}
-
-// applySorting applies sorting logic to the data
-func (lds *LocationsDataSource) applySorting(data []interface{}, sortColumn string, sortDir SortDirection) []interface{} {
-	if sortDir == SortNone || sortColumn == "" {
-		return data
-	}
-	
-	// Create a copy to sort
-	sorted := make([]interface{}, len(data))
-	copy(sorted, data)
-	
-	// Sort based on column and direction
-	sort.Slice(sorted, func(i, j int) bool {
-		loc1 := sorted[i].(locations.Location)
-		loc2 := sorted[j].(locations.Location)
-		
-		switch sortColumn {
-		case "Workers":
-			if sortDir == SortHighToLow {
-				return loc1.WorkerCount > loc2.WorkerCount
-			} else {
-				return loc1.WorkerCount < loc2.WorkerCount
-			}
-		case "Name":
-			if sortDir == SortHighToLow {
-				return loc1.Name.String > loc2.Name.String
-			} else {
-				return loc1.Name.String < loc2.Name.String
-			}
-		}
-		return false
-	})
-	
-	return sorted
-}
-
-// CreateLocationsGridMenu creates a grid menu for viewing locations
-func CreateLocationsGridMenu(userId int) (*GridMenu, error) {
-	// Create data source
-	dataSource, err := NewLocationsDataSource(userId)
-	if err != nil {
-		return nil, fmt.Errorf("error creating locations data source: %w", err)
-	}
-	
-	// Get location types for select column options
-	locationTypes, err := getLocationTypes()
-	if err != nil {
-		return nil, fmt.Errorf("error getting location types: %w", err)
-	}
-	
-	var typeOptions []string
-	for _, lt := range locationTypes {
-		typeOptions = append(typeOptions, lt.Name)
-	}
-	
-	// Define columns
-	columns := []Column{
-		{
-			Name:  "#",
-			Type:  NumericColumn,
-			Width: 5,
-			Accessor: func(data interface{}) string {
-				loc := data.(locations.Location)
-				return fmt.Sprintf("%d", loc.Id)
-			},
-		},
-		{
-			Name:  "Name",
-			Type:  TextColumn,
-			Width: 25,
-			Accessor: func(data interface{}) string {
-				loc := data.(locations.Location)
-				return loc.Name.String
-			},
-		},
-		{
-			Name:    "Type",
-			Type:    SelectColumn,
-			Width:   15,
-			Options: typeOptions,
-			Accessor: func(data interface{}) string {
-				loc := data.(locations.Location)
-				return loc.LocationType
-			},
-		},
-		{
-			Name:  "Workers",
-			Type:  NumericColumn,
-			Width: 8,
-			Accessor: func(data interface{}) string {
-				loc := data.(locations.Location)
-				return fmt.Sprintf("%d", loc.WorkerCount)
-			},
-		},
-	}
-	
-	// Create grid menu with 10 items per page
-	gridMenu := NewGridMenu("LOCATIONS", columns, dataSource, 10)
-	
-	return gridMenu, nil
 }

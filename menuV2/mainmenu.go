@@ -41,13 +41,8 @@ func getLocationTypes() ([]LocationType, error) {
 	return locationTypes, nil
 }
 
-// LocationTypeSelectAction handles location type selection (currently unused - functionality moved to menu options)
-func LocationTypeSelectAction(params ...interface{}) ([]string, error) {
-	return []string{}, fmt.Errorf("location type selection not implemented yet")
-}
-
 // CreateLocationTypeMenu creates the location type selection menu
-func CreateLocationTypeMenu() (*StaticMenu, error) {
+func CreateLocationTypeMenu() (*SimpleMenu, error) {
 	locationTypes, err := getLocationTypes()
 	if err != nil {
 		return nil, fmt.Errorf("error getting location types: %w", err)
@@ -111,7 +106,7 @@ func CreateLocationTypeMenu() (*StaticMenu, error) {
 		})
 	}
 	
-	return &StaticMenu{
+	return &SimpleMenu{
 		Title:   "SELECT LOCATION TYPE",
 		Options: options,
 		BackFunction: func(routeStack []string) ([]string, error) {
@@ -121,7 +116,7 @@ func CreateLocationTypeMenu() (*StaticMenu, error) {
 	}, nil
 }
 
-// Action functions that match the current main menu behavior
+// Action functions for main menu options
 
 func PingAction(params ...interface{}) ([]string, error) {
 	if len(params) < 1 {
@@ -246,8 +241,8 @@ func MainMenuBackAction(routeStack []string) ([]string, error) {
 }
 
 // CreateMainMenuV2 creates the v2 version of the main menu
-func CreateMainMenuV2() *StaticMenu {
-	return &StaticMenu{
+func CreateMainMenuV2() *SimpleMenu {
+	return &SimpleMenu{
 		Title: "MAIN MENU",
 		Options: []Option{
 			{
@@ -288,7 +283,7 @@ func CreateMainMenuV2() *StaticMenu {
 // MainMenuListenV2 is the v2 replacement for menus.MainMenuListen
 // It has the same signature so it can be a drop-in replacement
 func MainMenuListenV2(thisUser user.User, reader util.InputReader) error {
-	var currentMenu *StaticMenu
+	var currentMenu *SimpleMenu
 	routeStack := []string{"mainMenu"} // Start with main menu
 
 	for {
@@ -355,7 +350,7 @@ func MainMenuListenV2(thisUser user.User, reader util.InputReader) error {
 
 // TestMainMenuV2 allows testing the new menu system
 func TestMainMenuV2(thisUser user.User, reader util.InputReader) error {
-	var currentMenu *StaticMenu
+	var currentMenu *SimpleMenu
 	routeStack := []string{"mainMenu"} // Start with main menu
 	
 	fmt.Println("Welcome to Prism V2 Menu System")
