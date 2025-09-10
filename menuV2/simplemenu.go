@@ -13,8 +13,8 @@ type Option struct {
 	Action      func(params ...interface{}) ([]string, error)
 }
 
-// StaticMenu represents a simple menu with fixed options
-type StaticMenu struct {
+// SimpleMenu represents a simple menu with fixed options
+type SimpleMenu struct {
 	Title        string
 	Options      []Option
 	BackFunction func(routeStack []string) ([]string, error)
@@ -46,7 +46,7 @@ const (
 )
 
 // renderBorder draws the menu with Unicode box drawing characters
-func (m *StaticMenu) renderBorder(selectedIndex int) {
+func (m *SimpleMenu) renderBorder(selectedIndex int) {
 	// Calculate width based on title and options
 	width := len(m.Title) + 4
 	for _, option := range m.Options {
@@ -88,7 +88,7 @@ func (m *StaticMenu) renderBorder(selectedIndex int) {
 }
 
 // Show displays the menu and handles user input
-func (m *StaticMenu) Show(routeStack []string, params ...interface{}) ([]string, error) {
+func (m *SimpleMenu) Show(routeStack []string, params ...interface{}) ([]string, error) {
 	selectedIndex := 0
 
 	for {
@@ -106,16 +106,23 @@ func (m *StaticMenu) Show(routeStack []string, params ...interface{}) ([]string,
 			continue
 		}
 
+		fmt.Printf("DEBUG: SimpleMenu received input type: %v, value: '%s'\n", input.Type, input.Value)
+
 		switch input.Type {
 		case ArrowUp:
+			fmt.Printf("DEBUG: SimpleMenu -> ArrowUp (selectedIndex %d->", selectedIndex)
 			if selectedIndex > 0 {
 				selectedIndex--
 			}
+			fmt.Printf("%d)\n", selectedIndex)
 		case ArrowDown:
+			fmt.Printf("DEBUG: SimpleMenu -> ArrowDown (selectedIndex %d->", selectedIndex)
 			if selectedIndex < len(m.Options)-1 {
 				selectedIndex++
 			}
+			fmt.Printf("%d)\n", selectedIndex)
 		case EnterKey:
+			fmt.Printf("DEBUG: SimpleMenu -> EnterKey, executing option %d\n", selectedIndex)
 			if selectedIndex >= 0 && selectedIndex < len(m.Options) {
 				newRouteStack, err := m.Options[selectedIndex].Action(params...)
 				if err != nil {
@@ -127,9 +134,11 @@ func (m *StaticMenu) Show(routeStack []string, params ...interface{}) ([]string,
 				return newRouteStack, nil
 			}
 		case NumericInput:
+			fmt.Printf("DEBUG: SimpleMenu -> NumericInput '%s'\n", input.Value)
 			if num, err := strconv.Atoi(input.Value); err == nil {
 				if num >= 1 && num <= len(m.Options) {
 					selectedIndex = num - 1
+					fmt.Printf("DEBUG: SimpleMenu -> executing option %d via numeric\n", selectedIndex)
 					newRouteStack, err := m.Options[selectedIndex].Action(params...)
 					if err != nil {
 						fmt.Printf("\nError: %v\nPress any key to continue...", err)
@@ -145,6 +154,7 @@ func (m *StaticMenu) Show(routeStack []string, params ...interface{}) ([]string,
 				}
 			}
 		case BackCommand:
+			fmt.Printf("DEBUG: SimpleMenu -> BackCommand\n")
 			if m.BackFunction != nil {
 				return m.BackFunction(routeStack)
 			}
@@ -154,8 +164,10 @@ func (m *StaticMenu) Show(routeStack []string, params ...interface{}) ([]string,
 			}
 			return routeStack, nil
 		case MapCommand:
+			fmt.Printf("DEBUG: SimpleMenu -> MapCommand\n")
 			return []string{}, nil
 		case InvalidInput:
+			fmt.Printf("DEBUG: SimpleMenu -> InvalidInput '%s'\n", input.Value)
 			fmt.Printf("\nInvalid input '%s'. Use ↑/↓, Enter, numbers 1-%d, 'b' for back, or 'm' for map.\nPress any key to continue...", input.Value, len(m.Options))
 			GetInput()
 			continue

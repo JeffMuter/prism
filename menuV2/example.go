@@ -39,9 +39,9 @@ func MainMenuBack(routeStack []string) ([]string, error) {
 	return []string{}, nil
 }
 
-// CreateExampleMenu demonstrates how to use the StaticMenu
-func CreateExampleMenu() *StaticMenu {
-	return &StaticMenu{
+// CreateExampleMenu demonstrates how to use the SimpleMenu
+func CreateExampleMenu() *SimpleMenu {
+	return &SimpleMenu{
 		Title: "MAIN MENU",
 		Options: []Option{
 			{
@@ -69,8 +69,8 @@ func RunExample() {
 	menu := CreateExampleMenu()
 	routeStack := []string{}
 	
-	fmt.Println("Static Menu Example")
-	fmt.Println("This demonstrates the menuV2 static menu system")
+	fmt.Println("Simple Menu Example")
+	fmt.Println("This demonstrates the menuV2 simple menu system")
 	fmt.Print("Press any key to continue...")
 	GetInput()
 
