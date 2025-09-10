@@ -19,18 +19,18 @@ func PaintScreen(thisUser *user.User) ([][]rune, error) {
 		return canvas, fmt.Errorf("error getting screen dimensions for rendering: %w,", err)
 	}
 
-	// get all locations
-	locationsToRender, err := locations.GetAllLocations(thisUser)
+	// get locations within the rendering bounds using spatial filtering
+	var degreeRange float64 = 2 // in lat/long units how far should locations be to render?
+	locationsToRender, err := locations.GetLocationsInBounds(thisUser, degreeRange)
 	if err != nil {
-		return canvas, fmt.Errorf("error getting loc's near to user: %w,", err)
+		return canvas, fmt.Errorf("error getting locations in bounds: %w", err)
 	}
 	fmt.Printf("locations count: %d\n", len(locationsToRender))
 
 	// set each locations coordinates
-	locationsToRender, err =
-		findLocationsCoordinates(thisUser, &locationsToRender)
+	locationsToRender, err = setLocationsScreenCoordinates(thisUser, locationsToRender, degreeRange)
 	if err != nil {
-		return canvas, fmt.Errorf("error getting coordinates for loc's: %w,", err)
+		return canvas, fmt.Errorf("error calculating screen coordinates for locations: %w", err)
 	}
 	// set each location's art file from their ArtName
 	locationsToRender = locations.SetLocationsArt(locationsToRender)
@@ -59,31 +59,22 @@ func PaintScreen(thisUser *user.User) ([][]rune, error) {
 	return canvas, nil
 }
 
-// findLocationsCoordinates takes any given locations, returning just the locations close
-// enough to the user to show on screen, then adjust the approved locations, adding detail
-// on where they ought to appear on the screen, based on the screen width & height.
-func findLocationsCoordinates(user *user.User, unfilteredLocations *[]locations.Location) ([]locations.Location, error) {
-	var filteredLocations []locations.Location
-	var degreeRange float64 = 2 // in lat/long units how far should locations be to render? thats what this represents
-	minLat, maxLat, minLong, maxLong := util.GetMaxLocationRanges(degreeRange, user.Latitude, user.Longitude)
+// setLocationsScreenCoordinates calculates screen coordinates for locations that are already within bounds.
+// Since locations are pre-filtered by GetLocationsInBounds, we only need to calculate screen positions.
+func setLocationsScreenCoordinates(user *user.User, locations []locations.Location, degreeRange float64) ([]locations.Location, error) {
+	minLat, _, minLong, _ := util.GetMaxLocationRanges(degreeRange, user.Latitude, user.Longitude)
 
-	for _, location := range *unfilteredLocations {
-		// if out of bounds, don't add the object to the filtered slice by skipping this loop iteration
-		if location.Latitude > maxLat || location.Latitude < minLat || location.Longitude > maxLong || location.Longitude < minLong {
-			continue
-		}
-
+	for i, location := range locations {
 		// distance represents the unit of distance each char on the canvas represents in degree distance.
 		// if the canvas degree range is 10, and the screen width is 10, then every char on the screen is 1 lat.
 		var horizontalIndex int = int((location.Longitude - minLong) / (degreeRange * 2) * float64(user.ScreenWidth))
 		var verticalIndex int = int((location.Latitude - minLat) / (degreeRange * 2) * float64(user.ScreenHeight))
 
-		location.XCoordinate = horizontalIndex
-		location.YCoordinate = verticalIndex
-		filteredLocations = append(filteredLocations, location)
+		locations[i].XCoordinate = horizontalIndex
+		locations[i].YCoordinate = verticalIndex
 	}
 
-	return filteredLocations, nil
+	return locations, nil
 }
 
 func addLocationsToCanvas(canvas [][]rune, locations []locations.Location) {

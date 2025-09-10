@@ -13,6 +13,8 @@ const (
 	NumericInput InputType = iota
 	ArrowUp
 	ArrowDown
+	ArrowLeft
+	ArrowRight
 	EnterKey
 	BackCommand
 	MapCommand
@@ -126,6 +128,10 @@ func GetInput() (Input, error) {
 			return Input{Type: ArrowUp}, nil
 		case 66: // Down arrow (ESC[B)
 			return Input{Type: ArrowDown}, nil
+		case 67: // Right arrow (ESC[C)
+			return Input{Type: ArrowRight}, nil
+		case 68: // Left arrow (ESC[D)
+			return Input{Type: ArrowLeft}, nil
 		default:
 			// Unknown escape sequence - treat as back command
 			drainInputBuffer() // Clean up any remaining characters
