@@ -121,7 +121,8 @@ func (m *StaticMenu) Show(routeStack []string, params ...interface{}) ([]string,
 				if err != nil {
 					fmt.Printf("\nError: %v\nPress any key to continue...", err)
 					GetInput()
-					continue
+					// Exit to map after error instead of continuing menu loop
+					return []string{}, nil
 				}
 				return newRouteStack, nil
 			}
@@ -133,7 +134,8 @@ func (m *StaticMenu) Show(routeStack []string, params ...interface{}) ([]string,
 					if err != nil {
 						fmt.Printf("\nError: %v\nPress any key to continue...", err)
 						GetInput()
-						continue
+						// Exit to map after error instead of continuing menu loop
+						return []string{}, nil
 					}
 					return newRouteStack, nil
 				} else {

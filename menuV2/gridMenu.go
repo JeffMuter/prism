@@ -2,6 +2,7 @@ package menuV2
 
 import (
 	"fmt"
+	"regexp"
 	"sort"
 	"strings"
 	"prism/locations"
@@ -176,11 +177,26 @@ func (gm *GridMenu) render() error {
 	
 	// Render column headers with separator
 	fmt.Printf("%s%s%s\n", border.Vertical, strings.Repeat(border.Horizontal, totalWidth-2), border.Vertical)
-	gm.renderHeaders(border)
+	gm.renderTableHeader(border)
 	fmt.Printf("%s%s%s\n", border.Vertical, strings.Repeat(border.Horizontal, totalWidth-2), border.Vertical)
 	
 	// Render data rows
-	gm.renderDataRows(border, totalWidth)
+	start := gm.currentPage * gm.pageSize
+	end := start + gm.pageSize
+	if end > len(gm.cachedData) {
+		end = len(gm.cachedData)
+	}
+	
+	for i := start; i < end; i++ {
+		rowData := gm.cachedData[i]
+		isSelected := !gm.isInHeader && gm.currentRow == i
+		gm.renderTableRow(rowData, i, isSelected, border)
+	}
+	
+	// Fill remaining rows if less than page size
+	for i := end - start; i < gm.pageSize && len(gm.cachedData) > 0; i++ {
+		fmt.Printf("%s%s%s\n", border.Vertical, strings.Repeat(" ", totalWidth-2), border.Vertical)
+	}
 	
 	// Render bottom border
 	fmt.Printf("%s%s%s\n", border.BottomLeft, strings.Repeat(border.Horizontal, totalWidth-2), border.BottomRight)
@@ -189,6 +205,37 @@ func (gm *GridMenu) render() error {
 	gm.renderStatus()
 	
 	return nil
+}
+
+// Helper to get visual length (strips ANSI codes)
+func visualLength(s string) int {
+	// Remove ANSI escape sequences for accurate length calculation
+	ansiRegex := regexp.MustCompile(`\x1b\[[0-9;]*m`)
+	return len(ansiRegex.ReplaceAllString(s, ""))
+}
+
+// Format a cell with proper padding and optional highlighting
+func (gm *GridMenu) formatCell(text string, width int, isHighlighted bool) string {
+	// Apply highlighting first
+	if isHighlighted {
+		text = BgBlue + White + text + Reset
+	}
+	
+	// Calculate padding based on visual length
+	visualLen := visualLength(text)
+	if visualLen > width {
+		// Truncate cleanly without breaking ANSI codes
+		plainText := strings.ReplaceAll(strings.ReplaceAll(text, BgBlue+White, ""), Reset, "")
+		truncated := plainText[:width-1] + "…"
+		if isHighlighted {
+			truncated = BgBlue + White + truncated + Reset
+		}
+		return truncated
+	}
+	
+	// Add padding
+	padding := width - visualLen
+	return text + strings.Repeat(" ", padding)
 }
 
 // calculateTotalWidth calculates the total width needed for the grid
@@ -203,37 +250,23 @@ func (gm *GridMenu) calculateTotalWidth() int {
 	return width
 }
 
-// renderHeaders renders the column headers
-func (gm *GridMenu) renderHeaders(border Border) {
+// Render table header with clean, readable logic
+func (gm *GridMenu) renderTableHeader(border Border) {
 	fmt.Print(border.Vertical)
 	for i, col := range gm.Columns {
-		// Highlight current column if in header mode
-		highlight := gm.isInHeader && gm.currentColumn == i
-		
 		headerText := col.Name
 		if col.Name == gm.sortColumn {
-			switch gm.sortDirection {
-			case SortHighToLow:
-				headerText += " ↓"
-			case SortLowToHigh:
+			if gm.sortDirection == SortHighToLow {
+				headerText += " ↓" 
+			} else if gm.sortDirection == SortLowToHigh {
 				headerText += " ↑"
 			}
 		}
 		
-		// Add highlighting
-		if highlight {
-			headerText = fmt.Sprintf("[%s]", headerText)
-		}
+		isHighlighted := gm.isInHeader && gm.currentColumn == i
+		cellContent := gm.formatCell(headerText, col.Width, isHighlighted)
+		fmt.Print(cellContent)
 		
-		// Pad to column width
-		padded := fmt.Sprintf("%-*s", col.Width, headerText)
-		if len(padded) > col.Width {
-			padded = padded[:col.Width-1] + "…"
-		}
-		
-		fmt.Print(padded)
-		
-		// Add column separator
 		if i < len(gm.Columns)-1 {
 			fmt.Print(border.Vertical)
 		}
@@ -241,48 +274,23 @@ func (gm *GridMenu) renderHeaders(border Border) {
 	fmt.Print(border.Vertical + "\n")
 }
 
-// renderDataRows renders the data rows with pagination
-func (gm *GridMenu) renderDataRows(border Border, totalWidth int) {
-	start := gm.currentPage * gm.pageSize
-	end := start + gm.pageSize
-	if end > len(gm.cachedData) {
-		end = len(gm.cachedData)
-	}
-	
-	for i := start; i < end; i++ {
-		row := gm.cachedData[i]
-		highlight := !gm.isInHeader && gm.currentRow == i
+// Render single data row
+func (gm *GridMenu) renderTableRow(rowData interface{}, rowIndex int, isSelected bool, border Border) {
+	fmt.Print(border.Vertical)
+	for i, col := range gm.Columns {
+		cellData := col.Accessor(rowData)
+		// Highlight entire row when selected (not just current column)
+		isHighlighted := isSelected
+		cellContent := gm.formatCell(cellData, col.Width, isHighlighted)
+		fmt.Print(cellContent)
 		
-		fmt.Print(border.Vertical)
-		for j, col := range gm.Columns {
-			cellData := col.Accessor(row)
-			
-			// Add highlighting for current cell
-			if highlight && gm.currentColumn == j {
-				cellData = fmt.Sprintf("[%s]", cellData)
-			}
-			
-			// Pad to column width
-			padded := fmt.Sprintf("%-*s", col.Width, cellData)
-			if len(padded) > col.Width {
-				padded = padded[:col.Width-1] + "…"
-			}
-			
-			fmt.Print(padded)
-			
-			// Add column separator
-			if j < len(gm.Columns)-1 {
-				fmt.Print(border.Vertical)
-			}
+		if i < len(gm.Columns)-1 {
+			fmt.Print(border.Vertical)
 		}
-		fmt.Print(border.Vertical + "\n")
 	}
-	
-	// Fill remaining rows if less than page size
-	for i := end - start; i < gm.pageSize && len(gm.cachedData) > 0; i++ {
-		fmt.Printf("%s%s%s\n", border.Vertical, strings.Repeat(" ", totalWidth-2), border.Vertical)
-	}
+	fmt.Print(border.Vertical + "\n")
 }
+
 
 // renderStatus renders status and help information
 func (gm *GridMenu) renderStatus() {
@@ -322,6 +330,10 @@ func (gm *GridMenu) handleInput(reader util.InputReader) (string, error) {
 		gm.navigateUp()
 	case ArrowDown:
 		gm.navigateDown()
+	case ArrowLeft:
+		gm.navigateLeft()
+	case ArrowRight:
+		gm.navigateRight()
 	case EnterKey:
 		return "select", nil
 	case BackCommand:

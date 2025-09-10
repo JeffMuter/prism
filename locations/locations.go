@@ -128,11 +128,86 @@ func GetAllLocations(user *user.User) ([]Location, error) {
 	return locations, nil
 }
 
+// GetLocationsInBounds gets locations within a specified degree range from the user's position using spatial filtering.
+func GetLocationsInBounds(user *user.User, degreeRange float64) ([]Location, error) {
+	var locations []Location
+
+	db := db.GetDB()
+
+	minLat, maxLat, minLong, maxLong := util.GetMaxLocationRanges(degreeRange, user.Latitude, user.Longitude)
+
+	query := `
+		SELECT
+			COALESCE(ul.name, l.name) as name,
+			l.latitude,
+			l.longitude,
+			l.art
+		FROM
+			locations l
+			LEFT JOIN users_locations ul ON l.id = ul.location_id AND ul.user_id = ?
+		WHERE
+			(ul.user_id IS NOT NULL OR l.default_accessible = 1)
+			AND l.latitude BETWEEN ? AND ?
+			AND l.longitude BETWEEN ? AND ?
+	`
+
+	rows, err := db.Query(query, user.Id, minLat, maxLat, minLong, maxLong)
+	if err != nil {
+		return locations, fmt.Errorf("err querying db for locations in bounds (user id: %d): %w", user.Id, err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var location Location
+		err := rows.Scan(&location.Name, &location.Latitude, &location.Longitude, &location.ArtFileName)
+		if err != nil {
+			return locations, fmt.Errorf("error scanning location row: %w", err)
+		}
+
+		locations = append(locations, location)
+	}
+	return locations, nil
+}
+
 // ConnectToLocation allows a user to see if they can make a new node in this location. Checks a lat/long
 // range, and if no other locations are inside it, creates the new node. Returns the id of the newly connected location.
 func ConnectToLocation(user user.User) (int, error) {
 	var newUsersLocsId int
 	db := db.GetDB()
+
+	// First check if user is already connected to a location at current position
+	minLat, maxLat, minLong, maxLong := util.GetMaxLocationRanges(.5, user.Latitude, user.Longitude)
+	
+	// Check for existing connections at current location
+	connectedQuery := `SELECT 
+			l.id, 
+			l.name, 
+			l.latitude, 
+			l.longitude 
+		FROM 
+			locations l 
+		JOIN 
+			users_locations ul ON l.id = ul.location_id 
+		WHERE 
+			ul.user_id = ? 
+			AND l.latitude BETWEEN ? AND ?
+			AND l.longitude BETWEEN ? AND ?`
+	
+	rows, err := db.Query(connectedQuery, user.Id, minLat, maxLat, minLong, maxLong)
+	if err != nil {
+		return newUsersLocsId, fmt.Errorf("err querying db for existing connections: %v", err)
+	}
+	defer rows.Close()
+	
+	if rows.Next() {
+		var connectedLocation Location
+		err := rows.Scan(&connectedLocation.Id, &connectedLocation.Name, &connectedLocation.Latitude, &connectedLocation.Longitude)
+		if err != nil {
+			return newUsersLocsId, fmt.Errorf("error scanning connected location: %v", err)
+		}
+		return newUsersLocsId, fmt.Errorf("already connected to location: %s", connectedLocation.Name.String)
+	}
+	rows.Close()
 
 	// get all locations currently not associated to this user
 	query := `SELECT 
@@ -148,14 +223,12 @@ func ConnectToLocation(user user.User) (int, error) {
 			ul.user_id = ? 
 		WHERE 
 			ul.user_id IS NULL`
-	rows, err := db.Query(query, user.Id)
+	rows, err = db.Query(query, user.Id)
 	if err != nil {
 		return newUsersLocsId, fmt.Errorf("err querying db for connect to node: %v", err)
 	}
 	defer rows.Close()
 
-	// a range of roughly .1 miles in lat/long.
-	minLat, maxLat, minLong, maxLong := util.GetMaxLocationRanges(.5, user.Latitude, user.Longitude)
 	var locations []Location
 
 	for rows.Next() {
