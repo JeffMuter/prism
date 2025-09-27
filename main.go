@@ -7,7 +7,6 @@ import (
 	"prism/menuV2"
 	"prism/user"
 	"prism/util"
-	"time"
 )
 
 func main() {
@@ -17,7 +16,6 @@ func main() {
 		log.Fatalf("db connections failed...: %v", err)
 	}
 
-	fmt.Println(time.Now())
 
 	var thisUser = user.User{
 		Id:       1,
@@ -35,7 +33,7 @@ func main() {
 		thisUser.Longitude = -74.0060
 	}
 
-	fmt.Printf("Initial Lat: %v\nLong: %v\n", thisUser.Latitude, thisUser.Longitude)
+	fmt.Printf("Location: %.6f, %.6f\n", thisUser.Latitude, thisUser.Longitude)
 
 	// Create stdin reader for production use
 	reader := util.NewStdinReader()

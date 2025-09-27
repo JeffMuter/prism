@@ -77,7 +77,6 @@ func Ping() (float64, float64, error) {
 	}
 	lat := result["location"].(map[string]any)["lat"].(float64)
 	long := result["location"].(map[string]any)["lng"].(float64)
-	fmt.Printf("Ping Location: %v, %v\n", lat, long)
 	return lat, long, nil
 }
 

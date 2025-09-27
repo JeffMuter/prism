@@ -107,8 +107,14 @@ func (lds *LocationsDataSource) applySorting(data []interface{}, sortColumn stri
 	sort.Slice(sorted, func(i, j int) bool {
 		loc1 := sorted[i].(locations.Location)
 		loc2 := sorted[j].(locations.Location)
-		
+
 		switch sortColumn {
+		case "#":
+			if sortDir == SortHighToLow {
+				return loc1.Id > loc2.Id
+			} else {
+				return loc1.Id < loc2.Id
+			}
 		case "Workers":
 			if sortDir == SortHighToLow {
 				return loc1.WorkerCount > loc2.WorkerCount

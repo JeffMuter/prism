@@ -76,16 +76,22 @@ func CreateLocationTypeMenu() (*SimpleMenu, error) {
 				}
 				
 				// Get user's current location
+				fmt.Println("Getting your current location...")
 				var err error
 				thisUser.Latitude, thisUser.Longitude, err = user.Ping()
 				if err != nil {
-					return []string{}, fmt.Errorf("error pinging user loc: %w", err)
+					fmt.Printf("Failed to get location: %v\n", err)
+					fmt.Print("Press any key to continue...")
+					GetInput()
+					return []string{"mainMenu"}, nil
 				}
-				
+				fmt.Printf("Location found: %.6f, %.6f\n", thisUser.Latitude, thisUser.Longitude)
+
 				// Create the location
+				fmt.Println("Creating location...")
 				usersLocsId, err := locations.CreateLocation(thisUser, locName, locTypeId)
 				if err != nil {
-					fmt.Printf("Error: %v\n", err)
+					fmt.Printf("Error creating location: %v\n", err)
 					fmt.Print("Press any key to continue...")
 					GetInput()
 					return []string{"mainMenu"}, nil
@@ -240,6 +246,64 @@ func MainMenuBackAction(routeStack []string) ([]string, error) {
 	return []string{}, nil
 }
 
+// CreateEggsMenu creates a menu for managing eggs
+func CreateEggsMenu(userId int) (*SimpleMenu, error) {
+	// Get available eggs for the user
+	eggs, err := workers.GetEggsAvailableForUser(userId)
+	if err != nil {
+		return nil, fmt.Errorf("error getting eggs for user: %w", err)
+	}
+
+	var options []Option
+
+	if len(eggs) == 0 {
+		// No eggs available
+		options = append(options, Option{
+			Name:        "No eggs available",
+			Description: "You don't have any eggs ready to hatch",
+			Action: func(params ...interface{}) ([]string, error) {
+				fmt.Println("No eggs available to hatch.")
+				fmt.Print("Press any key to continue...")
+				GetInput()
+				return []string{"mainMenu"}, nil
+			},
+		})
+	} else {
+		// Create hatch options for each egg
+		for _, egg := range eggs {
+			eggId := egg.Id // Capture for closure
+			locationName := egg.LocationName
+			options = append(options, Option{
+				Name:        fmt.Sprintf("Hatch egg at %s", locationName),
+				Description: fmt.Sprintf("Hatch the egg found at %s", locationName),
+				Action: func(params ...interface{}) ([]string, error) {
+					err := workers.HatchEgg(eggId)
+					if err != nil {
+						fmt.Printf("Error hatching egg: %v\n", err)
+						fmt.Print("Press any key to continue...")
+						GetInput()
+						return []string{"mainMenu", "eggsMenu"}, nil
+					}
+
+					fmt.Printf("Successfully hatched egg at %s!\n", locationName)
+					fmt.Print("Press any key to continue...")
+					GetInput()
+					return []string{"mainMenu"}, nil
+				},
+			})
+		}
+	}
+
+	return &SimpleMenu{
+		Title:   "EGGS MENU",
+		Options: options,
+		BackFunction: func(routeStack []string) ([]string, error) {
+			// Go back to main menu
+			return []string{"mainMenu"}, nil
+		},
+	}, nil
+}
+
 // CreateMainMenuV2 creates the v2 version of the main menu
 func CreateMainMenuV2() *SimpleMenu {
 	return &SimpleMenu{
@@ -323,12 +387,27 @@ func MainMenuListenV2(thisUser user.User, reader util.InputReader) error {
 			if err != nil {
 				return fmt.Errorf("error creating locations grid menu: %w", err)
 			}
-			
+
 			newRouteStack, err := locationsGrid.Show(routeStack, thisUser, reader)
 			if err != nil {
 				return fmt.Errorf("locations grid error: %w", err)
 			}
-			
+
+			// Update route stack and continue
+			routeStack = newRouteStack
+			continue
+		} else if lastRoute == "eggsMenu" {
+			// Show eggs menu
+			eggsMenu, err := CreateEggsMenu(thisUser.Id)
+			if err != nil {
+				return fmt.Errorf("error creating eggs menu: %w", err)
+			}
+
+			newRouteStack, err := eggsMenu.Show(routeStack, thisUser, reader)
+			if err != nil {
+				return fmt.Errorf("eggs menu error: %w", err)
+			}
+
 			// Update route stack and continue
 			routeStack = newRouteStack
 			continue
@@ -393,12 +472,28 @@ func TestMainMenuV2(thisUser user.User, reader util.InputReader) error {
 			if err != nil {
 				return fmt.Errorf("error creating locations grid menu: %w", err)
 			}
-			
+
 			newRouteStack, err := locationsGrid.Show(routeStack, thisUser, reader)
 			if err != nil {
 				return fmt.Errorf("locations grid error: %w", err)
 			}
-			
+
+			// Update route stack and continue
+			routeStack = newRouteStack
+			fmt.Printf("Current route: %v\n", routeStack)
+			continue
+		} else if lastRoute == "eggsMenu" {
+			// Show eggs menu
+			eggsMenu, err := CreateEggsMenu(thisUser.Id)
+			if err != nil {
+				return fmt.Errorf("error creating eggs menu: %w", err)
+			}
+
+			newRouteStack, err := eggsMenu.Show(routeStack, thisUser, reader)
+			if err != nil {
+				return fmt.Errorf("eggs menu error: %w", err)
+			}
+
 			// Update route stack and continue
 			routeStack = newRouteStack
 			fmt.Printf("Current route: %v\n", routeStack)

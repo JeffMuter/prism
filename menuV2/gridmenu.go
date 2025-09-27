@@ -468,28 +468,44 @@ func (gm *GridMenu) handleNumericColumnSort(columnName string) error {
 
 // handleSelectColumnFilter shows options for select columns
 func (gm *GridMenu) handleSelectColumnFilter(col Column, reader util.InputReader) error {
-	fmt.Printf("\nFilter by %s:\n", col.Name)
-	for i, option := range col.Options {
-		fmt.Printf("%d. %s\n", i+1, option)
+	// Create options for SimpleMenu
+	var options []Option
+	for _, option := range col.Options {
+		optValue := option // Capture for closure
+		options = append(options, Option{
+			Name:        optValue,
+			Description: fmt.Sprintf("Filter by %s", optValue),
+			Action: func(params ...interface{}) ([]string, error) {
+				gm.filters[col.Name] = optValue
+				gm.needsRefresh = true
+				return []string{}, nil
+			},
+		})
 	}
-	fmt.Printf("%d. Clear filter\n", len(col.Options)+1)
-	fmt.Print("Select option: ")
-	
-	input, err := reader.ReadCommandInput()
-	if err != nil {
-		return err
+
+	// Add clear filter option
+	options = append(options, Option{
+		Name:        "Clear filter",
+		Description: "Remove current filter",
+		Action: func(params ...interface{}) ([]string, error) {
+			delete(gm.filters, col.Name)
+			gm.needsRefresh = true
+			return []string{}, nil
+		},
+	})
+
+	menu := &SimpleMenu{
+		Title:   fmt.Sprintf("Filter by %s", col.Name),
+		Options: options,
+		BackFunction: func(routeStack []string) ([]string, error) {
+			// Return to grid menu
+			return []string{}, nil
+		},
 	}
-	
-	// Parse selection (simplified)
-	if input == fmt.Sprintf("%d", len(col.Options)+1) {
-		delete(gm.filters, col.Name)
-	} else {
-		// For now, just store the input as filter value
-		gm.filters[col.Name] = input
-	}
-	
-	gm.needsRefresh = true
-	return nil
+
+	// Show the menu with the same parameters the grid menu received
+	_, err := menu.Show([]string{}, reader)
+	return err
 }
 
 // handleTextColumnFilter handles fuzzy search for text columns

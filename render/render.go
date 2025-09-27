@@ -25,7 +25,6 @@ func PaintScreen(thisUser *user.User) ([][]rune, error) {
 	if err != nil {
 		return canvas, fmt.Errorf("error getting locations in bounds: %w", err)
 	}
-	fmt.Printf("locations count: %d\n", len(locationsToRender))
 
 	// set each locations coordinates
 	locationsToRender, err = setLocationsScreenCoordinates(thisUser, locationsToRender, degreeRange)
