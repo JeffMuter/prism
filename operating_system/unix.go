@@ -22,13 +22,11 @@ func GetTerminalSize() (int, int, error) {
 	if err != nil {
 		return 140, 20, nil
 	}
-	fmt.Println("fin getting term size")
 	return int(ws.Col), int(ws.Row), nil
 }
 
 func GetWifiInfo() (string, error) {
 	if isWSL() {
-		fmt.Println("WSL detected")
 		// Use PowerShell to get the Wi-Fi info on WSL
 		cmd := exec.Command("powershell.exe", "-Command", "Get-NetAdapter -Name '*Wi-Fi*' | Select-Object -ExpandProperty MacAddress")
 		stdout, err := cmd.Output()

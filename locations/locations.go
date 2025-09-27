@@ -176,7 +176,7 @@ func ConnectToLocation(user user.User) (int, error) {
 	db := db.GetDB()
 
 	// First check if user is already connected to a location at current position
-	minLat, maxLat, minLong, maxLong := util.GetMaxLocationRanges(.5, user.Latitude, user.Longitude)
+	minLat, maxLat, minLong, maxLong := util.GetMaxLocationRanges(0.145, user.Latitude, user.Longitude)
 	
 	// Check for existing connections at current location
 	connectedQuery := `SELECT 
@@ -271,7 +271,6 @@ func GetLocationsForUser(userId int) ([]Location, error) {
 
 	db := db.GetDB()
 
-	fmt.Println(userId)
 	query := `SELECT 
 		l.id, 
 		ul.id,
