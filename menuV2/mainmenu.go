@@ -209,6 +209,19 @@ func LocationsAction(params ...interface{}) ([]string, error) {
 	return []string{"mainMenu", "locationsGrid"}, nil
 }
 
+func WorkersAction(params ...interface{}) ([]string, error) {
+	if len(params) < 1 {
+		return []string{}, fmt.Errorf("workers requires user parameter")
+	}
+	_, ok := params[0].(user.User)
+	if !ok {
+		return []string{}, fmt.Errorf("first parameter must be user.User")
+	}
+
+	// Navigate to workers grid menu (all workers)
+	return []string{"mainMenu", "workersGrid"}, nil
+}
+
 func EggsAction(params ...interface{}) ([]string, error) {
 	if len(params) < 1 {
 		return []string{}, fmt.Errorf("eggs requires user parameter")
@@ -330,6 +343,11 @@ func CreateMainMenuV2() *SimpleMenu {
 				Action:      LocationsAction,
 			},
 			{
+				Name:        "Workers",
+				Description: "View and manage all your workers",
+				Action:      WorkersAction,
+			},
+			{
 				Name:        "Eggs",
 				Description: "Manage your eggs",
 				Action:      EggsAction,
@@ -391,6 +409,42 @@ func MainMenuListenV2(thisUser user.User, reader util.InputReader) error {
 			newRouteStack, err := locationsGrid.Show(routeStack, thisUser, reader)
 			if err != nil {
 				return fmt.Errorf("locations grid error: %w", err)
+			}
+
+			// Update route stack and continue
+			routeStack = newRouteStack
+			continue
+		} else if lastRoute == "workersGrid" {
+			// Show workers grid menu (all workers)
+			workersGrid, err := CreateWorkersGridMenu(thisUser.Id, nil)
+			if err != nil {
+				return fmt.Errorf("error creating workers grid menu: %w", err)
+			}
+
+			newRouteStack, err := workersGrid.Show(routeStack, thisUser, reader)
+			if err != nil {
+				return fmt.Errorf("workers grid error: %w", err)
+			}
+
+			// Update route stack and continue
+			routeStack = newRouteStack
+			continue
+		} else if strings.HasPrefix(lastRoute, "workersGrid-") {
+			// Show location-specific workers grid menu
+			locationIdStr := strings.TrimPrefix(lastRoute, "workersGrid-")
+			locationId := 0
+			if _, err := fmt.Sscanf(locationIdStr, "%d", &locationId); err != nil {
+				return fmt.Errorf("invalid location ID in workers grid route: %s", locationIdStr)
+			}
+
+			workersGrid, err := CreateWorkersGridMenu(thisUser.Id, &locationId)
+			if err != nil {
+				return fmt.Errorf("error creating location workers grid menu: %w", err)
+			}
+
+			newRouteStack, err := workersGrid.Show(routeStack, thisUser, reader)
+			if err != nil {
+				return fmt.Errorf("location workers grid error: %w", err)
 			}
 
 			// Update route stack and continue
@@ -476,6 +530,44 @@ func TestMainMenuV2(thisUser user.User, reader util.InputReader) error {
 			newRouteStack, err := locationsGrid.Show(routeStack, thisUser, reader)
 			if err != nil {
 				return fmt.Errorf("locations grid error: %w", err)
+			}
+
+			// Update route stack and continue
+			routeStack = newRouteStack
+			fmt.Printf("Current route: %v\n", routeStack)
+			continue
+		} else if lastRoute == "workersGrid" {
+			// Show workers grid menu (all workers)
+			workersGrid, err := CreateWorkersGridMenu(thisUser.Id, nil)
+			if err != nil {
+				return fmt.Errorf("error creating workers grid menu: %w", err)
+			}
+
+			newRouteStack, err := workersGrid.Show(routeStack, thisUser, reader)
+			if err != nil {
+				return fmt.Errorf("workers grid error: %w", err)
+			}
+
+			// Update route stack and continue
+			routeStack = newRouteStack
+			fmt.Printf("Current route: %v\n", routeStack)
+			continue
+		} else if strings.HasPrefix(lastRoute, "workersGrid-") {
+			// Show location-specific workers grid menu
+			locationIdStr := strings.TrimPrefix(lastRoute, "workersGrid-")
+			locationId := 0
+			if _, err := fmt.Sscanf(locationIdStr, "%d", &locationId); err != nil {
+				return fmt.Errorf("invalid location ID in workers grid route: %s", locationIdStr)
+			}
+
+			workersGrid, err := CreateWorkersGridMenu(thisUser.Id, &locationId)
+			if err != nil {
+				return fmt.Errorf("error creating location workers grid menu: %w", err)
+			}
+
+			newRouteStack, err := workersGrid.Show(routeStack, thisUser, reader)
+			if err != nil {
+				return fmt.Errorf("location workers grid error: %w", err)
 			}
 
 			// Update route stack and continue
