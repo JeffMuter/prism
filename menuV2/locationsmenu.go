@@ -240,13 +240,14 @@ func CreateLocationDetailMenu(loc locations.Location) (*SimpleMenu, error) {
 		},
 		{
 			Name:        "Manage Workers",
-			Description: "Assign or remove workers",
+			Description: "View and manage workers at this location",
 			Action: func(params ...interface{}) ([]string, error) {
-				// TODO: Implement worker management
-				fmt.Printf("Worker management for %s not implemented yet\n", loc.Name.String)
-				fmt.Print("Press any key to continue...")
-				GetInput()
-				return []string{}, nil
+				if len(params) < 1 {
+					return []string{}, fmt.Errorf("manage workers requires user parameter")
+				}
+
+				// Navigate to location-specific workers grid
+				return []string{"mainMenu", "locationsGrid", fmt.Sprintf("location-%d", loc.Id), fmt.Sprintf("workersGrid-%d", loc.Id)}, nil
 			},
 		},
 		{
