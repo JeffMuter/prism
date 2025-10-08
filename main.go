@@ -16,7 +16,6 @@ func main() {
 		log.Fatalf("db connections failed...: %v", err)
 	}
 
-
 	var thisUser = user.User{
 		Id:       1,
 		Username: "1",
