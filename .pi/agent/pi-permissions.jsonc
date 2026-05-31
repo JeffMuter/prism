@@ -1,0 +1,11 @@
+{
+  "tools": {
+    "write": "ask",
+    "edit":  "ask"
+  },
+  "bash": {
+    "nix search*": "deny",
+    "rm -rf *":    "deny",
+    "*":           "ask"
+  }
+}
