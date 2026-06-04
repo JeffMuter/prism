@@ -27,8 +27,14 @@ func GetTerminalSize() (int, int, error) {
 
 func GetWifiInfo() (string, error) {
 	if isWSL() {
-		// Use PowerShell to get the Wi-Fi info on WSL
-		cmd := exec.Command("powershell.exe", "-Command", "Get-NetAdapter -Name '*Wi-Fi*' | Select-Object -ExpandProperty MacAddress")
+		// Try to locate PowerShell
+		psPath, err := exec.LookPath("powershell.exe")
+		if err != nil {
+			// Fall back to known location
+			psPath = "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe"
+		}
+
+		cmd := exec.Command(psPath, "-Command", "Get-NetAdapter -Name '*Wi-Fi*' | Select-Object -ExpandProperty MacAddress")
 		stdout, err := cmd.Output()
 		if err != nil {
 			return "", fmt.Errorf("error getting Wi-Fi info in WSL: %v", err)

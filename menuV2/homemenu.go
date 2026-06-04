@@ -247,60 +247,40 @@ func CreateHomeNameEntryMenu(loc locations.Location) (*SimpleMenu, error) {
 			Name:        "Enter Home Name",
 			Description: "Name the center of your future empire",
 			Action: func(params ...interface{}) ([]string, error) {
-				if len(params) < 1 {
-					return []string{}, fmt.Errorf("home name entry requires reader parameter")
-				}
-
-				reader, ok := params[0].(util.InputReader)
-				if !ok {
-					return []string{}, fmt.Errorf("first parameter must be util.InputReader")
-				}
-
-				// Get home name from user
-				fmt.Print("Name the center of your future empire (max 30 characters): ")
-				homeName, err := reader.ReadCommandInput()
+				// Get home name from user using pretty text input
+				homeName, err := ShowTextInput(TextInputConfig{
+					Title:       "Create Home Location",
+					Prompt:      "Home name: ",
+					Placeholder: "Name the center of your future empire",
+					MaxLength:   30,
+					Validate: func(s string) error {
+						s = strings.TrimSpace(s)
+						if s == "" {
+							return fmt.Errorf("home name cannot be empty")
+						}
+						if !isValidHomeName(s) {
+							return fmt.Errorf("invalid characters - use letters, numbers, spaces, and basic punctuation only")
+						}
+						return nil
+					},
+				})
 				if err != nil {
-					fmt.Printf("Error reading input: %v\n", err)
-					fmt.Print("Press any key to continue...")
-					GetInput()
 					return []string{"mainMenu"}, nil
 				}
 
-				// Validate home name
 				homeName = strings.TrimSpace(homeName)
-				if homeName == "" {
-					fmt.Println("Home name cannot be empty!")
-					fmt.Print("Press any key to continue...")
-					GetInput()
-					return []string{"mainMenu"}, nil
-				}
-
-				if len(homeName) > 30 {
-					fmt.Println("Home name cannot exceed 30 characters!")
-					fmt.Print("Press any key to continue...")
-					GetInput()
-					return []string{"mainMenu"}, nil
-				}
-
-				// Validate that homeName is a safe string (basic validation)
-				if !isValidHomeName(homeName) {
-					fmt.Println("Home name contains invalid characters! Use letters, numbers, spaces, and basic punctuation only.")
-					fmt.Print("Press any key to continue...")
-					GetInput()
-					return []string{"mainMenu"}, nil
-				}
 
 				// Set the home location
 				err = locations.SetHomeLocation(&loc, homeName)
 				if err != nil {
-					fmt.Printf("Error creating home location: %v\n", err)
+					fmt.Printf("\nError creating home location: %v\n", err)
 					fmt.Print("Press any key to continue...")
 					GetInput()
 					return []string{"mainMenu"}, nil
 				}
 
 				// Success message
-				fmt.Printf("New Home Created: '%s' at %s\n", homeName, loc.Name.String)
+				fmt.Printf("\nNew Home Created: '%s' at %s\n", homeName, loc.Name.String)
 				fmt.Print("Press any key to continue...")
 				GetInput()
 				return []string{"mainMenu"}, nil

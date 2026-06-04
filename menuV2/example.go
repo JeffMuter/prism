@@ -39,7 +39,7 @@ func MainMenuBack(routeStack []string) ([]string, error) {
 	return []string{}, nil
 }
 
-// CreateExampleMenu demonstrates how to use the SimpleMenu
+// CreateExampleMenu demonstrates how to use the SimpleMenu (Bubble Tea powered)
 func CreateExampleMenu() *SimpleMenu {
 	return &SimpleMenu{
 		Title: "MAIN MENU",

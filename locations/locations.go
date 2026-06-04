@@ -34,9 +34,9 @@ type Location struct {
 func CreateLocation(user user.User, locName string, locTypeId int) (int, error) {
 	var newLocationRowId int
 	var newUsersLocsId int
-	//this num signifies 10 miles in lat/long degrees. We're using this to
-	// determine the max / min lat&long to determine if the node we want to place is too close to another node.
-	var maxRange float64 = 0.145
+
+	// 10 miles in kilometers - minimum distance between locations
+	var maxRangeKm float64 = 16.09
 
 	userLoc := Location{Latitude: user.Latitude, Longitude: user.Longitude}
 
@@ -45,13 +45,13 @@ func CreateLocation(user user.User, locName string, locTypeId int) (int, error) 
 	// check each location, if any node is too close, cancel the process
 	for _, loc := range locations {
 
-		isTooClose, err := isLocationTooClose(loc, userLoc, maxRange)
+		isTooClose, err := isLocationTooClose(loc, userLoc, maxRangeKm)
 		if err != nil {
 			return 0, fmt.Errorf("isLocationTooClose error: %w", err)
 		}
 
 		if isTooClose {
-			return 0, fmt.Errorf("cannot create location: too close to existing location (within %.1f miles)", maxRange*69)
+			return 0, fmt.Errorf("cannot create location: too close to existing location (within 10 miles)")
 		}
 	}
 
@@ -177,7 +177,7 @@ func ConnectToLocation(user user.User) (int, error) {
 
 	// First check if user is already connected to a location at current position
 	minLat, maxLat, minLong, maxLong := util.GetMaxLocationRanges(0.145, user.Latitude, user.Longitude)
-	
+
 	// Check for existing connections at current location
 	connectedQuery := `SELECT 
 			l.id, 
@@ -192,13 +192,13 @@ func ConnectToLocation(user user.User) (int, error) {
 			ul.user_id = ? 
 			AND l.latitude BETWEEN ? AND ?
 			AND l.longitude BETWEEN ? AND ?`
-	
+
 	rows, err := db.Query(connectedQuery, user.Id, minLat, maxLat, minLong, maxLong)
 	if err != nil {
 		return newUsersLocsId, fmt.Errorf("err querying db for existing connections: %v", err)
 	}
 	defer rows.Close()
-	
+
 	if rows.Next() {
 		var connectedLocation Location
 		err := rows.Scan(&connectedLocation.Id, &connectedLocation.Name, &connectedLocation.Latitude, &connectedLocation.Longitude)
@@ -394,7 +394,7 @@ func GetLocationFromLocationId(id int) (Location, error) {
 	return location, nil
 }
 
-// isLocationTooClose takes 2 locations, and checks if their lat/long is too close by the range you pass in, which is lat/long units
+// isLocationTooClose takes 2 locations, and checks if their distance is less than maxDistance (in kilometers)
 func isLocationTooClose(loc1, loc2 Location, maxDistance float64) (bool, error) {
 
 	// check if lat/long for either location arent correctly set.
@@ -404,14 +404,6 @@ func isLocationTooClose(loc1, loc2 Location, maxDistance float64) (bool, error) 
 
 	if maxDistance < 0 {
 		return false, fmt.Errorf("distance between two locations cannot be less than 0. maxDistance: %f", maxDistance)
-	}
-
-	if math.Abs(loc1.Latitude-loc2.Latitude) < maxDistance {
-		return true, nil
-	}
-
-	if math.Abs(loc1.Longitude-loc2.Longitude) < maxDistance {
-		return true, nil
 	}
 
 	distanceBetweenLocations := haversineDistance(loc1, loc2)

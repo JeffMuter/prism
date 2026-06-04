@@ -148,22 +148,21 @@ func NewLocationAction(params ...interface{}) ([]string, error) {
 	if !ok {
 		return []string{}, fmt.Errorf("first parameter must be user.User")
 	}
-	reader, ok := params[1].(util.InputReader)
-	if !ok {
-		return []string{}, fmt.Errorf("second parameter must be util.InputReader")
-	}
 
-	fmt.Println("What will the name of this location be?...")
-	locName, err := reader.ReadCommandInput()
+	// Use pretty text input
+	locName, err := ShowTextInput(TextInputConfig{
+		Title:       "Create New Location",
+		Prompt:      "Location name: ",
+		Placeholder: "Enter a name for this location",
+		MaxLength:   50,
+		Validate: func(s string) error {
+			if strings.TrimSpace(s) == "" {
+				return fmt.Errorf("location name cannot be empty")
+			}
+			return nil
+		},
+	})
 	if err != nil {
-		return []string{}, fmt.Errorf("error getting input from the user: %w", err)
-	}
-	
-	// Validate location name is not empty
-	if locName == "" {
-		fmt.Println("Location name cannot be empty!")
-		fmt.Print("Press any key to continue...")
-		GetInput()
 		return []string{"mainMenu"}, nil
 	}
 

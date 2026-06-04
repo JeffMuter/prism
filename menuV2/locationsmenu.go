@@ -225,7 +225,7 @@ func CreateLocationsGridMenu(userId int) (*GridMenu, error) {
 func CreateLocationDetailMenu(loc locations.Location) (*SimpleMenu, error) {
 	// For now, create a simple static menu with basic location info
 	// This can be expanded to a more detailed grid menu later
-	
+
 	options := []Option{
 		{
 			Name:        "View Resources",
@@ -262,9 +262,16 @@ func CreateLocationDetailMenu(loc locations.Location) (*SimpleMenu, error) {
 			},
 		},
 	}
-	
+
 	return &SimpleMenu{
 		Title:   fmt.Sprintf("%s - %s", loc.Name.String, loc.LocationType),
 		Options: options,
+		BackFunction: func(routeStack []string) ([]string, error) {
+			// Go back to locations grid
+			if len(routeStack) > 0 {
+				return routeStack[:len(routeStack)-1], nil
+			}
+			return []string{"mainMenu"}, nil
+		},
 	}, nil
 }
